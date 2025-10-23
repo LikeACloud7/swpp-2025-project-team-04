@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 
-import WelcomeStep from '@/components/initial-survey/WelcomeStep';
 import LevelSelector from '@/components/initial-survey/LevelSelector';
-import PercentageSlider from '@/components/initial-survey/PercentageSlider';
-import TopicGrid from '@/components/initial-survey/TopicGrid';
+import ListeningAudioButton from '@/components/initial-survey/ListeningAudioButton';
 import NavButtons from '@/components/initial-survey/NavButtons';
+import PercentageSlider from '@/components/initial-survey/PercentageSlider';
 import ProgressBar from '@/components/initial-survey/ProgressBar';
+import TopicGrid from '@/components/initial-survey/TopicGrid';
+import WelcomeStep from '@/components/initial-survey/WelcomeStep';
 import {
   LISTENING_LEVELS,
   TOPIC_CATEGORIES,
@@ -91,53 +92,68 @@ export default function InitialSurveyScreen() {
         );
       case 2:
         return (
-          <PercentageSlider
-            value={userInput.percent1}
-            onChange={(value) =>
-              setUserInput({ ...userInput, percent1: value })
-            }
-            fileNumber={1}
-          />
+          <>
+            <ListeningAudioButton fileNumber={1} />
+            <PercentageSlider
+              value={userInput.percent1}
+              onChange={(value) =>
+                setUserInput({ ...userInput, percent1: value })
+              }
+              fileNumber={1}
+            />
+          </>
         );
       case 3:
         return (
-          <PercentageSlider
-            value={userInput.percent2}
-            onChange={(value) =>
-              setUserInput({ ...userInput, percent2: value })
-            }
-            fileNumber={2}
-          />
+          <>
+            <ListeningAudioButton fileNumber={2} />
+            <PercentageSlider
+              value={userInput.percent2}
+              onChange={(value) =>
+                setUserInput({ ...userInput, percent2: value })
+              }
+              fileNumber={2}
+            />
+          </>
         );
       case 4:
         return (
-          <PercentageSlider
-            value={userInput.percent3}
-            onChange={(value) =>
-              setUserInput({ ...userInput, percent3: value })
-            }
-            fileNumber={3}
-          />
+          <>
+            <ListeningAudioButton fileNumber={3} />
+            <PercentageSlider
+              value={userInput.percent3}
+              onChange={(value) =>
+                setUserInput({ ...userInput, percent3: value })
+              }
+              fileNumber={3}
+            />
+          </>
         );
       case 5:
         return (
-          <PercentageSlider
-            value={userInput.percent4}
-            onChange={(value) =>
-              setUserInput({ ...userInput, percent4: value })
-            }
-            fileNumber={4}
-          />
+          <>
+            <ListeningAudioButton fileNumber={4} />
+            <PercentageSlider
+              value={userInput.percent4}
+              onChange={(value) =>
+                setUserInput({ ...userInput, percent4: value })
+              }
+              fileNumber={4}
+            />
+          </>
         );
       case 6:
         return (
-          <PercentageSlider
-            value={userInput.percent5}
-            onChange={(value) =>
-              setUserInput({ ...userInput, percent5: value })
-            }
-            fileNumber={5}
-          />
+          <>
+            <ListeningAudioButton fileNumber={5} />
+            <PercentageSlider
+              value={userInput.percent5}
+              onChange={(value) =>
+                setUserInput({ ...userInput, percent5: value })
+              }
+              fileNumber={5}
+            />
+          </>
         );
       case 7:
         return (
@@ -164,7 +180,6 @@ export default function InitialSurveyScreen() {
         )}
         {renderStep()}
       </ScrollView>
-
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}

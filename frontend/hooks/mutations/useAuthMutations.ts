@@ -22,7 +22,7 @@ export const useSignup = () => {
       setAccessToken(data.access_token);
       saveRefreshToken(data.refresh_token);
       console.log('회원가입 성공 및 모든 토큰/정보 저장 완료');
-      router.replace('/');
+      router.replace('/initial-survey');
     },
     onError: (error) => console.error('회원가입 실패:', error),
   });
