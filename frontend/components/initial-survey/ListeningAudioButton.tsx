@@ -1,27 +1,26 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-
-const audioSources = {
-  1: require('@/assets/audio/1_audio.mp3'),
-  2: require('@/assets/audio/2_audio.mp3'),
-  3: require('@/assets/audio/3_audio.mp3'),
-  4: require('@/assets/audio/4_audio.mp3'),
-  5: require('@/assets/audio/5_audio.mp3'),
-} as const;
+import { getAudioUrl } from '@/api/initialSurvey';
 
 type ListeningAudioButtonProps = {
-  fileNumber: keyof typeof audioSources;
+  level: string;
+  questionNumber: number;
 };
 
 export default function ListeningAudioButton({
-  fileNumber,
+  level,
+  questionNumber,
 }: ListeningAudioButtonProps) {
-  const audioSource = audioSources[fileNumber];
+  // 백엔드 API에서 오디오 파일 URL 생성
+  const audioUrl = useMemo(() => {
+    if (!level) return '';
+    return getAudioUrl(level, questionNumber);
+  }, [level, questionNumber]);
 
-  // expo-audio player (컴포넌트 라이프사이클에 맞춰 자동 관리됨)
-  const player = useAudioPlayer(audioSource);
-  const status = useAudioPlayerStatus(player); // { isPlaying, duration, currentTime, isLoaded, ... }
+  // expo-audio player
+  const player = useAudioPlayer(audioUrl);
+  const status = useAudioPlayerStatus(player);
 
   const handlePress = useCallback(() => {
     if (!player) return;
@@ -35,8 +34,6 @@ export default function ListeningAudioButton({
       player.play();
     }
   }, [player, status?.playing]);
-
-  if (!audioSource) return null;
 
   return (
     <View className="items-center mt-6">

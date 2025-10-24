@@ -16,6 +16,7 @@ import {
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
+import { submitInitialSurvey } from '@/api/initialSurvey';
 
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,6 +35,10 @@ export default function InitialSurveyScreen() {
       handleSubmit();
       return;
     }
+    // 레벨 선택 없이 Step 2로 넘어가는 것 방지
+    if (currentStep === 1 && !userInput.proficiencyLevel) {
+      return;
+    }
     setCurrentStep(currentStep + 1);
   };
 
@@ -44,6 +49,17 @@ export default function InitialSurveyScreen() {
   };
 
   const handleSubmit = () => {
+    submitInitialSurvey(
+      userInput.proficiencyLevel,
+      [
+        userInput.percent1,
+        userInput.percent2,
+        userInput.percent3,
+        userInput.percent4,
+        userInput.percent5,
+      ],
+      userInput.selectedTopics
+    );
     router.replace('/(main)');
   };
 
@@ -93,7 +109,10 @@ export default function InitialSurveyScreen() {
       case 2:
         return (
           <>
-            <ListeningAudioButton fileNumber={1} />
+            <ListeningAudioButton
+              level={userInput.proficiencyLevel}
+              questionNumber={1}
+            />
             <PercentageSlider
               value={userInput.percent1}
               onChange={(value) =>
@@ -106,7 +125,10 @@ export default function InitialSurveyScreen() {
       case 3:
         return (
           <>
-            <ListeningAudioButton fileNumber={2} />
+            <ListeningAudioButton
+              level={userInput.proficiencyLevel}
+              questionNumber={2}
+            />
             <PercentageSlider
               value={userInput.percent2}
               onChange={(value) =>
@@ -119,7 +141,10 @@ export default function InitialSurveyScreen() {
       case 4:
         return (
           <>
-            <ListeningAudioButton fileNumber={3} />
+            <ListeningAudioButton
+              level={userInput.proficiencyLevel}
+              questionNumber={3}
+            />
             <PercentageSlider
               value={userInput.percent3}
               onChange={(value) =>
@@ -132,7 +157,10 @@ export default function InitialSurveyScreen() {
       case 5:
         return (
           <>
-            <ListeningAudioButton fileNumber={4} />
+            <ListeningAudioButton
+              level={userInput.proficiencyLevel}
+              questionNumber={4}
+            />
             <PercentageSlider
               value={userInput.percent4}
               onChange={(value) =>
@@ -145,7 +173,10 @@ export default function InitialSurveyScreen() {
       case 6:
         return (
           <>
-            <ListeningAudioButton fileNumber={5} />
+            <ListeningAudioButton
+              level={userInput.proficiencyLevel}
+              questionNumber={5}
+            />
             <PercentageSlider
               value={userInput.percent5}
               onChange={(value) =>
