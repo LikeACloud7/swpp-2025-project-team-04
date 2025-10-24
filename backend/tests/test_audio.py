@@ -1,11 +1,9 @@
-from fastapi.testclient import TestClient
-from fastapi import Depends
-import pytest
 import os
 import sys
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dotenv import load_dotenv
+from fastapi.testclient import TestClient
 
 # Load environment variables from .env file before importing anything
 load_dotenv()
@@ -14,8 +12,15 @@ load_dotenv()
 if not os.environ.get("OPENAI_API_KEY"):
     os.environ["OPENAI_API_KEY"] = "sk-test-dummy-key-for-testing"
 
-from app.main import app
-from app.modules.users.models import User, CEFRLevel
+# Handle imports based on whether we're running from backend/ or project root
+try:
+    # Try importing from backend.app (when running from project root)
+    from backend.app.main import app
+    from backend.app.modules.users.models import User, CEFRLevel
+except ModuleNotFoundError:
+    # Fall back to app imports (when running from backend directory)
+    from app.main import app
+    from app.modules.users.models import User, CEFRLevel
 
 client = TestClient(app)
 
