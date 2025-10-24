@@ -1,5 +1,5 @@
 import pytest
-from backend.app.modules.tts.utils import parse_tts_by_newlines  # adjust import path
+from backend.app.modules.tts.utils import parse_tts_by_newlines
 
 
 
@@ -41,7 +41,6 @@ def test_parse_tts_by_newlines_basic():
         assert isinstance(sentence["text"], str)
         assert len(sentence["text"]) > 0
 
-    # Check sentence text contents
     assert sentences[0]["text"].startswith("Good morning")
     assert sentences[1]["text"].startswith("How are you")
     assert sentences[2]["text"].startswith("I hope you")
