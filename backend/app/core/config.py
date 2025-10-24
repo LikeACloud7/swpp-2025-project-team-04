@@ -11,9 +11,12 @@ class Settings(BaseSettings):
     db_host: str
     db_name: str
     secret_key: str
+    elevenlabs_api_key: str
+    openai_api_key: str
 
     class Config:
-        env_file = "backend/.env"
+        env_file = ".env"
+        case_sensitive = False
 
 
 settings = Settings()
