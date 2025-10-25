@@ -1,4 +1,4 @@
-import Button from '@/components/Button';
+import Button from '@/components/home/Button';
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
@@ -64,7 +64,7 @@ export default function HomeScreen() {
         <Button
           title="Generate Audio"
           onPress={() => {
-            router.push('/audio');
+            router.push('/audioPlayer');
           }}
           style={{ width: '100%' }}
         />
