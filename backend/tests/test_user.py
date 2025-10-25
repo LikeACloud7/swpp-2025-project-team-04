@@ -157,11 +157,11 @@ def test_get_me_response_schema():
     
     assert response.status_code == 200
     response_data = response.json()
-    
-    # Verify exact schema - should only have these 3 fields
-    expected_fields = {"id", "username", "nickname"}
+
+    # Verify exact schema - should only have these  fields
+    expected_fields = {"id", "username", "nickname", "level", "level_updated_at"}
     actual_fields = set(response_data.keys())
     assert actual_fields == expected_fields
     
     # Verify no extra or missing fields
-    assert len(response_data) == 3
+    assert len(response_data) == 5
