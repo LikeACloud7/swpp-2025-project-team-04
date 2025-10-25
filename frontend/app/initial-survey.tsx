@@ -7,6 +7,7 @@ import ListeningAudioButton from '@/components/initial-survey/ListeningAudioButt
 import NavButtons from '@/components/initial-survey/NavButtons';
 import PercentageSlider from '@/components/initial-survey/PercentageSlider';
 import ProgressBar from '@/components/initial-survey/ProgressBar';
+import TestOptionStep from '@/components/initial-survey/TestOptionStep';
 import TopicGrid from '@/components/initial-survey/TopicGrid';
 import WelcomeStep from '@/components/initial-survey/WelcomeStep';
 import {
@@ -21,6 +22,7 @@ import { submitLevelTest } from '@/api/initialSurvey';
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skipTest, setSkipTest] = useState<boolean | null>(null);
   const [userInput, setUserInput] = useState({
     proficiencyLevel: '',
     percent1: 50,
@@ -40,12 +42,25 @@ export default function InitialSurveyScreen() {
     if (currentStep === 1 && !userInput.proficiencyLevel) {
       return;
     }
+    // Step 2에서 선택 없이 넘어가기 방지
+    if (currentStep === 2 && skipTest === null) {
+      return;
+    }
+    // Step 2에서 Skip하면 바로 Step 8로 이동
+    if (currentStep === 2 && skipTest === true) {
+      setCurrentStep(8);
+      return;
+    }
     setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      if (currentStep === 8 && skipTest === true) {
+        setCurrentStep(2);
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
@@ -108,7 +123,19 @@ export default function InitialSurveyScreen() {
   const getNextButtonLabel = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) return '완료';
     if (currentStep === 0) return '시작하기';
+    if (currentStep === 2) {
+      if (skipTest === true) return '건너뛰기';
+      if (skipTest === false) return '테스트 시작';
+      return '선택해주세요';
+    }
     return '다음';
+  };
+
+  const canProceed = () => {
+    if (isSubmitting) return false;
+    if (currentStep === 1 && !userInput.proficiencyLevel) return false;
+    if (currentStep === 2 && skipTest === null) return false;
+    return true;
   };
 
   const renderStep = () => {
@@ -133,8 +160,13 @@ export default function InitialSurveyScreen() {
         );
       case 2:
         return (
+          <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />
+        );
+      case 3:
+        return (
           <>
             <ListeningAudioButton
+              key="audio-1"
               level={userInput.proficiencyLevel}
               questionNumber={1}
             />
@@ -147,10 +179,11 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 3:
+      case 4:
         return (
           <>
             <ListeningAudioButton
+              key="audio-2"
               level={userInput.proficiencyLevel}
               questionNumber={2}
             />
@@ -163,10 +196,11 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 4:
+      case 5:
         return (
           <>
             <ListeningAudioButton
+              key="audio-3"
               level={userInput.proficiencyLevel}
               questionNumber={3}
             />
@@ -179,10 +213,11 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 5:
+      case 6:
         return (
           <>
             <ListeningAudioButton
+              key="audio-4"
               level={userInput.proficiencyLevel}
               questionNumber={4}
             />
@@ -195,10 +230,11 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 6:
+      case 7:
         return (
           <>
             <ListeningAudioButton
+              key="audio-5"
               level={userInput.proficiencyLevel}
               questionNumber={5}
             />
@@ -211,7 +247,7 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 7:
+      case 8:
         return (
           <TopicGrid
             categories={TOPIC_CATEGORIES}
@@ -256,7 +292,7 @@ export default function InitialSurveyScreen() {
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
         showBackButton={currentStep > 0}
-        canProceed={!isSubmitting}
+        canProceed={canProceed()}
       />
     </View>
   );

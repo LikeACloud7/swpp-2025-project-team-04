@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View, Alert } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { getAudioUrl } from '@/api/initialSurvey';
@@ -10,6 +10,12 @@ type ListeningAudioButtonProps = {
   questionNumber: number;
 };
 
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export default function ListeningAudioButton({
   level,
   questionNumber,
@@ -17,6 +23,11 @@ export default function ListeningAudioButton({
   const [currentTime, setCurrentTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [downloadedUri, setDownloadedUri] = useState<string | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // expo-audio player
+  const player = useAudioPlayer(null);
+  const status = useAudioPlayerStatus(player);
 
   // 백엔드 API에서 오디오 파일 URL 생성
   const audioUrl = useMemo(() => {
@@ -24,27 +35,41 @@ export default function ListeningAudioButton({
     return getAudioUrl(level, questionNumber);
   }, [level, questionNumber]);
 
-  // expo-audio player
-  const player = useAudioPlayer(null);
-  const status = useAudioPlayerStatus(player);
+  useEffect(() => {
+    setDownloadedUri(null);
+    setCurrentTime(0);
+    setIsLoading(false);
+
+    if (player) {
+      player.pause();
+      player.seekTo(0);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [level, questionNumber, player]);
 
   // 현재 시간 update
   useEffect(() => {
     if (!status?.playing) return;
 
     const interval = setInterval(() => {
-      setCurrentTime(status.currentTime || 0);
+      const time = status?.currentTime || 0;
+      const duration = status?.duration || 0;
+
+      if (duration > 0 && time >= duration - 0.5) {
+        setCurrentTime(duration);
+      } else {
+        setCurrentTime(time);
+      }
     }, 100); // 100ms update
 
     return () => clearInterval(interval);
-  }, [status?.playing, status?.currentTime]);
-
-  // 끝나면 시간 리셋
-  useEffect(() => {
-    if (status?.currentTime === status?.duration && status?.duration > 0) {
-      setCurrentTime(0);
-    }
-  }, [status?.currentTime, status?.duration]);
+  }, [status?.playing, status]);
 
   const handlePlayPause = useCallback(async () => {
     if (!player) return;
@@ -53,6 +78,11 @@ export default function ListeningAudioButton({
       if (status?.playing) {
         player.pause();
       } else {
+        // Set loading immediately at the start to prevent glitching
+        if (!downloadedUri) {
+          setIsLoading(true);
+        }
+
         if (downloadedUri) {
           player.play();
           return;
@@ -60,9 +90,10 @@ export default function ListeningAudioButton({
 
         if (!audioUrl) return;
 
-        setIsLoading(true);
-
         const accessToken = getAccessToken();
+        if (!accessToken) {
+          throw new Error('No access token available');
+        }
 
         const fileName = `audio_${level}_${questionNumber}.wav`;
         const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
@@ -81,18 +112,21 @@ export default function ListeningAudioButton({
           throw new Error(`Failed to download audio`);
         }
 
-        setDownloadedUri(downloadResult.uri);
-
         player.replace({ uri: downloadResult.uri });
         player.play();
-        setIsLoading(false);
+
+        timeoutRef.current = setTimeout(() => {
+          setDownloadedUri(downloadResult.uri);
+          setIsLoading(false);
+          timeoutRef.current = null;
+        }, 50);
       }
     } catch (error) {
       console.error('Failed to load audio:', error);
       setIsLoading(false);
       Alert.alert('오디오 재생 오류', '오디오 파일을 불러올 수 없습니다.');
     }
-  }, [player, status?.playing, status?.duration, currentTime, audioUrl, downloadedUri, level, questionNumber]);
+  }, [player, status?.playing, audioUrl, downloadedUri, level, questionNumber]);
 
   const handleRestart = useCallback(() => {
     if (!player || !downloadedUri) return;
@@ -102,14 +136,14 @@ export default function ListeningAudioButton({
     player.play();
   }, [player, downloadedUri]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const duration = status?.duration || 0;
-  const progress = duration > 0 ? currentTime / duration : 0;
+  const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
+  const hasFinished =
+    duration > 0 &&
+    !status?.playing &&
+    downloadedUri !== null &&
+    currentTime >= duration * 0.95;
 
   return (
     <View className="items-center mt-8 mb-4 w-full px-4">
@@ -119,40 +153,54 @@ export default function ListeningAudioButton({
         </Text>
 
         {/* Play/Pause Button(s) */}
-        {status?.playing ? (
+        {status?.playing || isLoading ? (
           <Pressable
             onPress={handlePlayPause}
             className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             android_ripple={{ color: '#4D7BAA' }}
+            disabled={isLoading}
           >
             <Text className="text-white text-[18px] font-bold text-center">
-              ⏸ 일시정지
+              {isLoading ? '로딩 중...' : '❚❚ 일시정지'}
             </Text>
           </Pressable>
-        ) : downloadedUri && !isLoading ? (
-          <View className="flex-row gap-2 mb-4">
+        ) : downloadedUri ? (
+          hasFinished ? (
             <Pressable
               onPress={handleRestart}
-              className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
+              className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
               android_ripple={{ color: '#4D7BAA' }}
             >
-              <Text className="text-white text-[16px] font-bold text-center">
+              <Text className="text-white text-[18px] font-bold text-center">
                 ⏮ 처음부터
               </Text>
             </Pressable>
-            <Pressable
-              onPress={handlePlayPause}
-              className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
-              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-              android_ripple={{ color: '#4D7BAA' }}
-            >
-              <Text className="text-white text-[16px] font-bold text-center">
-                ▶ 재생
-              </Text>
-            </Pressable>
-          </View>
+          ) : (
+            <View className="flex-row gap-2 mb-4">
+              <Pressable
+                onPress={handleRestart}
+                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
+                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                android_ripple={{ color: '#4D7BAA' }}
+              >
+                <Text className="text-white text-[16px] font-bold text-center">
+                  ⏮ 처음부터
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handlePlayPause}
+                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
+                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                android_ripple={{ color: '#4D7BAA' }}
+              >
+                <Text className="text-white text-[16px] font-bold text-center">
+                  ▶ 재생
+                </Text>
+              </Pressable>
+            </View>
+          )
         ) : (
           <Pressable
             onPress={handlePlayPause}
