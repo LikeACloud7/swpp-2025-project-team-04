@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     elevenlabs_api_key: Optional[str] = None
 
     class Config:
-        env_file = "backend/.env"
+        env_file = ".env"
+        case_sensitive = False
 
 
 settings = Settings()
