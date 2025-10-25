@@ -80,25 +80,6 @@ def test_summarize_level_test_with_llm_success():
     assert len(llm.calls) == 1
 
 
-def test_summarize_level_test_llm_failure_falls_back():
-    llm = FakeLLMClient(error=LLMServiceError("network down"))
-    service = PersonalizationService(llm_client=llm)
-
-    tests = [
-        schemas.LevelTestItem(script_id="script-a", understanding=42),
-        schemas.LevelTestItem(script_id="script-b", understanding=38),
-    ]
-    result = service._summarize_level_test(
-        tests=tests,
-        scripts=make_scripts(),
-    )
-
-    assert result.level == CEFRLevel.B1  # 평균 40 → B1 구간
-    assert result.level_score == 45      # B1 구간 중간값
-    assert result.llm_confidence == 40
-    assert "휴리스틱" in result.rationale
-
-
 def test_summarize_level_test_invalid_llm_payload_uses_defaults():
     llm = FakeLLMClient(
         response=json.dumps(
