@@ -18,9 +18,10 @@ class SentenceTimestamp(BaseModel):
 
 class FinalAudioResponse(BaseModel):
     """
-    Final response with audio and sentence timestamps
+    Final response with audio file URL and sentence timestamps
     """
-    audio_base64: str
+    title: str
+    audio_url: str
     sentences: List[SentenceTimestamp]
 
 class GeneratedScriptResponse(BaseModel):
@@ -28,6 +29,7 @@ class GeneratedScriptResponse(BaseModel):
     A temporary response model to show the output of Part 1.
     This will eventually be replaced by the final audio response.
     """
+    title: str
     selected_voice_id: str
     selected_voice_name: str
     script: str
