@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from openai import AsyncOpenAI
 from fastapi import HTTPException
-from elevenlabs import ElevenLabs
+from elevenlabs.client import ElevenLabs
 from ..users.models import User, CEFRLevel
 
 from .schemas import AudioGenerateRequest
