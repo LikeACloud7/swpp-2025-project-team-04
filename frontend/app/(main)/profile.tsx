@@ -1,4 +1,4 @@
-import Button from '@/components/Button';
+import Button from '@/components/home/Button';
 import { useLogout } from '@/hooks/mutations/useAuthMutations';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { Text, View } from 'react-native';

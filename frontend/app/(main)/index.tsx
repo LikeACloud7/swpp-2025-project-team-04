@@ -1,11 +1,16 @@
-import Button from '@/components/Button';
+import Button from '@/components/home/Button';
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import TrackPlayer from 'react-native-track-player';
+import { PlaybackService } from '../PlaybackService';
 
 const THEME_OPTIONS = ['News', 'Sports', 'Travel', 'Science', 'Culture'];
 const MOOD_OPTIONS = ['Calm', 'Energetic', 'Academic', 'Casual', 'Focused'];
+
+// RNTP 서비스 등록
+TrackPlayer.registerPlaybackService(() => PlaybackService);
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -64,7 +69,7 @@ export default function HomeScreen() {
         <Button
           title="Generate Audio"
           onPress={() => {
-            router.push('/audio');
+            router.push('/audioPlayer');
           }}
           style={{ width: '100%' }}
         />
