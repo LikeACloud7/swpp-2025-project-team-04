@@ -18,29 +18,31 @@ export default function WelcomeStep({
   sections,
 }: WelcomeStepProps) {
   return (
-    <View className="py-5">
-      <Text className="text-[32px] font-bold text-gray-800 mb-3 text-center">
+    <View className="py-8">
+      <Text className="text-[36px] font-bold text-gray-900 mb-4 text-center leading-[44px]">
         {title}
       </Text>
-      <Text className="text-lg text-gray-600 mb-10 text-center leading-[26px]">
+      <Text className="text-lg text-gray-500 mb-4 text-center leading-[28px] px-2">
         {subtitle}
       </Text>
 
-      <View className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+      <View className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
         {sections.map((section, index) => (
-          <View key={index}>
+          <View key={index} className={index > 0 ? 'mt-8' : ''}>
             {section.heading && (
-              <Text className="text-xl font-semibold text-gray-800 mb-4">
+              <Text className="text-[22px] font-bold text-gray-900 mb-5 leading-[30px]">
                 {section.heading}
               </Text>
             )}
-            <Text className="text-base text-gray-700 leading-6 mb-4">
+            <Text className="text-[16px] text-gray-600 leading-[26px] mb-5">
               {section.content}
             </Text>
             {section.highlight && (
-              <Text className="text-[17px] font-semibold text-[#6FA4D7] leading-6 mb-4 text-center py-3 bg-gray-100 rounded-lg">
-                {section.highlight}
-              </Text>
+              <View className="bg-[#EBF4FB] p-5 rounded-xl mt-2">
+                <Text className="text-[18px] font-semibold text-[#6FA4D7] leading-[28px] text-center">
+                  {section.highlight}
+                </Text>
+              </View>
             )}
           </View>
         ))}

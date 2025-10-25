@@ -35,7 +35,7 @@ export default function InitialSurveyScreen() {
       handleSubmit();
       return;
     }
-    // 레벨 선택 없이 Step 2로 넘어가는 것 방지
+    // 레벨 선택 없이 Step 2로 넘어가기 방지
     if (currentStep === 1 && !userInput.proficiencyLevel) {
       return;
     }
@@ -72,7 +72,7 @@ export default function InitialSurveyScreen() {
         selectedTopics: currentTopics.filter((t) => t !== topicId),
       });
     } else if (currentTopics.length < MAX_TOPIC_SELECTIONS) {
-      // Add if less than max allowed
+      // Add if < 3
       setUserInput({
         ...userInput,
         selectedTopics: [...currentTopics, topicId],
@@ -200,17 +200,32 @@ export default function InitialSurveyScreen() {
     }
   };
 
+  // 마지막 페이지만 스크롤 가능
+  const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
+
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1" contentContainerClassName="p-6">
-        {currentStep > 0 && (
-          <ProgressBar
-            currentStep={currentStep}
-            totalPages={TOTAL_SURVEY_PAGES}
-          />
-        )}
-        {renderStep()}
-      </ScrollView>
+    <View className="flex-1 bg-[#EBF4FB]">
+      {isLastPage ? (
+        <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
+          {currentStep > 0 && (
+            <ProgressBar
+              currentStep={currentStep}
+              totalPages={TOTAL_SURVEY_PAGES}
+            />
+          )}
+          {renderStep()}
+        </ScrollView>
+      ) : (
+        <View className="flex-1 p-6 pt-16">
+          {currentStep > 0 && (
+            <ProgressBar
+              currentStep={currentStep}
+              totalPages={TOTAL_SURVEY_PAGES}
+            />
+          )}
+          {renderStep()}
+        </View>
+      )}
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}
