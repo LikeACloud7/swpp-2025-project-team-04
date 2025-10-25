@@ -67,7 +67,6 @@ export default function ListeningAudioButton({
   const progress = duration > 0 ? currentTime / duration : 0;
 
   return (
-        <Text className="text-white text-lg font-semibold text-center">
     <View className="items-center mt-8 mb-4 w-full px-4">
       <View className="w-full max-w-[320px] bg-white rounded-2xl p-6 shadow-md">
         <Text className="text-gray-800 text-[16px] font-bold text-center mb-4">

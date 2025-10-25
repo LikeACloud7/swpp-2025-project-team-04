@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import LevelSelector from '@/components/initial-survey/LevelSelector';
@@ -16,10 +16,11 @@ import {
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
-import { submitInitialSurvey } from '@/api/initialSurvey';
+import { submitLevelTest } from '@/api/initialSurvey';
 
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [userInput, setUserInput] = useState({
     proficiencyLevel: '',
     percent1: 50,
@@ -48,31 +49,43 @@ export default function InitialSurveyScreen() {
     }
   };
 
-  const handleSubmit = () => {
-    submitInitialSurvey(
-      userInput.proficiencyLevel,
-      [
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await submitLevelTest(userInput.proficiencyLevel, [
         userInput.percent1,
         userInput.percent2,
         userInput.percent3,
         userInput.percent4,
         userInput.percent5,
-      ],
-      userInput.selectedTopics
-    );
-    router.replace('/(main)');
+      ]);
+
+      // TODO: 관심있는 토픽
+
+      router.replace('/(main)');
+    } catch (error) {
+      console.error('Failed to submit level test');
+      Alert.alert(
+        '제출 실패',
+        '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleTopicToggle = (topicId: string) => {
     const currentTopics = userInput.selectedTopics;
     if (currentTopics.includes(topicId)) {
-      // Remove if already selected
       setUserInput({
         ...userInput,
         selectedTopics: currentTopics.filter((t) => t !== topicId),
       });
     } else if (currentTopics.length < MAX_TOPIC_SELECTIONS) {
-      // Add if < 3
       setUserInput({
         ...userInput,
         selectedTopics: [...currentTopics, topicId],
@@ -231,6 +244,7 @@ export default function InitialSurveyScreen() {
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
         showBackButton={currentStep > 0}
+        canProceed={!isSubmitting}
       />
     </View>
   );
