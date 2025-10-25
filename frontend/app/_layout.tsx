@@ -7,15 +7,18 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 export { ErrorBoundary } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // 스플래시 자동 종료 방지
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <QueryProvider>
-      <RootNavigation />
-    </QueryProvider>
+    <SafeAreaProvider>
+      <QueryProvider>
+        <RootNavigation />
+      </QueryProvider>
+    </SafeAreaProvider>
   );
 }
 
