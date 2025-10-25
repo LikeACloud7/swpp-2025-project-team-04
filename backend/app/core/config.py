@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     db_host: str
     db_name: str
     secret_key: str
-    elevenlabs_api_key: str
-    openai_api_key: str
+    elevenlabs_api_key: str = "dummy-key"
+    openai_api_key: str = "dummy-key"
 
     class Config:
         env_file = ".env"
