@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -12,13 +15,15 @@ class CEFRLevel(str, Enum):
     C1 = "C1"
     C2 = "C2"
 
+from ..personalization.models import CEFRLevel
+
 
 class User(BaseModel):
     id: int
     username: str
     nickname: str
-    level: Optional[CEFRLevel] = CEFRLevel.A1
+    level: Optional[CEFRLevel] = None
     level_updated_at: Optional[datetime] = None
-    
+
     class Config:
-        from_attributes = True
+        orm_mode = True
