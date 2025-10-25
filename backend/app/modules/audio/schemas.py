@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import List
 
 class AudioGenerateRequest(BaseModel):
     """
@@ -6,6 +7,21 @@ class AudioGenerateRequest(BaseModel):
     """
     mood: str = Field(..., example="excited")
     theme: str = Field(..., example="sports")
+
+class SentenceTimestamp(BaseModel):
+    """
+    Individual sentence with timestamp information
+    """
+    id: int
+    start_time: float
+    text: str
+
+class FinalAudioResponse(BaseModel):
+    """
+    Final response with audio and sentence timestamps
+    """
+    audio_base64: str
+    sentences: List[SentenceTimestamp]
 
 class GeneratedScriptResponse(BaseModel):
     """
