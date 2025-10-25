@@ -66,6 +66,10 @@ function RootNavigation() {
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
+      <Stack.Screen
+        name="initial-survey"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }
