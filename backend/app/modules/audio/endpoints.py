@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from . import schemas
 from . import service as AudioService
-from app.modules.users.models import User
-from app.modules.users.endpoints import get_current_user
+from ..users.models import User
+from ..users.endpoints import get_current_user
 
 
 router = APIRouter()
@@ -20,7 +20,7 @@ async def test_generate_audio(
     Test endpoint without authentication - generates audio script with dummy user
     """
     # Create dummy user for testing
-    from app.modules.users.models import CEFRLevel
+    from ..users.models import CEFRLevel
     dummy_user = User(
         id=1,
         username="testuser", 
