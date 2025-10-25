@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import patch
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
+import pytest
 
 # Load environment variables from .env file before importing anything
 load_dotenv()
@@ -64,6 +65,7 @@ def save_script_to_file(script_data, test_name, mood, theme, level):
     print(f"Script saved to: {filepath}")
     return filepath
 
+@pytest.mark.expensive
 def test_generate_audio_script():
     """Test the audio script generation endpoint with dummy user"""
     mood, theme = "excited", "sports"
@@ -96,6 +98,7 @@ def test_generate_audio_script():
     # Save script to file  
     save_script_to_file(data, "basic_test", mood, theme, "B1")
 
+@pytest.mark.expensive
 def test_generate_audio_different_levels():
     """Test with different user levels"""
     test_cases = [
