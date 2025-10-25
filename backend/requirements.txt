@@ -8,3 +8,8 @@ passlib
 python-jose
 pymysql
 pydantic-settings==2.1.0
+openai
+PyYAML
+pytest
+alembic
+python-dotenv
