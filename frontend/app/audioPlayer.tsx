@@ -9,6 +9,7 @@ import TrackPlayer, {
 import { Ionicons } from '@expo/vector-icons'; // 아이콘 추가
 
 import AudioScreen, { ScriptLine } from '../components/audio/script';
+import AudioSlider from '@/components/audio/slider';
 
 /**
  * 테스트용 스크립트 데이터
@@ -166,6 +167,8 @@ export default function AudioPlayer() {
     <View className="flex-1 bg-black">
       {/* 가사 화면 */}
       <AudioScreen scripts={testScripts} />
+
+      <AudioSlider />
 
       {/* 하단 플레이버튼 */}
       <View className="items-center justify-center p-5">
