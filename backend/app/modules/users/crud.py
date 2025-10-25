@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import UserNotFoundException
-from app.modules.personalization.models import CEFRLevel
+from ...core.exceptions import UserNotFoundException
+from ..personalization.models import CEFRLevel
 from .models import User
 
 def create_user(db: Session, username: str, hashed_password: str, nickname: str = None):

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     secret_key: str
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
+    elevenlabs_api_key: Optional[str] = None
 
     class Config:
         env_file = "backend/.env"

@@ -5,11 +5,11 @@ from typing import Dict
 
 import pytest
 
-from app.core.llm import LLMServiceError
-from app.modules.personalization import crud, schemas
-from app.modules.personalization.models import CEFRLevel, LevelTestScript
-from app.modules.personalization.service import PersonalizationService
-from app.modules.users import crud as user_crud
+from backend.app.core.llm import LLMServiceError
+from backend.app.modules.personalization import crud, schemas
+from backend.app.modules.personalization.models import CEFRLevel, LevelTestScript
+from backend.app.modules.personalization.service import PersonalizationService
+from backend.app.modules.users import crud as user_crud
 
 
 class FakePrompt:
@@ -19,7 +19,7 @@ class FakePrompt:
 
 @pytest.fixture(autouse=True)
 def patch_prompt_store(monkeypatch):
-    from app.modules.personalization import service as service_module
+    from backend.app.modules.personalization import service as service_module
     monkeypatch.setattr(service_module._PROMPT_STORE, "load", lambda _: FakePrompt)
 
 

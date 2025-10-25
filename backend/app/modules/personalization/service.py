@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.core.llm import LLMServiceError, OpenAILLMClient, PromptStore
+from ...core.llm import LLMServiceError, OpenAILLMClient, PromptStore
 
 from ...core.exceptions import AppException
 from ..users import crud as user_crud
@@ -15,7 +15,7 @@ from .models import CEFRLevel, LevelTestScript
 
 
 class LevelTestScriptNotFoundException(AppException):
-    def __init__(self, script_id: str):
+    def __init__(self, script_id: str = "unknown"):
         super().__init__(
             status_code=400,
             custom_code="LEVEL_TEST_SCRIPT_NOT_FOUND",
