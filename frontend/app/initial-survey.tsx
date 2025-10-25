@@ -55,15 +55,27 @@ export default function InitialSurveyScreen() {
     setIsSubmitting(true);
 
     try {
-      const response = await submitLevelTest(userInput.proficiencyLevel, [
+      // Mock
+      console.log('=== MOCK: Submitting Initial Survey ===');
+      console.log('Level:', userInput.proficiencyLevel);
+      console.log('Comprehension scores:', [
         userInput.percent1,
         userInput.percent2,
         userInput.percent3,
         userInput.percent4,
         userInput.percent5,
       ]);
+      console.log('Selected topics:', userInput.selectedTopics);
+      console.log('=== MOCK: Submission successful ===');
 
-      // TODO: 관심있는 토픽
+      // TODO: backend
+      // const response = await submitLevelTest(userInput.proficiencyLevel, [
+      //   userInput.percent1,
+      //   userInput.percent2,
+      //   userInput.percent3,
+      //   userInput.percent4,
+      //   userInput.percent5,
+      // ]);
 
       router.replace('/(main)');
     } catch (error) {
