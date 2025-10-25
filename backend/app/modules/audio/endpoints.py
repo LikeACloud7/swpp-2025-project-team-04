@@ -13,13 +13,13 @@ router = APIRouter()
 
 @router.post(
     "/test-generate",
-    response_model=schemas.GeneratedScriptResponse 
+    response_model=schemas.FinalAudioResponse 
 )
 async def test_generate_audio(
     request: schemas.AudioGenerateRequest
 ):
     """
-    Test endpoint without authentication - generates audio script with dummy user
+    Test endpoint without authentication - generates full audio pipeline with dummy user
     """
     # Create dummy user for testing
     from ..users.models import CEFRLevel
@@ -32,17 +32,13 @@ async def test_generate_audio(
     )
     
     try:
-        title, script, selected_voice = await AudioService.AudioService.generate_audio_script(
+        # Run the complete pipeline: Script generation + Voice selection + Audio generation + Timestamp parsing
+        result = await AudioService.AudioService.generate_full_audio_with_timestamps(
             request=request,
             user=dummy_user
         )
         
-        return schemas.GeneratedScriptResponse(
-            title=title,
-            selected_voice_id=selected_voice["voice_id"],
-            selected_voice_name=selected_voice["name"],
-            script=script
-        )
+        return result
 
     except HTTPException as e:
         raise e

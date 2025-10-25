@@ -25,8 +25,8 @@ VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 TEMP_AUDIO_DIR = os.path.join(BASE_DIR, "temp_audio")
 os.makedirs(TEMP_AUDIO_DIR, exist_ok=True)
 
-MIN_SCRIPT_WORDS = 400
-TARGET_SCRIPT_WORDS = 600
+MIN_SCRIPT_WORDS = 100
+TARGET_SCRIPT_WORDS = 200
 MAX_GENERATION_TRIES = 3
 
 # 1. Map CEFR Level to a challenge score range (0-100)
@@ -159,7 +159,7 @@ class AudioService:
         
         prompt = f"""
         You are a scriptwriter. Generate a script for an audio narration.
-        The script must be between 3 and 5 minutes long (around {TARGET_SCRIPT_WORDS} words).
+        The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
         
         Theme: {theme}
@@ -210,7 +210,7 @@ class AudioService:
             )
         
         # Parse title and script
-        title, script_only = cls._parse_title_and_script(generated_script)
+        title, script_only = AudioService._parse_title_and_script(generated_script)
         
         sentences = re.split(r'(?<=[.!?])\s+', script_only)
         formatted_script = "\n".join(sentence.strip() for sentence in sentences if sentence.strip())
@@ -263,15 +263,16 @@ class AudioService:
             response = elevenlabs_client.text_to_speech.convert_with_timestamps(
                 voice_id=voice_id,
                 text=script,
-                model_id="eleven_multilingual_v2",  # Use a model that supports timestamps
+                model_id="eleven_multilingual_v2",
                 enable_logging=False
             )
             
+            response_dict = response.model_dump()
             # Parse the response using our timestamp utility
-            sentences_with_timestamps = parse_tts_by_newlines(response)
+            sentences_with_timestamps = parse_tts_by_newlines(response_dict)
             
             return {
-                "audio_base64": response.get("audio_base64"),
+                "audio_base_64": response_dict.get("audio_base_64"),
                 "sentences": sentences_with_timestamps
             }
             
@@ -315,7 +316,7 @@ class AudioService:
     ) -> dict:
         """
         Complete pipeline: Generate script + voice selection + audio + timestamps
-        Returns audio_base64 and sentences with timestamps
+        Returns audio_base_64 and sentences with timestamps
         """
         # Step 1: Generate script and select voice
         title, script, selected_voice = await cls.generate_audio_script(request, user)
@@ -327,12 +328,12 @@ class AudioService:
         )
         
         # Step 3: Save audio file using title
-        cleaned_title = cls._clean_filename(title)
+        cleaned_title = AudioService._clean_filename(title)
         filename = f"{cleaned_title}_{user.id}.mp3"
         file_path = os.path.join(TEMP_AUDIO_DIR, filename)
         
         # Decode base64 and save as MP3
-        audio_data = base64.b64decode(audio_result["audio_base64"])
+        audio_data = base64.b64decode(audio_result["audio_base_64"])
         with open(file_path, 'wb') as audio_file:
             audio_file.write(audio_data)
         
