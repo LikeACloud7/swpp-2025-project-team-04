@@ -5,46 +5,26 @@ import { Chip } from './Chip';
 type ChipSelectorGroupProps = {
   title: string;
   chips: string[];
-  isMultiSelect?: boolean;
-  onSelectionChange?: (selected: string[]) => void;
+  onSelectionChange?: (selected: string | null) => void;
 };
 
 export function ChipSelectorGroup({
   title,
   chips,
-  isMultiSelect = false,
   onSelectionChange,
 }: ChipSelectorGroupProps) {
-  const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [selectedChip, setSelectedChip] = useState<string | null>(null);
 
   useEffect(() => {
-    onSelectionChange?.(selectedChips);
-  }, [onSelectionChange, selectedChips]);
+    onSelectionChange?.(selectedChip);
+  }, [onSelectionChange, selectedChip]);
 
-  const toggleChip = (chip: string) => {
-    setSelectedChips((prev) => {
-      const isAlreadySelected = prev.includes(chip);
-
-      // 다중 선택 모드
-      if (isMultiSelect) {
-        if (isAlreadySelected) {
-          return prev.filter((item) => item !== chip);
-        }
-        return [...prev, chip];
-      }
-
-      // 단일 선택 모드
-      if (isAlreadySelected) {
-        return [];
-      }
-      return [chip];
-    });
+  const selectChip = (chip: string) => {
+    setSelectedChip((prev) => (prev === chip ? null : chip));
   };
 
-  // 스크롤바 표시 여부
   const isScrollable = chips.length > 3;
 
-  // 컨테이너 스타일 메모이제이션
   const containerStyles = useMemo(
     () => ({
       paddingVertical: 8,
@@ -55,7 +35,7 @@ export function ChipSelectorGroup({
   );
 
   return (
-    <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 ">
+    <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-4">
       <Text className="mb-3 text-lg font-bold text-slate-900">{title}</Text>
       {isScrollable ? (
         <ScrollView
@@ -71,8 +51,8 @@ export function ChipSelectorGroup({
             <Chip
               key={chip}
               label={chip}
-              selected={selectedChips.includes(chip)}
-              onPress={() => toggleChip(chip)}
+              selected={selectedChip === chip}
+              onPress={() => selectChip(chip)}
             />
           ))}
         </ScrollView>
@@ -82,8 +62,8 @@ export function ChipSelectorGroup({
             <Chip
               key={chip}
               label={chip}
-              selected={selectedChips.includes(chip)}
-              onPress={() => toggleChip(chip)}
+              selected={selectedChip === chip}
+              onPress={() => selectChip(chip)}
             />
           ))}
         </View>
