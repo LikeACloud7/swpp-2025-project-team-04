@@ -1,3 +1,4 @@
+import { Sentence } from '@/api/audio';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Text,
@@ -10,23 +11,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 
-// 스크립트 한 줄
-export type ScriptLine = {
-  id: number;
-  start_time: number;
-  text: string;
+export type ScriptProps = {
+  scripts: Sentence[];
 };
 
-// 오디오 스크린 컴포넌트 props
-type AudioScreenProps = {
-  scripts: ScriptLine[];
-};
-
-export default function Script({ scripts }: AudioScreenProps) {
+export default function Script({ scripts }: ScriptProps) {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1); // 오디오에서의 index state
   const { position } = useProgress(250); // 250ms마다 재생 위치 업데이트
 
-  const flatListRef = useRef<FlatList<ScriptLine>>(null); // 자동 스크롤용 ref
+  const flatListRef = useRef<FlatList<Sentence>>(null); // 자동 스크롤용 ref
 
   // useEffect1: 현재 재생 위치에 맞는 가사 라인 인덱스 계산
   useEffect(() => {
@@ -34,7 +27,7 @@ export default function Script({ scripts }: AudioScreenProps) {
 
     let newIndex = -1;
     for (let i = 0; i < scripts.length; i++) {
-      if (position >= scripts[i].start_time) {
+      if (position >= parseFloat(scripts[i].start_time)) {
         newIndex = i;
       } else {
         break;
@@ -64,7 +57,7 @@ export default function Script({ scripts }: AudioScreenProps) {
   };
 
   // 컴포넌트: 라인 한 줄
-  const renderItem = ({ item, index }: ListRenderItemInfo<ScriptLine>) => {
+  const renderItem = ({ item, index }: ListRenderItemInfo<Sentence>) => {
     // 재생 위치면 하이라이팅
     const isHighlighted = index === currentLineIndex;
     const lineStyle = `
@@ -77,7 +70,9 @@ export default function Script({ scripts }: AudioScreenProps) {
     `;
     return (
       // 라인 터치 시 해당 시간으로 이동
-      <TouchableOpacity onPress={() => onLinePress(item.start_time)}>
+      <TouchableOpacity
+        onPress={() => onLinePress(parseFloat(item.start_time))}
+      >
         <Text className={lineStyle}>{item.text || '...'}</Text>
       </TouchableOpacity>
     );

@@ -1,36 +1,63 @@
 import Button from '@/components/home/Button';
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import TrackPlayer, { Capability } from 'react-native-track-player';
 import { PlaybackService } from '../PlaybackService';
+import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
+import { useQueryClient } from '@tanstack/react-query';
+import { v4 as uuidv4 } from 'uuid';
 
 const THEME_OPTIONS = ['News', 'Sports', 'Travel', 'Science', 'Culture'];
 const MOOD_OPTIONS = ['Calm', 'Energetic', 'Academic', 'Casual', 'Focused'];
 
-// RNTP 서비스 등록
-TrackPlayer.registerPlaybackService(() => PlaybackService);
-
 export default function HomeScreen() {
+  const qc = useQueryClient();
   const router = useRouter();
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
-  const focusMessage = useMemo(() => {
-    if (!selectedThemes.length) {
-      return 'Choose a theme and mood to unlock a personalized study plan.';
+  // 오디오 api
+  const { mutate: audioMutate, isPending: isAudioLoading } = useGenerateAudio();
+
+  const handleGenerateAudio = () => {
+    if (!selectedTheme || !selectedMood) {
+      console.warn('Please select both theme and mood.');
+      return;
     }
 
-    const primaryTheme = selectedThemes[0];
+    audioMutate(
+      {
+        mood: selectedMood,
+        theme: selectedTheme,
+      },
+      {
+        onSuccess: async (data) => {
+          console.log('Audio generation successful:', data);
 
-    if (!selectedMoods.length) {
-      return `We'll prepare ${primaryTheme} materials tailored just for you.`;
-    }
+          // RNTP에 트랙 추가 및 재생 준비
+          await TrackPlayer.reset(); // 이전 트랙 제거 (선택)
+          await TrackPlayer.add({
+            url: data.audio_url,
+            title: data.title,
+            artist: 'LingoFit',
+          });
 
-    const moodTone = selectedMoods.map((mood) => mood.toLowerCase()).join(', ');
-    return `We'll prepare ${primaryTheme} materials in a ${moodTone} tone to keep you motivated.`;
-  }, [selectedThemes, selectedMoods]);
+          const id = uuidv4(); // 생성된 세션 ID
+
+          // 캐시에 저장
+          qc.setQueryData(['audio', id], data);
+
+          // id만 전달
+          router.replace({ pathname: '/audioPlayer', params: { id } });
+        },
+        onError: (error) => {
+          console.error('Audio generation failed:', error);
+        },
+      },
+    );
+  };
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -46,32 +73,22 @@ export default function HomeScreen() {
         <ChipSelectorGroup
           title="Theme"
           chips={THEME_OPTIONS}
-          onSelectionChange={setSelectedThemes}
+          onSelectionChange={setSelectedTheme}
         />
 
         <ChipSelectorGroup
           title="Mood"
           chips={MOOD_OPTIONS}
-          isMultiSelect
-          onSelectionChange={setSelectedMoods}
+          onSelectionChange={setSelectedMood}
         />
-
-        <View className="mt-8 rounded-2xl bg-sky-500 p-5">
-          <Text className="mb-1 text-lg font-bold text-white">
-            Today&apos;s focus
-          </Text>
-          <Text className="text-base leading-6 text-slate-50">
-            {focusMessage}
-          </Text>
-        </View>
       </ScrollView>
+
       <View className="px-5 pb-8">
         <Button
-          title="Generate Audio"
-          onPress={() => {
-            router.push('/audioPlayer');
-          }}
+          title={isAudioLoading ? 'Generating…' : 'Generate Audio'}
+          onPress={handleGenerateAudio}
           style={{ width: '100%' }}
+          disabled={!selectedTheme || !selectedMood || isAudioLoading}
         />
       </View>
     </View>
