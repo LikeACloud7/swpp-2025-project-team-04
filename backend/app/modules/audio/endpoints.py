@@ -1,6 +1,8 @@
 # app/modules/audio/endpoints.py
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
+import os
 from . import schemas
 from . import service as AudioService
 from ..users.models import User
@@ -30,12 +32,13 @@ async def test_generate_audio(
     )
     
     try:
-        script, selected_voice = await AudioService.AudioService.generate_audio_script(
+        title, script, selected_voice = await AudioService.AudioService.generate_audio_script(
             request=request,
             user=dummy_user
         )
         
         return schemas.GeneratedScriptResponse(
+            title=title,
             selected_voice_id=selected_voice["voice_id"],
             selected_voice_name=selected_voice["name"],
             script=script
@@ -73,3 +76,24 @@ async def generate_audio(
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
+
+@router.get("/files/{filename}")
+async def get_audio_file(filename: str):
+    """
+    Serve audio files from temporary storage
+    """
+    # Get the temp audio directory path
+    from .service import TEMP_AUDIO_DIR
+    
+    file_path = os.path.join(TEMP_AUDIO_DIR, filename)
+    
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    
+    # Return the file
+    return FileResponse(
+        path=file_path,
+        media_type="audio/mpeg",
+        filename=filename
+    )
