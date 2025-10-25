@@ -4,6 +4,9 @@ import os
 import json
 import random
 import re
+import base64
+import uuid
+from datetime import datetime
 from openai import AsyncOpenAI
 from fastapi import HTTPException
 from elevenlabs import ElevenLabs
@@ -17,6 +20,10 @@ client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 elevenlabs_client = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY"))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
+
+# Temporary audio storage configuration
+TEMP_AUDIO_DIR = os.path.join(BASE_DIR, "temp_audio")
+os.makedirs(TEMP_AUDIO_DIR, exist_ok=True)
 
 MIN_SCRIPT_WORDS = 400
 TARGET_SCRIPT_WORDS = 600
@@ -138,7 +145,7 @@ class AudioService:
         theme: str, 
         user_level: CEFRLevel,
         selected_voice: dict
-    ) -> str:
+    ) -> tuple[str, str]:
         """
         (Special Points 1 & 3)
         Generates a script, ensures it's long enough, and formats
@@ -162,10 +169,18 @@ class AudioService:
         'A1'/'A2' = simple, 'B1'/'B2' = intermediate, 'C1'/'C2' = complex).
 
         *** IMPORTANT FORMATTING RULES ***
-        1. (Special Point 3) Every single sentence MUST be a new line.
+        1. Start with a title on the first line formatted as: TITLE: [Your Title Here]
+        2. Add one blank line after the title.
+        3. (Special Point 3) Every single sentence MUST be a new line.
            A sentence ends with a period, question mark, or exclamation mark.
-        2. Do NOT include speaker names (e.g., "Narrator:"), scene directions, 
+        4. Do NOT include speaker names (e.g., "Narrator:"), scene directions, 
            or any text other than the dialogue itself.
+        
+        Example format:
+        TITLE: Amazing Adventures in Technology
+        
+        Welcome to our exciting journey into the world of technology.
+        Today we will explore fascinating innovations.
         """
         
         generated_script = ""
@@ -194,10 +209,45 @@ class AudioService:
                 detail=f"Failed to generate script of sufficient length after {MAX_GENERATION_TRIES} attempts."
             )
         
-        sentences = re.split(r'(?<=[.!?])\s+', generated_script)
+        # Parse title and script
+        title, script_only = cls._parse_title_and_script(generated_script)
+        
+        sentences = re.split(r'(?<=[.!?])\s+', script_only)
         formatted_script = "\n".join(sentence.strip() for sentence in sentences if sentence.strip())
         
-        return formatted_script
+        return title, formatted_script
+
+    @staticmethod
+    def _parse_title_and_script(content: str) -> tuple[str, str]:
+        """
+        Parse the generated content to extract title and script separately
+        Returns (title, script_without_title)
+        """
+        lines = content.strip().split('\n')
+        
+        title = "Untitled Audio"  # Default title
+        script_lines = []
+        
+        for i, line in enumerate(lines):
+            if line.strip().startswith("TITLE:"):
+                # Extract title
+                title = line.strip()[6:].strip()  # Remove "TITLE:" prefix
+            elif line.strip() and not line.strip().startswith("TITLE:"):
+                # Add non-empty lines to script (skip empty lines after title)
+                script_lines.append(line.strip())
+        
+        script = '\n'.join(script_lines)
+        return title, script
+
+    @staticmethod
+    def _clean_filename(title: str) -> str:
+        """
+        Clean title for use as filename (remove special characters)
+        """
+        # Replace spaces with underscores and remove special characters
+        cleaned = re.sub(r'[^\w\s-]', '', title)
+        cleaned = re.sub(r'[-\s]+', '_', cleaned)
+        return cleaned[:50]  # Limit length
 
     @staticmethod
     def _generate_audio_with_timestamps(
@@ -237,11 +287,8 @@ class AudioService:
         cls, 
         request: AudioGenerateRequest, 
         user: User
-    ) -> tuple[str, dict]:
-        """
-        Main service function for Part 1.
-        (Updated to use the new algorithmic voice selection)
-        """
+    ) -> tuple[str, str, dict]:
+        
         all_voices = cls._load_voices()
         
         user_level = user.level 
@@ -251,14 +298,14 @@ class AudioService:
             user_level=user_level
         )
         
-        script = await cls._generate_script(
+        title, script = await cls._generate_script(
             mood=request.mood,
             theme=request.theme,
             user_level=user_level,
             selected_voice=selected_voice
         )
         
-        return script, selected_voice
+        return title, script, selected_voice
 
     @classmethod
     async def generate_full_audio_with_timestamps(
@@ -271,7 +318,7 @@ class AudioService:
         Returns audio_base64 and sentences with timestamps
         """
         # Step 1: Generate script and select voice
-        script, selected_voice = await cls.generate_audio_script(request, user)
+        title, script, selected_voice = await cls.generate_audio_script(request, user)
         
         # Step 2: Generate audio with timestamps using ElevenLabs
         audio_result = cls._generate_audio_with_timestamps(
@@ -279,8 +326,19 @@ class AudioService:
             voice_id=selected_voice["voice_id"]
         )
         
-        # Step 3: Return final response (audio + sentences with timestamps)
+        # Step 3: Save audio file using title
+        cleaned_title = cls._clean_filename(title)
+        filename = f"{cleaned_title}_{user.id}.mp3"
+        file_path = os.path.join(TEMP_AUDIO_DIR, filename)
+        
+        # Decode base64 and save as MP3
+        audio_data = base64.b64decode(audio_result["audio_base64"])
+        with open(file_path, 'wb') as audio_file:
+            audio_file.write(audio_data)
+        
+        # Step 4: Return final response with file URL
         return {
-            "audio_base64": audio_result["audio_base64"],
-            "sentences": audio_result["sentences"]  # Already in format: {id, start_time, text}
+            "title": title,
+            "audio_url": f"/api/v1/audio/files/{filename}",
+            "sentences": audio_result["sentences"]
         }
