@@ -16,8 +16,13 @@ from .schemas import AudioGenerateRequest
 from .utils import parse_tts_by_newlines
 
 # --- Configuration ---
-client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-elevenlabs_client = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY"))
+from ...core.config import settings
+
+def get_openai_client():
+    return AsyncOpenAI(api_key=settings.openai_api_key)
+
+def get_elevenlabs_client():
+    return ElevenLabs(api_key=settings.elevenlabs_api_key)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 
@@ -186,6 +191,7 @@ class AudioService:
         generated_script = ""
         for attempt in range(MAX_GENERATION_TRIES):
             try:
+                client = get_openai_client()
                 response = await client.chat.completions.create(
                     model="gpt-4o",
                     messages=[{"role": "system", "content": prompt}]
@@ -260,6 +266,7 @@ class AudioService:
         """
         try:
             # Call ElevenLabs API with alignment enabled
+            elevenlabs_client = get_elevenlabs_client()
             response = elevenlabs_client.text_to_speech.convert_with_timestamps(
                 voice_id=voice_id,
                 text=script,
