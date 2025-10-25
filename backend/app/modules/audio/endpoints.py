@@ -1,6 +1,8 @@
 # app/modules/audio/endpoints.py
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
+import os
 from . import schemas
 from . import service as AudioService
 from ..users.models import User
@@ -11,13 +13,13 @@ router = APIRouter()
 
 @router.post(
     "/test-generate",
-    response_model=schemas.GeneratedScriptResponse 
+    response_model=schemas.FinalAudioResponse 
 )
 async def test_generate_audio(
     request: schemas.AudioGenerateRequest
 ):
     """
-    Test endpoint without authentication - generates audio script with dummy user
+    Test endpoint without authentication - generates full audio pipeline with dummy user
     """
     # Create dummy user for testing
     from ..users.models import CEFRLevel
@@ -30,16 +32,13 @@ async def test_generate_audio(
     )
     
     try:
-        script, selected_voice = await AudioService.AudioService.generate_audio_script(
+        # Run the complete pipeline: Script generation + Voice selection + Audio generation + Timestamp parsing
+        result = await AudioService.AudioService.generate_full_audio_with_timestamps(
             request=request,
             user=dummy_user
         )
         
-        return schemas.GeneratedScriptResponse(
-            selected_voice_id=selected_voice["voice_id"],
-            selected_voice_name=selected_voice["name"],
-            script=script
-        )
+        return result
 
     except HTTPException as e:
         raise e
@@ -49,8 +48,7 @@ async def test_generate_audio(
 
 @router.post(
     "/generate",
-    response_model=schemas.GeneratedScriptResponse 
-    # response_model=schemas.FinalAudioResponse # <-- Your eventual goal
+    response_model=schemas.FinalAudioResponse
 )
 async def generate_audio(
     request: schemas.AudioGenerateRequest,
@@ -58,31 +56,40 @@ async def generate_audio(
 ):
     """
     Generates a 3-5 minute audio script based on mood, theme,
-    and user level, and selects a challenging voice.
-    
-    (Part 1 is implemented. Part 2 is pending.)
+    and user level, selects a challenging voice, and creates audio with timestamps.
     """
     try:
-        script, selected_voice = await AudioService.AudioService.generate_audio_script(
+        # Complete pipeline: Script generation + Voice selection + Audio generation + Timestamp parsing
+        result = await AudioService.AudioService.generate_full_audio_with_timestamps(
             request=request,
             user=current_user
         )
         
-        # --- PART 2: AUDIO CREATION (To-Do) ---
-        # You would now call the ElevenLabs API here using:
-        # - script
-        # - selected_voice["voice_id"]
-        # ----------------------------------------
-
-        # For now, just return the result of Part 1
-        return schemas.GeneratedScriptResponse(
-            selected_voice_id=selected_voice["voice_id"],
-            selected_voice_name=selected_voice["name"],
-            script=script
-        )
+        return result
 
     except HTTPException as e:
         raise e
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
+
+@router.get("/files/{filename}")
+async def get_audio_file(filename: str):
+    """
+    Serve audio files from temporary storage
+    """
+    # Get the temp audio directory path
+    from .service import TEMP_AUDIO_DIR
+    
+    file_path = os.path.join(TEMP_AUDIO_DIR, filename)
+    
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    
+    # Return the file
+    return FileResponse(
+        path=file_path,
+        media_type="audio/mpeg",
+        filename=filename
+    )
