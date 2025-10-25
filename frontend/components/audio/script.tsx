@@ -4,14 +4,16 @@ import {
   FlatList,
   TouchableOpacity,
   ListRenderItemInfo,
+  Dimensions,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 
 // 스크립트 한 줄
 export type ScriptLine = {
-  id: string | number;
-  time: number;
+  id: number;
+  start_time: number;
   text: string;
 };
 
@@ -32,7 +34,7 @@ export default function Script({ scripts }: AudioScreenProps) {
 
     let newIndex = -1;
     for (let i = 0; i < scripts.length; i++) {
-      if (position >= scripts[i].time) {
+      if (position >= scripts[i].start_time) {
         newIndex = i;
       } else {
         break;
@@ -66,7 +68,7 @@ export default function Script({ scripts }: AudioScreenProps) {
     // 재생 위치면 하이라이팅
     const isHighlighted = index === currentLineIndex;
     const lineStyle = `
-      py-4 px-5 text-center text-lg font-medium h-[60px]
+      py-4 px-5 text-center text-lg font-medium min-h-[60px]
       ${
         isHighlighted
           ? 'text-white font-bold text-xl scale-105'
@@ -75,11 +77,14 @@ export default function Script({ scripts }: AudioScreenProps) {
     `;
     return (
       // 라인 터치 시 해당 시간으로 이동
-      <TouchableOpacity onPress={() => onLinePress(item.time)}>
+      <TouchableOpacity onPress={() => onLinePress(item.start_time)}>
         <Text className={lineStyle}>{item.text || '...'}</Text>
       </TouchableOpacity>
     );
   };
+
+  // 화면 높이의 일부를 헤더/푸터로 사용하여 첫/마지막 라인도 중앙에 오도록 함
+  const listHeaderFooterHeight = Dimensions.get('window').height / 2.5;
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-900">
@@ -89,6 +94,13 @@ export default function Script({ scripts }: AudioScreenProps) {
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
+        // 중앙 정렬을 위한 빈 공간
+        ListHeaderComponent={
+          <View style={{ height: listHeaderFooterHeight }} />
+        }
+        ListFooterComponent={
+          <View style={{ height: listHeaderFooterHeight }} />
+        }
       />
     </SafeAreaView>
   );
