@@ -6,12 +6,15 @@ import random
 import re
 from openai import AsyncOpenAI
 from fastapi import HTTPException
+from elevenlabs import ElevenLabs
 from ..users.models import User, CEFRLevel
 
 from .schemas import AudioGenerateRequest
+from .utils import parse_tts_by_newlines
 
 # --- Configuration ---
 client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+elevenlabs_client = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY"))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 
@@ -196,6 +199,39 @@ class AudioService:
         
         return formatted_script
 
+    @staticmethod
+    def _generate_audio_with_timestamps(
+        script: str,
+        voice_id: str
+    ) -> dict:
+        """
+        Generate audio using ElevenLabs API and parse timestamps
+        Returns parsed sentence data with timestamps
+        """
+        try:
+            # Call ElevenLabs API with alignment enabled
+            response = elevenlabs_client.text_to_speech.convert_with_timestamps(
+                voice_id=voice_id,
+                text=script,
+                model_id="eleven_multilingual_v2",  # Use a model that supports timestamps
+                enable_logging=False
+            )
+            
+            # Parse the response using our timestamp utility
+            sentences_with_timestamps = parse_tts_by_newlines(response)
+            
+            return {
+                "audio_base64": response.get("audio_base64"),
+                "sentences": sentences_with_timestamps
+            }
+            
+        except Exception as e:
+            print(f"Error during audio generation: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate audio: {str(e)}"
+            )
+
     @classmethod
     async def generate_audio_script(
         cls, 
@@ -223,3 +259,28 @@ class AudioService:
         )
         
         return script, selected_voice
+
+    @classmethod
+    async def generate_full_audio_with_timestamps(
+        cls, 
+        request: AudioGenerateRequest, 
+        user: User
+    ) -> dict:
+        """
+        Complete pipeline: Generate script + voice selection + audio + timestamps
+        Returns audio_base64 and sentences with timestamps
+        """
+        # Step 1: Generate script and select voice
+        script, selected_voice = await cls.generate_audio_script(request, user)
+        
+        # Step 2: Generate audio with timestamps using ElevenLabs
+        audio_result = cls._generate_audio_with_timestamps(
+            script=script,
+            voice_id=selected_voice["voice_id"]
+        )
+        
+        # Step 3: Return final response (audio + sentences with timestamps)
+        return {
+            "audio_base64": audio_result["audio_base64"],
+            "sentences": audio_result["sentences"]  # Already in format: {id, start_time, text}
+        }
