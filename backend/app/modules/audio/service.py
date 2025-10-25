@@ -6,9 +6,7 @@ import random
 import re
 from openai import AsyncOpenAI
 from fastapi import HTTPException
-
-# --- Real Model Imports ---
-from app.modules.users.models import User, CEFRLevel
+from backend.app.modules.users.models import User, CEFRLevel
 
 from .schemas import AudioGenerateRequest
 
