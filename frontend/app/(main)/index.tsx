@@ -4,16 +4,18 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import TrackPlayer, { Capability } from 'react-native-track-player';
-import { PlaybackService } from '../PlaybackService';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
 import { useQueryClient } from '@tanstack/react-query';
+import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
+import { getBaseUrl } from '@/api/client';
 
 const THEME_OPTIONS = ['News', 'Sports', 'Travel', 'Science', 'Culture'];
 const MOOD_OPTIONS = ['Calm', 'Energetic', 'Academic', 'Casual', 'Focused'];
 
 export default function HomeScreen() {
   const qc = useQueryClient();
+  const baseURL = getBaseUrl();
   const router = useRouter();
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export default function HomeScreen() {
           // RNTP에 트랙 추가 및 재생 준비
           await TrackPlayer.reset(); // 이전 트랙 제거 (선택)
           await TrackPlayer.add({
-            url: data.audio_url,
+            url: `${baseURL}${data.audio_url}`,
             title: data.title,
             artist: 'LingoFit',
           });
@@ -50,7 +52,7 @@ export default function HomeScreen() {
           qc.setQueryData(['audio', id], data);
 
           // id만 전달
-          router.replace({ pathname: '/audioPlayer', params: { id } });
+          router.push(`/audioPlayer/${id}`);
         },
         onError: (error) => {
           console.error('Audio generation failed:', error);
