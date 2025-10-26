@@ -4,7 +4,7 @@ import { Chip } from './Chip';
 
 type ChipSelectorGroupProps = {
   title: string;
-  chips: string[];
+  chips: readonly string[];
   onSelectionChange?: (selected: string | null) => void;
 };
 

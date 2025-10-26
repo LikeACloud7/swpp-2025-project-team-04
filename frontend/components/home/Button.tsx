@@ -17,7 +17,7 @@ export default function Button({
       onPress={onPress}
       style={[
         {
-          backgroundColor: disabled ? '#A0A0A0' : '#1E90FF',
+          backgroundColor: disabled ? '#A0A0A0' : '#6FA4D7',
           paddingVertical: 12,
           paddingHorizontal: 20,
           borderRadius: 8,
