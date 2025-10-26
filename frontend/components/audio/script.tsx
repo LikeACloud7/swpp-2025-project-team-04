@@ -58,22 +58,24 @@ export default function Script({ scripts }: ScriptProps) {
 
   // 컴포넌트: 라인 한 줄
   const renderItem = ({ item, index }: ListRenderItemInfo<Sentence>) => {
-    // 재생 위치면 하이라이팅
     const isHighlighted = index === currentLineIndex;
-    const lineStyle = `
-      py-4 px-5 text-center text-lg font-medium min-h-[60px]
-      ${
-        isHighlighted
-          ? 'text-white font-bold text-xl scale-105'
-          : 'text-gray-400'
-      }
-    `;
+
     return (
-      // 라인 터치 시 해당 시간으로 이동
       <TouchableOpacity
+        activeOpacity={0.85}
         onPress={() => onLinePress(parseFloat(item.start_time))}
       >
-        <Text className={lineStyle}>{item.text || '...'}</Text>
+        <View
+          className={`mb-3 rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 shadow-sm ${isHighlighted ? 'border-primary bg-white shadow-lg' : ''}`}
+        >
+          <Text
+            className={`text-center text-lg font-semibold text-slate-600 ${
+              isHighlighted ? 'text-primary text-xl font-bold' : ''
+            }`}
+          >
+            {item.text || '...'}
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -82,19 +84,18 @@ export default function Script({ scripts }: ScriptProps) {
   const listHeaderFooterHeight = Dimensions.get('window').height / 2.5;
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-900">
+    <SafeAreaView className="flex-1">
       <FlatList
         ref={flatListRef}
         data={scripts}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
-        // 중앙 정렬을 위한 빈 공간
         ListHeaderComponent={
-          <View style={{ height: listHeaderFooterHeight }} />
+          <View style={{ height: listHeaderFooterHeight * 0.6 }} />
         }
         ListFooterComponent={
-          <View style={{ height: listHeaderFooterHeight }} />
+          <View style={{ height: listHeaderFooterHeight * 0.6 }} />
         }
       />
     </SafeAreaView>

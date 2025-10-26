@@ -14,7 +14,7 @@ export default function AudioSlider() {
   const { position, duration } = useProgress(250);
 
   return (
-    <View className="px-4 mt-2">
+    <View className="mt-1">
       <Slider
         value={position}
         minimumValue={0}
@@ -22,13 +22,17 @@ export default function AudioSlider() {
         onSlidingComplete={async (value) => {
           await TrackPlayer.seekTo(value);
         }}
-        minimumTrackTintColor="#ffffff"
-        maximumTrackTintColor="#555555"
-        thumbTintColor="#ffffff"
+        minimumTrackTintColor="#6FA4D7"
+        maximumTrackTintColor="#dbeafe"
+        thumbTintColor="#3b82f6"
       />
-      <View className="flex-row justify-between mt-1">
-        <Text className="text-xs text-gray-300">{formatTime(position)}</Text>
-        <Text className="text-xs text-gray-300">{formatTime(duration)}</Text>
+      <View className="mt-2 flex-row justify-between">
+        <Text className="text-xs font-semibold text-slate-500">
+          {formatTime(position)}
+        </Text>
+        <Text className="text-xs font-semibold text-slate-500">
+          {formatTime(duration)}
+        </Text>
       </View>
     </View>
   );
