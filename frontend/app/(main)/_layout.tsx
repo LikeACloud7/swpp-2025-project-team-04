@@ -59,6 +59,7 @@ export default function MainLayout() {
         options={{
           title: '통계',
           tabBarLabel: '통계',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart" size={size} color={color} />
           ),
