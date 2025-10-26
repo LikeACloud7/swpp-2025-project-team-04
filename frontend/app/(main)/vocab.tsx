@@ -2,8 +2,8 @@ import { Text, View } from 'react-native';
 
 export default function VocabScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Vocabulary coming soon.</Text>
+    <View className="flex-1 items-center justify-center bg-[#EBF4FB]">
+      <Text className="text-xl font-semibold text-neutral-600">작업중</Text>
     </View>
   );
 }
