@@ -40,8 +40,9 @@
     },
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#ffffff"
-    }
+      "resizeMode": "contain",
+      "backgroundColor": "#6FA4D7"
+    },
+    "icon": "./assets/icon.png"
   }
 }
