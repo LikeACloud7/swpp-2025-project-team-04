@@ -19,11 +19,11 @@ export const Chip = memo(function Chip({
       onPress={() => {
         onPress?.(label);
       }}
-      className={`mr-3 flex-row items-center rounded-full border px-4 py-2 ${selected ? 'border-sky-500 bg-sky-100 ' : 'border-neutral-200 bg-white'}`}
-      style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+      className={`mr-3 flex-row items-center rounded-full border-2 px-5 py-3 shadow-sm ${selected ? 'border-primary bg-primary' : 'border-gray-200 bg-white'}`}
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Text
-        className={`text-sm font-semibold ${selected ? 'text-sky-700' : 'text-slate-900'}`}
+        className={`text-[15px] font-semibold ${selected ? 'text-white' : 'text-gray-600'}`}
       >
         {label}
       </Text>

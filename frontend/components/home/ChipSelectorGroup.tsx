@@ -56,7 +56,7 @@ export function ChipSelectorGroup({
 
   return (
     <View className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 ">
-      <Text className="mb-3 text-lg font-bold text-slate-900">{title}</Text>
+      <Text className="mb-3 text-base font-bold text-slate-900">{title}</Text>
       {isScrollable ? (
         <ScrollView
           horizontal

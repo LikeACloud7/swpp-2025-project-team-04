@@ -61,10 +61,10 @@ function RootNavigation() {
     <Stack>
       {/* 사용자가 있으면 (main) 그룹으로, 없으면 (auth) 그룹으로 보냅니다. */}
       <Stack.Protected guard={!!user}>
-        <Stack.Screen name="(main)" />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Screen
         name="initial-survey"
