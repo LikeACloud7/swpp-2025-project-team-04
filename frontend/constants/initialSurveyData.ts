@@ -80,4 +80,4 @@ export const WELCOME_CONTENT = {
 };
 
 export const MAX_TOPIC_SELECTIONS = 3;
-export const TOTAL_SURVEY_PAGES = 7;
+export const TOTAL_SURVEY_PAGES = 8;

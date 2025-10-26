@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import LevelSelector from '@/components/initial-survey/LevelSelector';
@@ -7,6 +7,7 @@ import ListeningAudioButton from '@/components/initial-survey/ListeningAudioButt
 import NavButtons from '@/components/initial-survey/NavButtons';
 import PercentageSlider from '@/components/initial-survey/PercentageSlider';
 import ProgressBar from '@/components/initial-survey/ProgressBar';
+import TestOptionStep from '@/components/initial-survey/TestOptionStep';
 import TopicGrid from '@/components/initial-survey/TopicGrid';
 import WelcomeStep from '@/components/initial-survey/WelcomeStep';
 import {
@@ -16,9 +17,12 @@ import {
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
+import { submitLevelTest } from '@/api/initialSurvey';
 
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skipTest, setSkipTest] = useState<boolean | null>(null);
   const [userInput, setUserInput] = useState({
     proficiencyLevel: '',
     percent1: 50,
@@ -34,29 +38,81 @@ export default function InitialSurveyScreen() {
       handleSubmit();
       return;
     }
+    // 레벨 선택 없이 Step 2로 넘어가기 방지
+    if (currentStep === 1 && !userInput.proficiencyLevel) {
+      return;
+    }
+    // Step 2에서 선택 없이 넘어가기 방지
+    if (currentStep === 2 && skipTest === null) {
+      return;
+    }
+    // Step 2에서 Skip하면 바로 Step 8로 이동
+    if (currentStep === 2 && skipTest === true) {
+      setCurrentStep(8);
+      return;
+    }
     setCurrentStep(currentStep + 1);
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      if (currentStep === 8 && skipTest === true) {
+        setCurrentStep(2);
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
     }
   };
 
-  const handleSubmit = () => {
-    router.replace('/(main)');
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Mock
+      console.log('=== MOCK: Submitting Initial Survey ===');
+      console.log('Level:', userInput.proficiencyLevel);
+      console.log('Comprehension scores:', [
+        userInput.percent1,
+        userInput.percent2,
+        userInput.percent3,
+        userInput.percent4,
+        userInput.percent5,
+      ]);
+      console.log('Selected topics:', userInput.selectedTopics);
+      console.log('=== MOCK: Submission successful ===');
+
+      // TODO: backend
+      // const response = await submitLevelTest(userInput.proficiencyLevel, [
+      //   userInput.percent1,
+      //   userInput.percent2,
+      //   userInput.percent3,
+      //   userInput.percent4,
+      //   userInput.percent5,
+      // ]);
+
+      router.replace('/(main)');
+    } catch (error) {
+      console.error('Failed to submit level test');
+      Alert.alert(
+        '제출 실패',
+        '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleTopicToggle = (topicId: string) => {
     const currentTopics = userInput.selectedTopics;
     if (currentTopics.includes(topicId)) {
-      // Remove if already selected
       setUserInput({
         ...userInput,
         selectedTopics: currentTopics.filter((t) => t !== topicId),
       });
     } else if (currentTopics.length < MAX_TOPIC_SELECTIONS) {
-      // Add if less than max allowed
       setUserInput({
         ...userInput,
         selectedTopics: [...currentTopics, topicId],
@@ -67,7 +123,19 @@ export default function InitialSurveyScreen() {
   const getNextButtonLabel = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) return '완료';
     if (currentStep === 0) return '시작하기';
+    if (currentStep === 2) {
+      if (skipTest === true) return '건너뛰기';
+      if (skipTest === false) return '테스트 시작';
+      return '선택해주세요';
+    }
     return '다음';
+  };
+
+  const canProceed = () => {
+    if (isSubmitting) return false;
+    if (currentStep === 1 && !userInput.proficiencyLevel) return false;
+    if (currentStep === 2 && skipTest === null) return false;
+    return true;
   };
 
   const renderStep = () => {
@@ -92,8 +160,16 @@ export default function InitialSurveyScreen() {
         );
       case 2:
         return (
+          <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />
+        );
+      case 3:
+        return (
           <>
-            <ListeningAudioButton fileNumber={1} />
+            <ListeningAudioButton
+              key="audio-1"
+              level={userInput.proficiencyLevel}
+              questionNumber={1}
+            />
             <PercentageSlider
               value={userInput.percent1}
               onChange={(value) =>
@@ -103,10 +179,14 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 3:
+      case 4:
         return (
           <>
-            <ListeningAudioButton fileNumber={2} />
+            <ListeningAudioButton
+              key="audio-2"
+              level={userInput.proficiencyLevel}
+              questionNumber={2}
+            />
             <PercentageSlider
               value={userInput.percent2}
               onChange={(value) =>
@@ -116,10 +196,14 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 4:
+      case 5:
         return (
           <>
-            <ListeningAudioButton fileNumber={3} />
+            <ListeningAudioButton
+              key="audio-3"
+              level={userInput.proficiencyLevel}
+              questionNumber={3}
+            />
             <PercentageSlider
               value={userInput.percent3}
               onChange={(value) =>
@@ -129,10 +213,14 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 5:
+      case 6:
         return (
           <>
-            <ListeningAudioButton fileNumber={4} />
+            <ListeningAudioButton
+              key="audio-4"
+              level={userInput.proficiencyLevel}
+              questionNumber={4}
+            />
             <PercentageSlider
               value={userInput.percent4}
               onChange={(value) =>
@@ -142,10 +230,14 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 6:
+      case 7:
         return (
           <>
-            <ListeningAudioButton fileNumber={5} />
+            <ListeningAudioButton
+              key="audio-5"
+              level={userInput.proficiencyLevel}
+              questionNumber={5}
+            />
             <PercentageSlider
               value={userInput.percent5}
               onChange={(value) =>
@@ -155,7 +247,7 @@ export default function InitialSurveyScreen() {
             />
           </>
         );
-      case 7:
+      case 8:
         return (
           <TopicGrid
             categories={TOPIC_CATEGORIES}
@@ -169,22 +261,38 @@ export default function InitialSurveyScreen() {
     }
   };
 
+  // 마지막 페이지만 스크롤 가능
+  const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
+
   return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1" contentContainerClassName="p-6">
-        {currentStep > 0 && (
-          <ProgressBar
-            currentStep={currentStep}
-            totalPages={TOTAL_SURVEY_PAGES}
-          />
-        )}
-        {renderStep()}
-      </ScrollView>
+    <View className="flex-1 bg-[#EBF4FB]">
+      {isLastPage ? (
+        <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
+          {currentStep > 0 && (
+            <ProgressBar
+              currentStep={currentStep}
+              totalPages={TOTAL_SURVEY_PAGES}
+            />
+          )}
+          {renderStep()}
+        </ScrollView>
+      ) : (
+        <View className="flex-1 p-6 pt-16">
+          {currentStep > 0 && (
+            <ProgressBar
+              currentStep={currentStep}
+              totalPages={TOTAL_SURVEY_PAGES}
+            />
+          )}
+          {renderStep()}
+        </View>
+      )}
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
         showBackButton={currentStep > 0}
+        canProceed={canProceed()}
       />
     </View>
   );

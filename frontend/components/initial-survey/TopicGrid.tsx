@@ -19,34 +19,35 @@ export default function TopicGrid({
   maxSelections,
 }: TopicGridProps) {
   return (
-    <View className="mb-5">
-      <Text className="text-[22px] font-bold text-gray-800 mb-2 text-center leading-[30px]">
+    <View className="mb-8 py-4">
+      <Text className="text-[28px] font-bold text-gray-900 mb-3 text-center leading-[36px]">
         가장 관심 있는 주제를 선택해주세요
       </Text>
-      <Text className="text-base font-semibold text-gray-600 mb-[19px] text-center">
-        (최대 {maxSelections}개)
+      <Text className="text-base text-gray-500 mb-10 text-center">
+        최대 {maxSelections}개까지 선택할 수 있습니다
       </Text>
 
       {categories.map((categoryData, index) => (
-        <View key={index} className="mb-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3">
+        <View key={index} className="mb-8">
+          <Text className="text-[18px] font-bold text-gray-800 mb-4 ml-1">
             {categoryData.category}
           </Text>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-2.5">
             {categoryData.topics.map((topic) => {
               const isSelected = selectedTopics.includes(topic.id);
               return (
                 <TouchableOpacity
                   key={topic.id}
-                  className={`py-2.5 px-4 rounded-[20px] border-2 ${
+                  className={`py-3 px-5 rounded-full shadow-sm ${
                     isSelected
-                      ? 'border-[#6FA4D7] bg-[#6FA4D7]'
-                      : 'border-gray-300 bg-white'
+                      ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
+                      : 'bg-white border-2 border-gray-200'
                   }`}
                   onPress={() => onToggle(topic.id)}
+                  activeOpacity={0.7}
                 >
                   <Text
-                    className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-gray-600'}`}
+                    className={`text-[15px] font-semibold ${isSelected ? 'text-white' : 'text-gray-600'}`}
                   >
                     {topic.label}
                   </Text>
@@ -57,9 +58,11 @@ export default function TopicGrid({
         </View>
       ))}
 
-      <Text className="text-base font-semibold text-[#6FA4D7] text-center mt-4">
-        {selectedTopics.length}/{maxSelections} 선택됨
-      </Text>
+      <View className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 mt-4">
+        <Text className="text-[16px] font-bold text-[#6FA4D7] text-center">
+          {selectedTopics.length} / {maxSelections} 선택됨
+        </Text>
+      </View>
     </View>
   );
 }

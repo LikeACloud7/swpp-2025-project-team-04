@@ -17,28 +17,29 @@ export default function LevelSelector({
   onSelect,
 }: LevelSelectorProps) {
   return (
-    <View className="mb-5">
-      <Text className="text-2xl font-bold text-gray-800 mb-3 text-center">
+    <View className="mb-8 py-4">
+      <Text className="text-[28px] font-bold text-gray-900 mb-4 text-center leading-[36px]">
         영어 듣기 실력은 어느 정도인가요?
       </Text>
-      <Text className="text-base text-gray-600 mb-6 text-center leading-[22px]">
+      <Text className="text-base text-gray-500 mb-10 text-center leading-[24px] px-4">
         가장 정확하다고 생각하는 레벨을 하나 선택해 주세요.
       </Text>
-      <View className="gap-3">
+      <View className="gap-4">
         {levels.map((level) => {
           const isSelected = selectedLevel === level.id;
           return (
             <TouchableOpacity
               key={level.id}
-              className={`p-4 rounded-xl border-2 items-center ${
+              className={`p-5 rounded-2xl items-center shadow-sm ${
                 isSelected
-                  ? 'border-[#6FA4D7] bg-gray-100'
-                  : 'border-gray-300 bg-white'
+                  ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
+                  : 'bg-white border-2 border-gray-200'
               }`}
               onPress={() => onSelect(level.id)}
+              activeOpacity={0.7}
             >
               <Text
-                className={`text-lg font-bold ${isSelected ? 'text-[#6FA4D7]' : 'text-gray-800'}`}
+                className={`text-[18px] font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}
               >
                 {level.title}
               </Text>
