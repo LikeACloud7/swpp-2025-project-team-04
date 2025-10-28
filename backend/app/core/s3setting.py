@@ -30,6 +30,6 @@ def upload_audio_to_s3(audio_bytes: bytes, key: str) -> str:
         io.BytesIO(audio_bytes),
         AWS_S3_BUCKET,
         key,
-        ExtraArgs={"ContentType": "audio/mpeg", "ACL": "public-read"},
+        ExtraArgs={"ContentType": "audio/mpeg"},
     )
     return f"https://{AWS_S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{key}"

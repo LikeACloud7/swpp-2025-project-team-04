@@ -336,6 +336,8 @@ class AudioService:
         key = generate_s3_object_key("mp3")
         audio_url = upload_audio_to_s3(audio_data, key)
 
+        # TODO : MYSQL database에 url을 포함한 메타데이터 저장
+
         # Step 4: Return final response
         return {
             "title": title,
