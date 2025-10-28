@@ -33,56 +33,49 @@ export default function MainLayout() {
           },
         }}
       >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: '홈',
-          tabBarLabel: '홈',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="vocab"
-        options={{
-          title: '단어장',
-          tabBarLabel: '단어장',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="stats"
-        options={{
-          title: '통계',
-          tabBarLabel: '통계',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: '프로필',
-          tabBarLabel: '프로필',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="feedback"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: '홈',
+            tabBarLabel: '홈',
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="home" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="vocab"
+          options={{
+            title: '단어장',
+            tabBarLabel: '단어장',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="book" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="stats"
+          options={{
+            title: '통계',
+            tabBarLabel: '통계',
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="bar-chart" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: '프로필',
+            tabBarLabel: '프로필',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
     </View>
   );
 }

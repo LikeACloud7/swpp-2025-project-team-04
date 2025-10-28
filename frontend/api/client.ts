@@ -24,7 +24,7 @@ type PendingRequest = {
 let isRefreshing = false;
 let failedQueue: PendingRequest[] = [];
 
-const getBaseUrl = (): string => {
+export const getBaseUrl = (): string => {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL;
   if (!baseUrl) {
     throw new Error('API base URL is not configured. Set EXPO_PUBLIC_API_URL.');

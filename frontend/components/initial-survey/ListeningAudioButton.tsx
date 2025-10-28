@@ -105,7 +105,7 @@ export default function ListeningAudioButton({
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
 
         if (downloadResult.status !== 200) {
@@ -136,7 +136,6 @@ export default function ListeningAudioButton({
     player.play();
   }, [player, downloadedUri]);
 
-
   const duration = status?.duration || 0;
   const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
   const hasFinished =
@@ -162,7 +161,8 @@ export default function ListeningAudioButton({
             disabled={isLoading}
           >
             <Text className="text-white text-[18px] font-bold text-center">
-              {isLoading ? '로딩 중...' : '❚❚ 일시정지'}
+              {'❚❚ 일시정지'}
+              {/* {isLoading ? '로딩 중...' : '❚❚ 일시정지'} */}
             </Text>
           </Pressable>
         ) : downloadedUri ? (

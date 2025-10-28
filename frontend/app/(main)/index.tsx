@@ -5,18 +5,28 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import TrackPlayer from 'react-native-track-player';
-import { PlaybackService } from '../PlaybackService';
-
-// RNTP 서비스 등록
-TrackPlayer.registerPlaybackService(() => PlaybackService);
+import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
+import { useQueryClient } from '@tanstack/react-query';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
+import { getBaseUrl } from '@/api/client';
 
 export default function HomeScreen() {
+  const qc = useQueryClient();
+  const baseURL = getBaseUrl();
   const router = useRouter();
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
 
+  const [selectedTheme, setSelectedTheme] = useState<THEME_OPTIONS | null>(
+    null,
+  );
+  const [selectedMood, setSelectedMood] = useState<MOOD_OPTIONS | null>(null);
+
+  // 오디오 API 훅
+  const { mutate: audioMutate, isPending: isAudioLoading } = useGenerateAudio();
+
+  // 상단 안내 문구
   const focusMessage = useMemo(() => {
-    if (!selectedThemes.length) {
+    if (!selectedTheme) {
       return (
         <Text className="text-base leading-6 text-neutral-600">
           테마와 분위기를 선택하면 맞춤 학습 계획이 제공됩니다.
@@ -24,26 +34,59 @@ export default function HomeScreen() {
       );
     }
 
-    const primaryTheme = selectedThemes[0];
-
-    if (!selectedMoods.length) {
+    if (!selectedMood) {
       return (
         <Text className="text-base leading-6 text-neutral-600">
-          <Text className="font-bold">{primaryTheme}</Text> 주제로 맞춤 콘텐츠를
-          준비해드립니다.
+          <Text className="font-bold">{selectedTheme}</Text> 주제로 맞춤
+          콘텐츠를 준비해드립니다.
         </Text>
       );
     }
 
-    const moodTone = selectedMoods.join(', ');
     return (
       <Text className="text-base leading-6 text-neutral-600">
-        <Text className="font-bold">{primaryTheme}</Text> 주제로{' '}
-        <Text className="font-bold">{moodTone}</Text> 분위기의 콘텐츠를
+        <Text className="font-bold">{selectedTheme}</Text> 주제로{' '}
+        <Text className="font-bold">{selectedMood}</Text> 분위기의 콘텐츠를
         준비해드립니다.
       </Text>
     );
-  }, [selectedThemes, selectedMoods]);
+  }, [selectedTheme, selectedMood]);
+
+  const handleGenerateAudio = () => {
+    if (!selectedTheme || !selectedMood) {
+      console.warn('테마와 분위기를 모두 선택하세요.');
+      return;
+    }
+
+    audioMutate(
+      { mood: selectedMood, theme: selectedTheme },
+      {
+        onSuccess: async (data) => {
+          try {
+            // RNTP 트랙 세팅
+            await TrackPlayer.reset();
+            await TrackPlayer.add({
+              url: `${baseURL}${data.audio_url}`,
+              title: data.title,
+              artist: 'LingoFit',
+            });
+
+            // 세션 ID 생성 후 캐시에 원본 응답 저장
+            const id = uuidv4();
+            qc.setQueryData(['audio', id], data);
+
+            // 플레이어 화면으로 라우팅 (id만 전달)
+            router.push(`/audioPlayer/${id}`);
+          } catch (e) {
+            console.error('TrackPlayer 처리 중 오류:', e);
+          }
+        },
+        onError: (error) => {
+          console.error('오디오 생성 실패:', error);
+        },
+      },
+    );
+  };
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
@@ -74,7 +117,9 @@ export default function HomeScreen() {
                     {day}
                   </Text>
                   <View className="h-8 w-8 items-center justify-center rounded-full bg-neutral-200">
-                    <View className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500' : 'bg-transparent'}`} />
+                    <View
+                      className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500' : 'bg-transparent'}`}
+                    />
                   </View>
                 </View>
               ))}
@@ -92,15 +137,18 @@ export default function HomeScreen() {
         <View className="px-5 pt-3">
           <ChipSelectorGroup
             title="테마"
-            chips={THEME_OPTIONS}
-            onSelectionChange={setSelectedThemes}
+            chips={Object.values(THEME_OPTIONS)}
+            onSelectionChange={(value) =>
+              setSelectedTheme(value ? (value as THEME_OPTIONS) : null)
+            }
           />
 
           <ChipSelectorGroup
             title="분위기"
-            chips={MOOD_OPTIONS}
-            isMultiSelect
-            onSelectionChange={setSelectedMoods}
+            chips={Object.values(MOOD_OPTIONS)}
+            onSelectionChange={(value) =>
+              setSelectedMood(value ? (value as MOOD_OPTIONS) : null)
+            }
           />
 
           <View className="mt-2 rounded-2xl bg-white p-6 shadow-sm">
@@ -114,9 +162,9 @@ export default function HomeScreen() {
 
           <View className="mt-6">
             <Button
-              title="오디오 생성하기"
-              onPress={() => {
-              }}
+              title={isAudioLoading ? '생성 중...' : '오디오 생성하기'}
+              onPress={handleGenerateAudio}
+              disabled={isAudioLoading}
               style={{ width: '100%' }}
             />
           </View>
