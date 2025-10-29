@@ -24,7 +24,7 @@ export default function StatsScreen() {
     <View className="flex-1 bg-[#EBF4FB]">
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{paddingBottom: 32}}
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
         <View className="bg-gradient-to-br from-primary to-sky-600 px-6 pb-6 pt-16">
@@ -100,32 +100,30 @@ export default function StatsScreen() {
 
             <View className="flex-row flex-wrap justify-between">
               {[
-                {name: 'a', locked: true},
-                {name: 'b', locked: true},
-                {name: 'c', locked: true},
-                {name: 'd', locked: true},
-                {name: 'e', locked: true},
-                {name: 'f', locked: true},
+                { name: 'a', locked: true },
+                { name: 'b', locked: true },
+                { name: 'c', locked: true },
+                { name: 'd', locked: true },
+                { name: 'e', locked: true },
+                { name: 'f', locked: true },
               ].map((badge, index) => (
-                <View
-                  key={index}
-                  className="mb-4 w-[30%] items-center"
-                >
+                <View key={index} className="mb-4 w-[30%] items-center">
                   <View
-                    className={`mb-2 h-16 w-16 items-center justify-center rounded-2xl ${badge.locked
-                      ? 'bg-neutral-100'
-                      : 'bg-gradient-to-br from-yellow-400 to-orange-500'
-                      }`}
+                    className={`mb-2 h-16 w-16 items-center justify-center rounded-2xl ${
+                      badge.locked
+                        ? 'bg-neutral-100'
+                        : 'bg-gradient-to-br from-yellow-400 to-orange-500'
+                    }`}
                   >
                     <Text
                       className="text-3xl"
-                      style={{opacity: badge.locked ? 0.3 : 1}}
-                    >
-                    </Text>
+                      style={{ opacity: badge.locked ? 0.3 : 1 }}
+                    ></Text>
                   </View>
                   <Text
-                    className={`text-center text-xs font-semibold ${badge.locked ? 'text-neutral-400' : 'text-neutral-700'
-                      }`}
+                    className={`text-center text-xs font-semibold ${
+                      badge.locked ? 'text-neutral-400' : 'text-neutral-700'
+                    }`}
                   >
                     {badge.name}
                   </Text>

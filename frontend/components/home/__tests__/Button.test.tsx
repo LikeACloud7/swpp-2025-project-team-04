@@ -57,8 +57,12 @@ describe('Button', () => {
 
     expect(() =>
       render(
-        <Button title="Custom Style" onPress={mockOnPress} style={customStyle} />
-      )
+        <Button
+          title="Custom Style"
+          onPress={mockOnPress}
+          style={customStyle}
+        />,
+      ),
     ).not.toThrow();
 
     expect(screen.getByText('Custom Style')).toBeTruthy();
@@ -74,7 +78,7 @@ describe('Button', () => {
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
-      })
+      }),
     );
   });
 });

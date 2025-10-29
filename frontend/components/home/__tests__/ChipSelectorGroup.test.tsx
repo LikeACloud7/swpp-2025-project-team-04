@@ -18,7 +18,7 @@ describe('ChipSelectorGroup', () => {
           title="Test Title"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       expect(screen.getByText('Test Title')).toBeTruthy();
@@ -31,7 +31,7 @@ describe('ChipSelectorGroup', () => {
           title="Test"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       mockChips.forEach((chip) => {
@@ -47,11 +47,11 @@ describe('ChipSelectorGroup', () => {
           title="Many Chips"
           chips={manyChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       const scrollViews = UNSAFE_getAllByType(
-        require('react-native').ScrollView
+        require('react-native').ScrollView,
       );
       expect(scrollViews.length).toBeGreaterThan(0);
     });
@@ -63,14 +63,14 @@ describe('ChipSelectorGroup', () => {
           title="Few Chips"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       expect(mockChips.length).toBeLessThanOrEqual(3);
     });
   });
 
-  describe('단일 선택 모드 (기본값)', () => {
+  describe('단일 선택 모드', () => {
     // 칩 클릭 선택 테스트
     it('selects a chip when clicked', () => {
       render(
@@ -78,13 +78,13 @@ describe('ChipSelectorGroup', () => {
           title="Single Select"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       const chip = screen.getByText('Option 1');
       fireEvent.press(chip);
 
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 1']);
+      expect(mockOnSelectionChange).toHaveBeenLastCalledWith('Option 1');
     });
 
     // 같은 칩 다시 클릭 선택 해제 테스트
@@ -94,16 +94,16 @@ describe('ChipSelectorGroup', () => {
           title="Single Select"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       const chip = screen.getByText('Option 1');
 
       fireEvent.press(chip);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 1']);
+      expect(mockOnSelectionChange).toHaveBeenLastCalledWith('Option 1');
 
       fireEvent.press(chip);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith([]);
+      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(null);
     });
 
     // 다른 칩 클릭하면 이전 선택이 교체되는지 테스트
@@ -113,67 +113,16 @@ describe('ChipSelectorGroup', () => {
           title="Single Select"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
       const chip1 = screen.getByText('Option 1');
       fireEvent.press(chip1);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 1']);
+      expect(mockOnSelectionChange).toHaveBeenLastCalledWith('Option 1');
 
       const chip2 = screen.getByText('Option 2');
       fireEvent.press(chip2);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 2']);
-    });
-  });
-
-  describe('다중 선택 모드', () => {
-    // 여러 칩 선택 테스트
-    it('allows selecting multiple chips', () => {
-      render(
-        <ChipSelectorGroup
-          title="Multi Select"
-          chips={mockChips}
-          isMultiSelect
-          onSelectionChange={mockOnSelectionChange}
-        />
-      );
-
-      const chip1 = screen.getByText('Option 1');
-      const chip2 = screen.getByText('Option 2');
-
-      fireEvent.press(chip1);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 1']);
-
-      fireEvent.press(chip2);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith([
-        'Option 1',
-        'Option 2',
-      ]);
-    });
-
-    // 여러칩 선택 모드에서 각 칩을 선택 해제할 수 있는지 테스트
-    it('deselects individual chips in multi-select', () => {
-      render(
-        <ChipSelectorGroup
-          title="Multi Select"
-          chips={mockChips}
-          isMultiSelect
-          onSelectionChange={mockOnSelectionChange}
-        />
-      );
-
-      const chip1 = screen.getByText('Option 1');
-      const chip2 = screen.getByText('Option 2');
-
-      fireEvent.press(chip1);
-      fireEvent.press(chip2);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith([
-        'Option 1',
-        'Option 2',
-      ]);
-
-      fireEvent.press(chip1);
-      expect(mockOnSelectionChange).toHaveBeenLastCalledWith(['Option 2']);
+      expect(mockOnSelectionChange).toHaveBeenLastCalledWith('Option 2');
     });
   });
 
@@ -193,10 +142,10 @@ describe('ChipSelectorGroup', () => {
           title="Initial Call"
           chips={mockChips}
           onSelectionChange={mockOnSelectionChange}
-        />
+        />,
       );
 
-      expect(mockOnSelectionChange).toHaveBeenCalledWith([]);
+      expect(mockOnSelectionChange).toHaveBeenCalledWith(null);
     });
   });
 });

@@ -56,33 +56,76 @@ jest.mock('@react-native-community/slider', () => {
   const mockRN = require('react-native');
   return {
     __esModule: true,
-    default: (props) => mockReact.createElement(mockRN.View, { testID: 'slider', ...props }),
+    default: (props) =>
+      mockReact.createElement(mockRN.View, { testID: 'slider', ...props }),
   };
 });
 
-jest.mock('expo-av', () => ({
-  Audio: {
-    Sound: {
-      createAsync: jest.fn(() =>
-        Promise.resolve({
-          sound: {
-            playAsync: jest.fn(),
-            pauseAsync: jest.fn(),
-            unloadAsync: jest.fn(),
-          },
-          status: {},
-        })
-      ),
+jest.mock(
+  'expo-av',
+  () => ({
+    Audio: {
+      Sound: {
+        createAsync: jest.fn(() =>
+          Promise.resolve({
+            sound: {
+              playAsync: jest.fn(),
+              pauseAsync: jest.fn(),
+              unloadAsync: jest.fn(),
+            },
+            status: {},
+          }),
+        ),
+      },
+      setAudioModeAsync: jest.fn(() => Promise.resolve()),
     },
-    setAudioModeAsync: jest.fn(() => Promise.resolve()),
-  },
-}));
+  }),
+  { virtual: true },
+);
 
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(() => Promise.resolve(null)),
   setItemAsync: jest.fn(() => Promise.resolve()),
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
+
+jest.mock(
+  'expo-audio',
+  () => {
+    const mockPlayer = {
+      play: jest.fn(),
+      pause: jest.fn(),
+      seekTo: jest.fn(),
+      replace: jest.fn(),
+    };
+
+    return {
+      useAudioPlayer: jest.fn(() => mockPlayer),
+      useAudioPlayerStatus: jest.fn(() => ({
+        playing: false,
+        currentTime: 0,
+        duration: 0,
+      })),
+    };
+  },
+  { virtual: true },
+);
+
+jest.mock(
+  'expo-file-system/legacy',
+  () => ({
+    downloadAsync: jest.fn(() =>
+      Promise.resolve({
+        uri: 'file://test.wav',
+        status: 200,
+        headers: {},
+        md5: '',
+      }),
+    ),
+    cacheDirectory: 'file://cache/',
+  }),
+  { virtual: true },
+);
 
 jest.mock('react-native-lyric', () => ({
   __esModule: true,

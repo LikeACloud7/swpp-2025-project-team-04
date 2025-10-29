@@ -18,9 +18,7 @@ describe('PercentageSlider', () => {
   it('renders correctly with default props', () => {
     render(<PercentageSlider {...defaultProps} />);
 
-    expect(
-      screen.getByText(/들은 내용 중 몇 %를 이해했는지/)
-    ).toBeTruthy();
+    expect(screen.getByText(/들은 내용 중 몇 %를 이해했는지/)).toBeTruthy();
     expect(screen.getByText(/솔직하게 평가해 주세요./)).toBeTruthy();
 
     expect(screen.getByText('50%')).toBeTruthy();
@@ -33,7 +31,9 @@ describe('PercentageSlider', () => {
 
   // 올바른 %값 표시되는지 테스트
   it('displays the correct percentage value', () => {
-    const { rerender } = render(<PercentageSlider {...defaultProps} value={30} />);
+    const { rerender } = render(
+      <PercentageSlider {...defaultProps} value={30} />,
+    );
     expect(screen.getByText('30%')).toBeTruthy();
 
     rerender(<PercentageSlider {...defaultProps} value={80} />);
@@ -61,7 +61,9 @@ describe('PercentageSlider', () => {
 
   // 다른 파일 번호를 받아들이는지 테스트
   it('accepts different file numbers', () => {
-    const { rerender } = render(<PercentageSlider {...defaultProps} fileNumber={1} />);
+    const { rerender } = render(
+      <PercentageSlider {...defaultProps} fileNumber={1} />,
+    );
     expect(screen.getByText('50%')).toBeTruthy();
 
     rerender(<PercentageSlider {...defaultProps} fileNumber={5} />);
