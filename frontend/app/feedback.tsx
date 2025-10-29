@@ -24,7 +24,7 @@ export default function FeedbackScreen() {
 
     // TODO: 오디오페이지랑 연결, 백엔드 연동
 
-    router.back();
+    router.push('/');
   };
 
   const selectedLevel = DIFFICULTY_LEVELS.find(

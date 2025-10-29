@@ -7,8 +7,12 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 export default function ProfileScreen() {
   const router = useRouter();
   const { data: user, isLoading: isAuthLoading } = useUser();
-
   const logout = useLogout();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
@@ -22,7 +26,9 @@ export default function ProfileScreen() {
           <View className="items-center">
             <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-primary">
               <Text className="text-3xl font-bold text-white">
-                {isAuthLoading ? '?' : user?.nickname?.[0]?.toUpperCase() || 'U'}
+                {isAuthLoading
+                  ? '?'
+                  : user?.nickname?.[0]?.toUpperCase() || 'U'}
               </Text>
             </View>
             {isAuthLoading ? (
@@ -44,7 +50,7 @@ export default function ProfileScreen() {
         <View className="px-2">
           <Button
             title="로그아웃"
-            onPress={logout}
+            onPress={handleLogout}
             disabled={isAuthLoading || !user}
             style={{ width: '100%' }}
           />

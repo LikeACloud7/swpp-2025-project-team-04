@@ -7,18 +7,18 @@ export const PlaybackService = async function () {
   TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause());
   TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.stop());
 
-  // // ◀︎◀︎ / ▶︎▶︎ (필요하면 capabilities에도 추가해야 동작)
-  // TrackPlayer.addEventListener(Event.RemoteNext, () =>
-  //   TrackPlayer.skipToNext().catch(() => {}),
-  // );
-  // TrackPlayer.addEventListener(Event.RemotePrevious, () =>
-  //   TrackPlayer.skipToPrevious().catch(() => {}),
-  // );
+  // ◀︎◀︎ / ▶︎▶︎ (필요하면 capabilities에도 추가해야 동작)
+  TrackPlayer.addEventListener(Event.RemoteNext, () =>
+    TrackPlayer.skipToNext().catch(() => {}),
+  );
+  TrackPlayer.addEventListener(Event.RemotePrevious, () =>
+    TrackPlayer.skipToPrevious().catch(() => {}),
+  );
 
-  // // 시크 바 조작
-  // TrackPlayer.addEventListener(Event.RemoteSeek, ({ position }) =>
-  //   TrackPlayer.seekTo(position),
-  // );
+  // 시크 바 조작
+  TrackPlayer.addEventListener(Event.RemoteSeek, ({ position }) =>
+    TrackPlayer.seekTo(position),
+  );
 
   // 특별히 리턴할 것은 없음 (리스너만 등록)
 };
