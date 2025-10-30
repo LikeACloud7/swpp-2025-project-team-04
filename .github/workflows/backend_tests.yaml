@@ -41,4 +41,15 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PYTHONPATH=$PWD pytest backend/tests/ --maxfail=1 --disable-warnings -q -m "not expensive"
+          PYTHONPATH=$PWD pytest backend/tests/ \
+            --maxfail=1 --disable-warnings -q \
+            --cov=backend/app --cov-report=xml --cov-report=term-missing
+      
+            
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          flags: backend
+          fail_ci_if_error: true
+          verbose: true      
