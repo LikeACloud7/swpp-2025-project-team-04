@@ -51,3 +51,30 @@ def update_generated_content_vocabs(
     db.commit()
     db.refresh(content)
     return content
+
+
+def update_generated_content_audio(
+    db: Session,
+    *,
+    content_id: int,
+    audio_url: str,
+    response_json: Dict[str, Any],
+) -> Optional[GeneratedContent]:
+    """
+    Update audio_url and response_json after ElevenLabs TTS generation.
+    """
+    content = (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id == content_id)
+        .first()
+    )
+    if not content:
+        return None
+
+    content.audio_url = audio_url
+    content.response_json = response_json
+    content.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(content)
+    return content

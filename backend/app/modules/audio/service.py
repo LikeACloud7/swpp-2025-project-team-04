@@ -409,6 +409,7 @@ class AudioService:
 
 
 
+
         # === Step 3: Upload to S3 ===
         logger.info("=== Step 3: Upload audio to S3 ===")
 
@@ -418,21 +419,47 @@ class AudioService:
 
         logger.info(f"Audio uploaded to S3 | key={key}")
 
-      
+        
+
+
         
         
+
         
         # === Step 4: Response summary ===
         logger.info("=== Step 4: Response generation ===")
-        elapsed = time.time() - total_start
-        logger.info(f"Full pipeline completed in {elapsed:.2f}s")
 
-        return {
-            "generated_content_id" : generated_id,
+
+        response_payload = {
+            "generated_content_id": generated_id,
             "title": title,
             "audio_url": audio_url,
-            "sentences": audio_result["sentences"]
+            "sentences": audio_result["sentences"],
         }
+
+        try:
+            db = SessionLocal()
+            updated = crud.update_generated_content_audio(
+                db,
+                content_id=generated_id,
+                audio_url=audio_url,
+                response_json=response_payload, 
+            )
+            if updated:
+                logger.info(f"Updated GeneratedContent with final response for id={generated_id}")
+            else:
+                logger.warning(f"GeneratedContent not found for id={generated_id}")
+        except Exception as e:
+            logger.error(f"Failed to update audio_url in DB: {e}", exc_info=True)
+        finally:
+            db.close()
+
+
+
+        elapsed = time.time() - total_start
+        logger.info(f"Full pipeline completed in {elapsed:.2f}s")
+        
+        return response_payload
     
 
     @staticmethod
