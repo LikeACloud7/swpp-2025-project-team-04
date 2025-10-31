@@ -10,9 +10,15 @@ from openai import AsyncOpenAI
 from fastapi import HTTPException
 from elevenlabs import ElevenLabs
 from sqlalchemy.orm import Session
+from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
 from .utils import parse_tts_by_newlines
+from . import crud
+from ..vocab.service import VocabService
+from ...core.s3setting import generate_s3_object_key
+from ...core.s3setting import upload_audio_to_s3
+import time
 
 # --- Configuration ---
 from ...core.config import settings
@@ -336,21 +342,27 @@ class AudioService:
         Complete pipeline: Generate script + voice selection + audio + timestamps
         Returns audio_base_64 and sentences with timestamps
         """
-        # Step 1: Generate script and select voice
-        
 
+
+        # Step 1: Generate script and select voice
+        total_start = time.time()
         print("\n[DEBUG] === Step 1: Generate script and select voice ===")
+        start_script = time.time()  # ⏱ 스크립트 시작 시간
         print(f"[DEBUG] User Info: id={user.id}, username={user.username}, level={user.level}")
         title, script, selected_voice = await cls.generate_audio_script(request, user)
+        elapsed_script = time.time() - start_script
+        print(f"[TIMER] Script generation took {elapsed_script:.2f}s")
+
         print(f"[DEBUG] title: {title[:80]}{'...' if len(title) > 80 else ''}")
-        print(f"[DEBUG] script (len={len(script)}):")
         print(script)
-        print(f"[DEBUG] selected_voice keys: {list(selected_voice.keys())}")
-        print(f"[DEBUG] selected_voice: {json.dumps(selected_voice, indent=2)[:400]}")
+
+
+
 
         # ============================================================
         # ✅ Step 1.5: Placeholder DB entry 생성 (generated_content_id 확보)
         # ============================================================
+        generated_id = None
         try:
             db: Session = SessionLocal()
             content = crud.insert_generated_content(
@@ -368,6 +380,9 @@ class AudioService:
             generated_id = None
     
 
+
+
+
         # ✅ New step: Launch contextual vocabulary generation in background
         try:
             sentences = cls._split_script_by_newlines(script)
@@ -379,6 +394,7 @@ class AudioService:
 
 
 
+
         # Step 2: Generate audio with timestamps using ElevenLabs
         print("\n[DEBUG] === Step 2: Generate audio with timestamps ===")
         start_audio = time.time()  # ⏱ 전체 시작
@@ -387,19 +403,45 @@ class AudioService:
             voice_id=selected_voice["voice_id"]
         )
         
-        # Step 3: Save audio file using title
-        cleaned_title = AudioService._clean_filename(title)
-        filename = f"{cleaned_title}_{user.id}.mp3"
-        file_path = os.path.join(TEMP_AUDIO_DIR, filename)
-        
-        # Decode base64 and save as MP3
+        print("\n[DEBUG] === Step 3: s3 upload ===")
+        elapsed_audio = time.time() - start_audio
+        print(f"[TIMER] Audio generation took {elapsed_audio:.2f}s")
+
+
+
+        # Step 3: Decode base64 audio → upload to S3
         audio_data = base64.b64decode(audio_result["audio_base_64"])
-        with open(file_path, 'wb') as audio_file:
-            audio_file.write(audio_data)
-        
+        key = generate_s3_object_key("mp3")
+        audio_url = upload_audio_to_s3(audio_data, key)
+
+
+      
+        print("\n[DEBUG] === Step 4: respond ===")
         # Step 4: Return final response with file URL
+        elapsed_audio = time.time() - total_start
+        print(f"[TIMER] Audio generation took {elapsed_audio:.2f}s")
         return {
+            "generated_content_id" : generated_id,
             "title": title,
             "audio_url": audio_url,
             "sentences": audio_result["sentences"]
         }
+    
+
+    @staticmethod
+    def _split_script_by_newlines(script: str) -> list[str]:
+        """
+        Split the generated script (already newline-separated by GPT)
+        into a clean list of sentences.
+        Empty lines and stray whitespace are removed.
+        """
+        if not isinstance(script, str):
+            return []
+
+        # Split by literal newline
+        raw_sentences = script.split("\n")
+
+        # Clean and remove empty lines
+        sentences = [s.strip() for s in raw_sentences if s.strip()]
+
+        return sentences

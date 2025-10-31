@@ -20,6 +20,7 @@ class FinalAudioResponse(BaseModel):
     """
     Final response with audio file URL and sentence timestamps
     """
+    generated_content_id: int
     title: str
     audio_url: str
     sentences: List[SentenceTimestamp]
