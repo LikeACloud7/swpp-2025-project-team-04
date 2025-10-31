@@ -1,7 +1,9 @@
 # app/modules/audio/endpoints.py
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
+import boto3
+from ...core.config import settings
 import os
 from . import schemas
 from . import service as AudioService
