@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from backend.app.modules.stats import crud
 from backend.app.modules.stats.service import StatsService
 from backend.app.modules.level_management.models import CEFRLevel
-from backend.app.modules.stats.models import StudySession, Achievement
+from backend.app.modules.stats.models import StudySession
 from backend.app.modules.users.models import User as AppUser, CEFRLevel as UserCEFRLevel
 from backend.app.core.config import Base
 from sqlalchemy import create_engine
