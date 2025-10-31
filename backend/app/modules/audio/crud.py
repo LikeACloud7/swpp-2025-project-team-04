@@ -19,7 +19,7 @@ def insert_generated_content(
         script_data=script_data,
         audio_url=audio_url,
         response_json=response_json,
-        script_vocabs=None,  # ✅ 초기에는 비워둔다
+        script_vocabs=None,  
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
@@ -36,7 +36,7 @@ def update_generated_content_vocabs(
     script_vocabs: Dict[str, Any],
 ) -> Optional[GeneratedContent]:
     """
-    비동기 contextual vocab 생성 완료 후 script_vocabs 필드 갱신
+    Update the 'script vocabs' field after asynchronous contextual vocab generation is complete.
     """
     content = (
         db.query(GeneratedContent)

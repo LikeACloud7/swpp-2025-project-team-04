@@ -31,4 +31,9 @@ def add_vocab_entry(
 
 
 def get_vocab_for_user(db: Session, user_id: int) -> List[VocabEntry]:
-    return db.query(VocabEntry).filter(VocabEntry.user_id == user_id).all()
+    return (
+        db.query(VocabEntry)
+        .filter(VocabEntry.user_id == user_id)
+        .order_by(VocabEntry.created_at.desc())
+        .all()
+    )

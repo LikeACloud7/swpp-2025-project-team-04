@@ -6,9 +6,10 @@ import os
 from datetime import datetime
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-from ...core.config import settings
 from ...core.config import settings, SessionLocal
 from ..audio import crud
+
+
 
 load_dotenv()
 client = AsyncOpenAI(api_key=settings.openai_api_key)
@@ -21,6 +22,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 class VocabService:
     _running_tasks = {}
 
+    # for async related problem resolution
     @staticmethod
     async def build_contextual_vocab(sentences: list[str], content_id: int):
         if content_id in VocabService._running_tasks:
@@ -31,7 +33,6 @@ class VocabService:
 
         async def _run():
             print(f"✅ Starting async processing for {len(sentences)} sentences (content_id={content_id})...")
-            # 기존 로직 동일
             ...
 
         task = asyncio.create_task(_run())
@@ -101,7 +102,7 @@ class VocabService:
     @staticmethod
     async def build_contextual_vocab(sentences: list[str], generated_content_id: int):
         print(f"✅ Starting async processing for {len(sentences)} sentences (content_id={generated_content_id})...")
-        start_total = time.time()  # ⏱ 전체 시작    
+        start_total = time.time()  
         tasks = [asyncio.create_task(VocabService.process_sentence_async(i, s)) for i, s in enumerate(sentences)]
         results = await asyncio.gather(*tasks)
         results_sorted = sorted(results, key=lambda x: x["index"])
@@ -109,18 +110,8 @@ class VocabService:
 
         merged_words_result = {"sentences": results_sorted}
 
-        # ✅ JSON 파일 저장
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = os.path.join(OUTPUT_DIR, f"contextual_vocab_{timestamp}.json")
 
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(merged_words_result, f, ensure_ascii=False, indent=2)
-            print(f"💾 Saved contextual vocabulary → {output_file}")
-        except Exception as e:
-            print(f"⚠️ Failed to save contextual vocab JSON: {e}")
-
-        # ✅ DB 업데이트 로직 추가
+        # db update
         try:
             db = SessionLocal()
             updated = crud.update_generated_content_vocabs(

@@ -25,6 +25,16 @@ def generate_s3_object_key(ext: str = "mp3") -> str:
 
     return key
 
+
+def generate_example_audio_key(ext: str = "mp3") -> str:
+    """
+    Generate a unique S3 object key for example sentence audios.
+    Stored under the prefix 'audio/examples/'.
+    """
+    key = f"audio/examples/{uuid.uuid4()}.{ext}"
+    return key
+
+
 def upload_audio_to_s3(audio_bytes: bytes, key: str) -> str:
     s3_client.upload_fileobj(
         io.BytesIO(audio_bytes),

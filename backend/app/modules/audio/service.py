@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
-from .utils import parse_tts_by_newlines
+from .utils import parse_tts_by_newlines, get_elevenlabs_client
 from . import crud
 from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
@@ -26,8 +26,7 @@ from ...core.config import settings
 def get_openai_client():
     return AsyncOpenAI(api_key=settings.openai_api_key)
 
-def get_elevenlabs_client():
-    return ElevenLabs(api_key=settings.elevenlabs_api_key)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 
@@ -173,7 +172,7 @@ class AudioService:
         
         Theme: {theme}
         Mood: {mood}
-        User Level: {user_level.value}
+        User Level: {user_level.value} 
         (This means vocabulary and sentence structure should be appropriate. 
         'A1'/'A2' = simple, 'B1'/'B2' = intermediate, 'C1'/'C2' = complex).
 

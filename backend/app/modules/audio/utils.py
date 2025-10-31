@@ -1,5 +1,9 @@
 import re
+from elevenlabs import ElevenLabs
+from app.core.config import settings
 
+def get_elevenlabs_client(): # for circular dependency resolution
+    return ElevenLabs(api_key=settings.elevenlabs_api_key)
 
 def extract_words_from_sentence(sentence: str) -> list[str]:
     """
@@ -24,7 +28,7 @@ def extract_words_from_sentence(sentence: str) -> list[str]:
 
 
 def parse_tts_by_newlines(tts_response: dict):
-    """줄바꿈('\n') 기준으로 문장을 분리하여 문장 별 정보 리스트 반환 """
+    """Return a list of sentence information by splitting the text based on newline ('\n') characters."""
     alignment = tts_response.get("alignment")
     if alignment is None:
         raise ValueError("No alignment or normalized_alignment found in response")
