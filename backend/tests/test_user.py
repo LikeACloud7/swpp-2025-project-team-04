@@ -52,11 +52,14 @@ def test_get_me_success():
     assert "id" in response_data
     assert "username" in response_data
     assert "nickname" in response_data
+    assert "initial_level_completed" in response_data
+    assert "level_score" in response_data
     
     # Validate data types
     assert isinstance(response_data["id"], int)
     assert isinstance(response_data["username"], str)
     assert isinstance(response_data["nickname"], str)
+    assert isinstance(response_data["initial_level_completed"], bool)
     
     # Validate actual values
     assert response_data["username"] == DUMMY_USER_USERNAME
@@ -159,9 +162,17 @@ def test_get_me_response_schema():
     response_data = response.json()
 
     # Verify exact schema - should only have these  fields
-    expected_fields = {"id", "username", "nickname", "level", "level_updated_at"}
+    expected_fields = {
+        "id",
+        "username",
+        "nickname",
+        "level",
+        "level_updated_at",
+        "initial_level_completed",
+        "level_score",
+    }
     actual_fields = set(response_data.keys())
     assert actual_fields == expected_fields
     
     # Verify no extra or missing fields
-    assert len(response_data) == 5
+    assert len(response_data) == 7
