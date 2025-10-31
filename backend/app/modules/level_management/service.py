@@ -46,8 +46,7 @@ _CEFR_SCORING_LOOKUP: Dict[CEFRLevel, Tuple[int, int]] = {
     level: bounds for level, bounds in _CEFR_SCORING_BANDS
 }
 
-
-class PersonalizationService:
+class LevelManagementService:
     def __init__(self, *, llm_client: Optional[OpenAILLMClient] = None):
         self._llm_client = llm_client
 
@@ -209,6 +208,7 @@ class PersonalizationService:
             level_description=schemas.CEFR_LEVEL_DESCRIPTIONS[payload.level],
             updated_at=user_record.level_updated_at,
         )
+
 
     def _summarize_level_test(
         self,

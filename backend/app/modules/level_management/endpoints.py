@@ -14,12 +14,12 @@ from ...core.exceptions import (
 from ..users import crud as user_crud
 from . import schemas
 from .service import (
-    PersonalizationService,
+    LevelManagementService,
     LevelTestScriptNotFoundException,
 )
 
-router = APIRouter(prefix="/personalization", tags=["personalization"])
-service = PersonalizationService()
+router = APIRouter(prefix="/level-management", tags=["level-management"])
+service = LevelManagementService()
 
 
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):

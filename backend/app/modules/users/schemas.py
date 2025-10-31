@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from ..personalization.models import CEFRLevel
+from ..level_management.models import CEFRLevel
 
 
 class User(BaseModel):
