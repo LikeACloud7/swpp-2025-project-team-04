@@ -19,7 +19,7 @@ from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
 from ...core.s3setting import upload_audio_to_s3
 import time
-from app.core.logger import logger
+from ...core.logger import logger
 # --- Configuration ---
 from ...core.config import settings
 

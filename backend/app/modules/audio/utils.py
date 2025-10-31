@@ -1,6 +1,6 @@
 import re
 from elevenlabs import ElevenLabs
-from app.core.config import settings
+from ...core.config import settings
 
 def get_elevenlabs_client(): # for circular dependency resolution
     return ElevenLabs(api_key=settings.elevenlabs_api_key)

@@ -12,8 +12,8 @@ from ...core.exceptions import (
     ScriptVocabsNotFoundException,
 )
 import time
-from app.modules.audio.utils import get_elevenlabs_client
-from app.core.s3setting import generate_example_audio_key, upload_audio_to_s3
+from ...modules.audio.utils import get_elevenlabs_client
+from ...core.s3setting import generate_example_audio_key, upload_audio_to_s3
 
 
 router = APIRouter(prefix="/vocabs", tags=["vocab"])
