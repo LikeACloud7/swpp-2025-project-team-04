@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     openai_base_url: Optional[str] = None
     elevenlabs_api_key: Optional[str] = None
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str | None = None
+    aws_s3_bucket: str | None = None
 
     class Config:
         env_file = ".env"

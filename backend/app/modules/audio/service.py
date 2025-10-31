@@ -17,6 +17,7 @@ from .utils import parse_tts_by_newlines
 
 # --- Configuration ---
 from ...core.config import settings
+from ...core.s3setting import generate_s3_object_key, upload_audio_to_s3
 
 def get_openai_client():
     return AsyncOpenAI(api_key=settings.openai_api_key)
@@ -25,10 +26,6 @@ def get_elevenlabs_client():
     return ElevenLabs(api_key=settings.elevenlabs_api_key)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
-
-# Temporary audio storage configuration
-TEMP_AUDIO_DIR = os.path.join(BASE_DIR, "temp_audio")
-os.makedirs(TEMP_AUDIO_DIR, exist_ok=True)
 
 MIN_SCRIPT_WORDS = 100
 TARGET_SCRIPT_WORDS = 200
@@ -333,20 +330,17 @@ class AudioService:
             script=script,
             voice_id=selected_voice["voice_id"]
         )
-        
-        # Step 3: Save audio file using title
-        cleaned_title = AudioService._clean_filename(title)
-        filename = f"{cleaned_title}_{user.id}.mp3"
-        file_path = os.path.join(TEMP_AUDIO_DIR, filename)
-        
-        # Decode base64 and save as MP3
+
+        # Step 3: Decode base64 audio → upload to S3
         audio_data = base64.b64decode(audio_result["audio_base_64"])
-        with open(file_path, 'wb') as audio_file:
-            audio_file.write(audio_data)
-        
-        # Step 4: Return final response with file URL
+        key = generate_s3_object_key("mp3")
+        audio_url = upload_audio_to_s3(audio_data, key)
+
+        # TODO : MYSQL database에 url을 포함한 메타데이터 저장
+
+        # Step 4: Return final response
         return {
             "title": title,
-            "audio_url": f"/api/v1/audio/files/{filename}",
+            "audio_url": audio_url,
             "sentences": audio_result["sentences"]
         }
