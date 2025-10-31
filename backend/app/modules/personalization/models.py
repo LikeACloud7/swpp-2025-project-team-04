@@ -29,4 +29,8 @@ class UserLevelHistory(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     level = Column(SAEnum(CEFRLevel, name="cefr_level"), nullable=False)
+    level_score = Column(Integer, nullable=True)
+    llm_confidence = Column(Integer, nullable=True)
+    average_understanding = Column(Integer, nullable=True)
+    sample_count = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

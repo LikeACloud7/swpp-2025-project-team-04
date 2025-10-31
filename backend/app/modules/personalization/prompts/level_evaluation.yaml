@@ -6,6 +6,9 @@ user: |
   Evaluate the learner using the CEFR bands:
   {cefr_bands}
 
+  Learner current profile from database:
+  {current_profile}
+
   Respond with a JSON object shaped exactly like:
   {{
     "level": "A1|A2|B1|B2|C1|C2",

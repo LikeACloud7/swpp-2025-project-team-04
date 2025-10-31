@@ -59,6 +59,28 @@ def evaluate_level(
 
 
 @router.post(
+    "/session-feedback",
+    response_model=schemas.LevelTestResponse,
+    responses=AppException.to_openapi_examples(
+        [
+            InvalidAuthHeaderException,
+            UserNotFoundException,
+            AuthTokenExpiredException,
+            InvalidTokenException,
+            InvalidTokenTypeException,
+            LevelTestScriptNotFoundException,
+        ]
+    ),
+)
+def evaluate_session_feedback(
+    payload: schemas.LevelTestRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return service.evaluate_session_feedback(db=db, user=current_user, payload=payload)
+
+
+@router.post(
     "/manual-level",
     response_model=schemas.ManualLevelUpdateResponse,
     responses=AppException.to_openapi_examples(

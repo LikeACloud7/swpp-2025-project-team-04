@@ -14,7 +14,7 @@ from backend.app.modules.users import crud as user_crud
 
 class FakePrompt:
     system = "system prompt"
-    user = "tests: {tests}\ncefr: {cefr_bands}"
+    user = "tests: {tests}\ncefr: {cefr_bands}\nprofile: {current_profile}"
 
 
 @pytest.fixture(autouse=True)
@@ -125,10 +125,22 @@ def test_set_manual_level_updates_user_and_history(monkeypatch):
     user = SimpleNamespace(id=42)
     updated_at = datetime.now(timezone.utc)
 
-    def fake_update_user_level(db_arg, *, user_id, level, commit):
+    def fake_update_user_level(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        initial_level_completed=None,
+        commit,
+    ):
         assert db_arg is db
         assert user_id == user.id
         assert level == CEFRLevel.B2
+        assert level_score is None
+        assert llm_confidence is None
+        assert initial_level_completed is True
         assert commit is False
         return SimpleNamespace(
             id=user_id,
@@ -136,10 +148,23 @@ def test_set_manual_level_updates_user_and_history(monkeypatch):
             level_updated_at=updated_at,
         )
 
-    def fake_insert_level_history(db_arg, *, user_id, level):
+    def fake_insert_level_history(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        average_understanding=None,
+        sample_count=None,
+    ):
         assert db_arg is db
         assert user_id == user.id
         assert level == CEFRLevel.B2
+        assert level_score is None
+        assert llm_confidence is None
+        assert average_understanding is None
+        assert sample_count is None
         return SimpleNamespace(user_id=user_id, level=level)
 
     monkeypatch.setattr(user_crud, "update_user_level", fake_update_user_level)
@@ -155,3 +180,93 @@ def test_set_manual_level_updates_user_and_history(monkeypatch):
     assert response.level == CEFRLevel.B2
     assert response.level_description == schemas.CEFR_LEVEL_DESCRIPTIONS[CEFRLevel.B2]
     assert response.updated_at == updated_at
+
+
+def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
+    db = DummySession()
+    updated_at = datetime.now(timezone.utc)
+    user = SimpleNamespace(
+        id=7,
+        level=CEFRLevel.B1,
+        level_score=52,
+        llm_confidence=48,
+        initial_level_completed=True,
+        level_updated_at=updated_at,
+    )
+
+    llm = FakeLLMClient(
+        response=json.dumps(
+            {
+                "level": "B2",
+                "level_score": 70,
+                "llm_confidence": 65,
+                "rationale": "Learner shows improved comprehension after session.",
+            }
+        )
+    )
+    service = PersonalizationService(llm_client=llm)
+
+    def fake_get_scripts_by_ids(db_arg, ids):
+        scripts = make_scripts()
+        return {script_id: scripts[script_id] for script_id in ids}
+
+    def fake_update_user_level(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        initial_level_completed=None,
+        commit,
+    ):
+        assert db_arg is db
+        assert user_id == user.id
+        assert level == CEFRLevel.B2
+        assert level_score == 70
+        assert llm_confidence == 65
+        assert initial_level_completed is True
+        assert commit is False
+        return SimpleNamespace(
+            id=user_id,
+            level=level,
+            level_updated_at=updated_at,
+        )
+
+    def fake_insert_level_history(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        average_understanding=None,
+        sample_count=None,
+    ):
+        assert db_arg is db
+        assert user_id == user.id
+        assert level == CEFRLevel.B2
+        assert level_score == 70
+        assert llm_confidence == 65
+        assert average_understanding == 55
+        assert sample_count == 2
+        return SimpleNamespace(user_id=user_id, level=level)
+
+    monkeypatch.setattr(crud, "get_scripts_by_ids", fake_get_scripts_by_ids)
+    monkeypatch.setattr(user_crud, "update_user_level", fake_update_user_level)
+    monkeypatch.setattr(crud, "insert_level_history", fake_insert_level_history)
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(script_id="script-a", understanding=50),
+            schemas.LevelTestItem(script_id="script-b", understanding=60),
+        ]
+    )
+
+    response = service.evaluate_session_feedback(db=db, user=user, payload=payload)
+
+    assert db.commits == 1
+    assert len(db.refreshed) == 2
+    assert response.level == CEFRLevel.B2
+    assert response.scores.level_score == 70
+    assert '"context": "session_feedback"' in llm.calls[0]["user_prompt"]

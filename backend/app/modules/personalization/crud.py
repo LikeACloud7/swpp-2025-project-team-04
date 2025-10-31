@@ -20,7 +20,23 @@ def get_scripts_by_ids(db: Session, script_ids: Sequence[str]) -> Mapping[str, L
     return lookup
 
 
-def insert_level_history(db: Session, *, user_id: int, level: CEFRLevel) -> UserLevelHistory:
-    record = UserLevelHistory(user_id=user_id, level=level)
+def insert_level_history(
+    db: Session,
+    *,
+    user_id: int,
+    level: CEFRLevel,
+    level_score: int | None = None,
+    llm_confidence: int | None = None,
+    average_understanding: int | None = None,
+    sample_count: int | None = None,
+) -> UserLevelHistory:
+    record = UserLevelHistory(
+        user_id=user_id,
+        level=level,
+        level_score=level_score,
+        llm_confidence=llm_confidence,
+        average_understanding=average_understanding,
+        sample_count=sample_count,
+    )
     db.add(record)
     return record
