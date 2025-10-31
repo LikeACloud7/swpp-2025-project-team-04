@@ -21,7 +21,8 @@ app.include_router(auth_router, prefix = "/api/v1")
 app.include_router(users_router, prefix = "/api/v1")
 app.include_router(audio_router, prefix = "/api/v1/audio")
 app.include_router(survey_router, prefix = "/api/v1")
-app.include_router(personalization_router, prefix = "/api/v1")
+app.include_router(level_management_router, prefix = "/api/v1")
+app.include_router(stats_router, prefix = "/api/v1")
 app.include_router(vocab_router, prefix = "/api/v1")
 
 
