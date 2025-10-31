@@ -19,7 +19,7 @@ from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
 from ...core.s3setting import upload_audio_to_s3
 import time
-
+from app.core.logger import logger
 # --- Configuration ---
 from ...core.config import settings
 
@@ -274,10 +274,10 @@ class AudioService:
             elevenlabs_client = get_elevenlabs_client()
             loop = asyncio.get_event_loop()
 
-            # 🚀 핵심 변화:
-            # run_in_executor() → blocking call을 별도의 스레드에서 실행
+            # main change for asyncronous handling
+            # run_in_executor() → blocking call in another thread
             response = await loop.run_in_executor(
-                None,  # 기본 ThreadPoolExecutor 사용
+                None,  
                 lambda: elevenlabs_client.text_to_speech.convert_with_timestamps(
                     voice_id=voice_id,
                     text=script,
@@ -341,26 +341,26 @@ class AudioService:
         Complete pipeline: Generate script + voice selection + audio + timestamps
         Returns audio_base_64 and sentences with timestamps
         """
-
-
-        # Step 1: Generate script and select voice
         total_start = time.time()
-        print("\n[DEBUG] === Step 1: Generate script and select voice ===")
-        start_script = time.time()  # ⏱ 스크립트 시작 시간
-        print(f"[DEBUG] User Info: id={user.id}, username={user.username}, level={user.level}")
+
+
+
+        # === Step 1: Generate script and select voice ===
+        logger.info("=== Step 1: Generate script and select voice ===")
+        logger.info(f"User Info | id={user.id}, username={user.username}, level={user.level}")
+        start_script = time.time()
+
         title, script, selected_voice = await cls.generate_audio_script(request, user)
-        elapsed_script = time.time() - start_script
-        print(f"[TIMER] Script generation took {elapsed_script:.2f}s")
 
-        print(f"[DEBUG] title: {title[:80]}{'...' if len(title) > 80 else ''}")
-        print(script)
-
+        logger.info(f"Script generation completed in {time.time() - start_script:.2f}s")
+        logger.debug(f"Title: {title}")
+        logger.debug(f"Script Preview: {script[:200]}...")
 
 
 
-        # ============================================================
-        # ✅ Step 1.5: Placeholder DB entry 생성 (generated_content_id 확보)
-        # ============================================================
+
+
+        # === Step 1.5: DB placeholder entry ===
         generated_id = None
         try:
             db: Session = SessionLocal()
@@ -373,52 +373,60 @@ class AudioService:
                 response_json=None,
             )
             generated_id = content.generated_content_id
-            print(f"[DEBUG] Inserted placeholder GeneratedContent (id={generated_id})")
+            logger.info(f"Inserted placeholder GeneratedContent (id={generated_id})")
         except Exception as e:
-            print(f"[DEBUG] Failed to insert GeneratedContent: {e}")
+            logger.error(f"Failed to insert GeneratedContent: {e}", exc_info=True)
             generated_id = None
     
 
 
 
 
-        # ✅ New step: Launch contextual vocabulary generation in background
+
+        # === Step 2-1: Background contextual vocab (Background) ===
         try:
             sentences = cls._split_script_by_newlines(script)
-            print(f"[DEBUG] Launching contextual vocab processing for {len(sentences)} sentences...")
-            # ✅ content_id 넘겨서 background에서 DB 업데이트 가능하도록
+            logger.info(f"Launching contextual vocab processing for {len(sentences)} sentences...")
             asyncio.create_task(VocabService.build_contextual_vocab(sentences, generated_id))
         except Exception as e:
-            print(f"[DEBUG] Failed to launch VocabService: {e}")
+            logger.error(f"Failed to launch VocabService: {e}", exc_info=True)
 
 
 
 
-        # Step 2: Generate audio with timestamps using ElevenLabs
-        print("\n[DEBUG] === Step 2: Generate audio with timestamps ===")
-        start_audio = time.time()  # ⏱ 전체 시작
+
+        # ===Step 2-2: Generate audio with timestamps using ElevenLabs===
+        logger.info("=== Step 2: Generate audio with ElevenLabs ===")
+        start_audio = time.time()
+
         audio_result = await cls._generate_audio_with_timestamps(
             script=script,
             voice_id=selected_voice["voice_id"]
         )
         
-        print("\n[DEBUG] === Step 3: s3 upload ===")
-        elapsed_audio = time.time() - start_audio
-        print(f"[TIMER] Audio generation took {elapsed_audio:.2f}s")
+        logger.info(f"Audio generation took {time.time() - start_audio:.2f}s")
 
 
 
-        # Step 3: Decode base64 audio → upload to S3
+
+        # === Step 3: Upload to S3 ===
+        logger.info("=== Step 3: Upload audio to S3 ===")
+
         audio_data = base64.b64decode(audio_result["audio_base_64"])
         key = generate_s3_object_key("mp3")
         audio_url = upload_audio_to_s3(audio_data, key)
 
+        logger.info(f"Audio uploaded to S3 | key={key}")
 
       
-        print("\n[DEBUG] === Step 4: respond ===")
-        # Step 4: Return final response with file URL
-        elapsed_audio = time.time() - total_start
-        print(f"[TIMER] Audio generation took {elapsed_audio:.2f}s")
+        
+        
+        
+        # === Step 4: Response summary ===
+        logger.info("=== Step 4: Response generation ===")
+        elapsed = time.time() - total_start
+        logger.info(f"Full pipeline completed in {elapsed:.2f}s")
+
         return {
             "generated_content_id" : generated_id,
             "title": title,

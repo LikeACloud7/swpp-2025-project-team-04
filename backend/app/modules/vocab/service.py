@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from ...core.config import settings, SessionLocal
 from ..audio import crud
-
+from ...core.logger import logger
 
 
 load_dotenv()
@@ -22,22 +22,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 class VocabService:
     _running_tasks = {}
 
-    # for async related problem resolution
-    @staticmethod
-    async def build_contextual_vocab(sentences: list[str], content_id: int):
-        if content_id in VocabService._running_tasks:
-            task = VocabService._running_tasks[content_id]
-            if not task.done():
-                print(f"[DEBUG] Skipping duplicate vocab build for content_id={content_id}")
-                return
-
-        async def _run():
-            print(f"✅ Starting async processing for {len(sentences)} sentences (content_id={content_id})...")
-            ...
-
-        task = asyncio.create_task(_run())
-        VocabService._running_tasks[content_id] = task
-
+    
     @staticmethod
     async def process_sentence_async(index: int, sentence: str):
         prompt = f"""
@@ -82,7 +67,7 @@ class VocabService:
 
             content = response.choices[0].message.content.strip()
             data = json.loads(content)
-            print(f"[Sentence {index+1:02d}] ✅ Done in {elapsed:.2f}s")
+            logger.info(f"[Sentence {index+1:02d}] ✅ Done in {elapsed:.2f}s")
 
             return {
                 "index": index,
@@ -91,7 +76,7 @@ class VocabService:
             }
 
         except Exception as e:
-            print(f"[Sentence {index+1:02d}] ❌ Error: {e}")
+            logger.warning(f"[Sentence {index+1:02d}] ❌ Error: {e}")
             return {
                 "index": index,
                 "text": sentence,
@@ -101,12 +86,20 @@ class VocabService:
 
     @staticmethod
     async def build_contextual_vocab(sentences: list[str], generated_content_id: int):
-        print(f"✅ Starting async processing for {len(sentences)} sentences (content_id={generated_content_id})...")
+        
+        # preventing multiple execution
+        if generated_content_id in VocabService._running_tasks:
+            task = VocabService._running_tasks[generated_content_id]
+            if not task.done():
+                logger.warning(f"Skipping duplicate vocab build for content_id={generated_content_id}")
+                return
+        
+        logger.info(f"✅ Starting async processing for {len(sentences)} sentences (content_id={generated_content_id})...")
         start_total = time.time()  
         tasks = [asyncio.create_task(VocabService.process_sentence_async(i, s)) for i, s in enumerate(sentences)]
         results = await asyncio.gather(*tasks)
         results_sorted = sorted(results, key=lambda x: x["index"])
-        print("✅ All sentences processed successfully!")
+        logger.info("✅ All sentences processed successfully!")
 
         merged_words_result = {"sentences": results_sorted}
 
@@ -120,15 +113,15 @@ class VocabService:
                 script_vocabs=merged_words_result,
             )
             if updated:
-                print(f"✅ Updated script_vocabs in DB for content_id={generated_content_id}")
+                logger.info(f"DB Updated script_vocabs for content_id={generated_content_id}")
             else:
-                print(f"⚠️ No matching content_id={generated_content_id} found in DB")
+                logger.warning(f"No matching content_id={generated_content_id} found in DB")
         except Exception as e:
-            print(f"⚠️ Failed to update script_vocabs in DB: {e}")
+            logger.warning(f"Failed to update script_vocabs in DB: {e}")
         finally:
             db.close()
 
         total_elapsed = time.time() - start_total
-        print(f"[TIMER] 🧾 Total contextual vocab pipeline took {total_elapsed:.2f}s\n")
+        logger.info(f"[TIMER] 🧾Total contextual vocab pipeline took {total_elapsed:.2f}s\n")
 
         return merged_words_result
