@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum as SAEnum, func
+from sqlalchemy import Column, Integer, String, DateTime, Enum as SAEnum, func, Boolean
 from enum import Enum
-from sqlalchemy.sql import func
 from ...core.config import Base
 from ..personalization.models import CEFRLevel
 
@@ -22,3 +21,6 @@ class User(Base):
     nickname = Column(String(50), nullable=False)
     level = Column(SAEnum(CEFRLevel, name="cefr_level"), nullable=False, default=CEFRLevel.A1)
     level_updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    initial_level_completed = Column(Boolean, nullable=False, default=False)
+    level_score = Column(Integer, nullable=True)
+    llm_confidence = Column(Integer, nullable=True)

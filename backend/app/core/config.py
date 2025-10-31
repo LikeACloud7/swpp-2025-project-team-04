@@ -1,6 +1,7 @@
 from typing import Optional
+
 from pydantic_settings import BaseSettings
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from dotenv import load_dotenv
@@ -41,6 +42,52 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+
+def apply_startup_migrations():
+    """Minimal, idempotent schema sync to keep CI database aligned with models."""
+    if engine.dialect.name != "mysql":
+        return
+
+    with engine.begin() as conn:
+        inspector = inspect(conn)
+
+        user_columns = {column["name"] for column in inspector.get_columns("users")}
+        if "initial_level_completed" not in user_columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE users "
+                    "ADD COLUMN initial_level_completed TINYINT(1) NOT NULL DEFAULT 0"
+                )
+            )
+        if "level_score" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN level_score INT NULL"))
+        if "llm_confidence" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN llm_confidence INT NULL"))
+
+        history_columns = {
+            column["name"] for column in inspector.get_columns("user_level_history")
+        }
+        if "level_score" not in history_columns:
+            conn.execute(
+                text("ALTER TABLE user_level_history ADD COLUMN level_score INT NULL")
+            )
+        if "llm_confidence" not in history_columns:
+            conn.execute(
+                text("ALTER TABLE user_level_history ADD COLUMN llm_confidence INT NULL")
+            )
+        if "average_understanding" not in history_columns:
+            conn.execute(
+                text(
+                    "ALTER TABLE user_level_history "
+                    "ADD COLUMN average_understanding INT NULL"
+                )
+            )
+        if "sample_count" not in history_columns:
+            conn.execute(
+                text("ALTER TABLE user_level_history ADD COLUMN sample_count INT NULL")
+            )
+
 
 def get_db():
     db = SessionLocal()

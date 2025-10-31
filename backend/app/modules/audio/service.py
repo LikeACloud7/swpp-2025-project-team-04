@@ -13,10 +13,9 @@ from sqlalchemy.orm import Session
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
 from .utils import parse_tts_by_newlines
-from ..vocab.service import VocabService 
-from . import crud 
-import time 
-from ...core.config import SessionLocal, settings
+
+# --- Configuration ---
+from ...core.config import settings
 
 def get_openai_client():
     return AsyncOpenAI(api_key=settings.openai_api_key)
@@ -25,10 +24,6 @@ def get_elevenlabs_client():
     return ElevenLabs(api_key=settings.elevenlabs_api_key)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
-
-# Temporary audio storage configuration
-TEMP_AUDIO_DIR = os.path.join(BASE_DIR, "temp_audio")
-os.makedirs(TEMP_AUDIO_DIR, exist_ok=True)
 
 MIN_SCRIPT_WORDS = 100
 TARGET_SCRIPT_WORDS = 200
@@ -392,13 +387,7 @@ class AudioService:
             voice_id=selected_voice["voice_id"]
         )
         
-
-        print(f"[DEBUG] audio_result keys: {list(audio_result.keys())}")
-        print(f"[DEBUG] audio_base_64 length: {len(audio_result.get('audio_base_64', ''))}")
-        print(f"[DEBUG] sentences count: {len(audio_result.get('sentences', []))}")
-
         # Step 3: Save audio file using title
-        print("\n[DEBUG] === Step 3: Save audio file ===")
         cleaned_title = AudioService._clean_filename(title)
         filename = f"{cleaned_title}_{user.id}.mp3"
         file_path = os.path.join(TEMP_AUDIO_DIR, filename)
@@ -409,30 +398,8 @@ class AudioService:
             audio_file.write(audio_data)
         
         # Step 4: Return final response with file URL
-        print("\n[DEBUG] === Step 4: Final Response ===")
-        audio_elapsed = time.time() - start_audio
-        print(f"[TIMER] 🔊 Audio synthesis took {audio_elapsed:.2f}s")
         return {
             "title": title,
-            "audio_url": f"/api/v1/audio/files/{filename}",
+            "audio_url": audio_url,
             "sentences": audio_result["sentences"]
         }
-    
-
-    @staticmethod
-    def _split_script_by_newlines(script: str) -> list[str]:
-        """
-        Split the generated script (already newline-separated by GPT)
-        into a clean list of sentences.
-        Empty lines and stray whitespace are removed.
-        """
-        if not isinstance(script, str):
-            return []
-
-        # Split by literal newline
-        raw_sentences = script.split("\n")
-
-        # Clean and remove empty lines
-        sentences = [s.strip() for s in raw_sentences if s.strip()]
-
-        return sentences

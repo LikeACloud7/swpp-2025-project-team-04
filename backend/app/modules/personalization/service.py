@@ -50,6 +50,27 @@ _CEFR_SCORING_LOOKUP: Dict[CEFRLevel, Tuple[int, int]] = {
 class PersonalizationService:
     def __init__(self, *, llm_client: Optional[OpenAILLMClient] = None):
         self._llm_client = llm_client
+
+    def _build_user_profile(self, user: User, *, context: str) -> Dict[str, object]:
+        level = getattr(user, "level", None)
+        if hasattr(level, "value"):
+            level_value = level.value  # type: ignore[attr-defined]
+        elif isinstance(level, str):
+            level_value = level
+        elif level is None:
+            level_value = None
+        else:
+            level_value = str(level)
+
+        profile = {
+            "context": context,
+            "current_level": level_value,
+            "level_score": getattr(user, "level_score", None),
+            "llm_confidence": getattr(user, "llm_confidence", None),
+            "initial_level_completed": getattr(user, "initial_level_completed", False),
+            "level_updated_at": user.level_updated_at.isoformat() if getattr(user, "level_updated_at", None) else None,
+        }
+        return profile
         
     def evaluate_initial_level(
         self,
@@ -68,18 +89,80 @@ class PersonalizationService:
         evaluation = self._summarize_level_test(
             tests=payload.tests,
             scripts=scripts,
+            current_profile=self._build_user_profile(user, context="initial_level_assessment"),
         )
 
         user_record = user_crud.update_user_level(
             db,
             user_id=user.id,
             level=evaluation.level,
+            level_score=evaluation.level_score,
+            llm_confidence=evaluation.llm_confidence,
+            initial_level_completed=True,
             commit=False,
         )
         history_record = crud.insert_level_history(
             db,
             user_id=user.id,
             level=evaluation.level,
+            level_score=evaluation.level_score,
+            llm_confidence=evaluation.llm_confidence,
+            average_understanding=evaluation.average_understanding,
+            sample_count=evaluation.sample_count,
+        )
+
+        db.commit()
+        db.refresh(user_record)
+        db.refresh(history_record)
+
+        return schemas.LevelTestResponse(
+            level=evaluation.level,
+            level_description=schemas.CEFR_LEVEL_DESCRIPTIONS[evaluation.level],
+            scores=schemas.LevelScores(
+                level_score=evaluation.level_score,
+                llm_confidence=evaluation.llm_confidence,
+            ),
+            rationale=evaluation.rationale,
+            updated_at=user_record.level_updated_at,
+        )
+
+    def evaluate_session_feedback(
+        self,
+        *,
+        db: Session,
+        user: User,
+        payload: schemas.LevelTestRequest,
+    ) -> schemas.LevelTestResponse:
+        script_ids = [item.script_id for item in payload.tests]
+        scripts = crud.get_scripts_by_ids(db, script_ids)
+
+        for item in payload.tests:
+            if scripts.get(item.script_id) is None:
+                raise LevelTestScriptNotFoundException(item.script_id)
+
+        evaluation = self._summarize_level_test(
+            tests=payload.tests,
+            scripts=scripts,
+            current_profile=self._build_user_profile(user, context="session_feedback"),
+        )
+
+        user_record = user_crud.update_user_level(
+            db,
+            user_id=user.id,
+            level=evaluation.level,
+            level_score=evaluation.level_score,
+            llm_confidence=evaluation.llm_confidence,
+            initial_level_completed=True,
+            commit=False,
+        )
+        history_record = crud.insert_level_history(
+            db,
+            user_id=user.id,
+            level=evaluation.level,
+            level_score=evaluation.level_score,
+            llm_confidence=evaluation.llm_confidence,
+            average_understanding=evaluation.average_understanding,
+            sample_count=evaluation.sample_count,
         )
 
         db.commit()
@@ -108,6 +191,7 @@ class PersonalizationService:
             db,
             user_id=user.id,
             level=payload.level,
+            initial_level_completed=True,
             commit=False,
         )
         history_record = crud.insert_level_history(
@@ -131,6 +215,7 @@ class PersonalizationService:
         *,
         tests: List[schemas.LevelTestItem],
         scripts: Dict[str, LevelTestScript],
+        current_profile: Optional[Dict[str, object]] = None,
     ) -> LevelEvaluationResult:
         average_understanding = round(
             sum(item.understanding for item in tests) / len(tests)
@@ -157,9 +242,14 @@ class PersonalizationService:
             for level, bounds in _CEFR_SCORING_BANDS
         ]
 
+        profile_payload = current_profile or {
+            "context": "unknown",
+            "note": "No prior learner profile was provided.",
+        }
         prompt = _PROMPT_STORE.load("level_evaluation")
         user_prompt = prompt.user.format(
             cefr_bands=json.dumps(cefr_payload, ensure_ascii=False, indent=2),
+            current_profile=json.dumps(profile_payload, ensure_ascii=False, indent=2),
             tests=json.dumps(test_payload, ensure_ascii=False, indent=2),
         )
 
@@ -176,6 +266,8 @@ class PersonalizationService:
                 level=fallback_level,
                 level_score=self._default_band_midpoint(fallback_level),
                 llm_confidence=average_understanding,
+                average_understanding=average_understanding,
+                sample_count=sample_count,
                 rationale="LLM 평가가 실패하여 자기 보고 이해도 기반의 휴리스틱 결과를 사용했습니다.",
             )
 

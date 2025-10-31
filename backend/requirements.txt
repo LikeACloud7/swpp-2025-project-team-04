@@ -14,5 +14,5 @@ python-dotenv>=1.0.0
 elevenlabs==2.16.0
 PyYAML
 alembic
-
 pytest-cov
+boto3

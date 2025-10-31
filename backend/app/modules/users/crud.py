@@ -29,6 +29,9 @@ def update_user_level(
     *,
     user_id: int,
     level: CEFRLevel,
+    level_score: int | None = None,
+    llm_confidence: int | None = None,
+    initial_level_completed: bool | None = None,
     commit: bool = True,
 ) -> User:
     user = db.query(User).filter(User.id == user_id).first()
@@ -36,6 +39,12 @@ def update_user_level(
         raise UserNotFoundException()
 
     user.level = level
+    if level_score is not None:
+        user.level_score = level_score
+    if llm_confidence is not None:
+        user.llm_confidence = llm_confidence
+    if initial_level_completed is not None:
+        user.initial_level_completed = initial_level_completed
     db.add(user)
 
     if commit:

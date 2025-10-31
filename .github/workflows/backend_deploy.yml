@@ -23,13 +23,13 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ec2-user/swpp-2025-project-team-04
+            cd /home/ec2-user/swpp-2025-project-team-04/backend
             git pull origin dev-backend
 
             docker stop backend || true
             docker rm backend || true
 
 
-            docker build -t backend-image ./backend
+            docker build -t backend-image .
 
             docker run -d --name backend -p 3000:3000 backend-image
