@@ -3,7 +3,8 @@ from .modules.auth.endpoints import router as auth_router
 from .modules.users.endpoints import router as users_router
 from .modules.audio.endpoints import router as audio_router
 from .modules.survey.endpoints import router as survey_router
-from .modules.personalization.endpoints import router as personalization_router
+from .modules.level_management.endpoints import router as level_management_router
+from .modules.stats.endpoints import router as stats_router
 from .modules.vocab.endpoints import router as vocab_router
 from .core.config import engine, Base
 from .core.config import engine, Base, apply_startup_migrations
