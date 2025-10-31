@@ -1,10 +1,30 @@
+import re
 
 
+def extract_words_from_sentence(sentence: str) -> list[str]:
+    """
+    Extract clean English words from a sentence.
+    Handles contractions, punctuation, and case normalization.
+    Returns a list of lowercase words only.
+    """
+    if not isinstance(sentence, str):
+        return []
+
+    # Normalize whitespace
+    sentence = sentence.strip()
+
+    # Keep only letters and apostrophes inside words
+    # e.g., "don't", "I'm" should be kept as one word
+    tokens = re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?", sentence)
+
+    # Normalize to lowercase
+    words = [t.lower() for t in tokens]
+
+    return words
 
 
 def parse_tts_by_newlines(tts_response: dict):
     """줄바꿈('\n') 기준으로 문장을 분리하여 문장 별 정보 리스트 반환 """
-    
     alignment = tts_response.get("alignment")
     if alignment is None:
         raise ValueError("No alignment or normalized_alignment found in response")
@@ -20,29 +40,32 @@ def parse_tts_by_newlines(tts_response: dict):
     for i, ch in enumerate(chars):
         if current_start_time is None:
             current_start_time = starts[i]
-
-        # 문장에 charater 추가
         current_sentence += ch
 
-        # 줄바꿈 감지
         if ch == "\n":
             stripped = current_sentence.strip()
-            if stripped:  
+            if stripped:
                 sentences.append({
                     "id": sentence_id,
                     "start_time": round(current_start_time, 3),
-                    "text": stripped
+                    "text": stripped,
+                    "words": extract_words_from_sentence(stripped)
                 })
                 sentence_id += 1
             current_sentence = ""
             current_start_time = None
 
-    # 마지막 문장이 줄바꿈 없이 끝난 경우
     if current_sentence.strip():
+        stripped = current_sentence.strip()
         sentences.append({
             "id": sentence_id,
             "start_time": round(current_start_time or 0, 3),
-            "text": current_sentence.strip()
+            "text": stripped,
+            "words": extract_words_from_sentence(stripped)
         })
 
     return sentences
+
+
+
+

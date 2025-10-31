@@ -1,0 +1,1088 @@
+{
+  "sentences": [
+    {
+      "index": 0,
+      "text": "Hello there, little adventurers!",
+      "words": [
+        {
+          "word": "Hello",
+          "pos": "감탄사",
+          "meaning": "인사, 안녕하세요"
+        },
+        {
+          "word": "there",
+          "pos": "부사",
+          "meaning": "저기, 저곳에"
+        },
+        {
+          "word": "little",
+          "pos": "형용사",
+          "meaning": "작은, 소규모의"
+        },
+        {
+          "word": "adventurers",
+          "pos": "명사",
+          "meaning": "모험가들, 모험하는 사람들 (adventurer의 복수형)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "Today, we're going to have some fun with colors!",
+      "words": [
+        {
+          "word": "Today",
+          "pos": "부사",
+          "meaning": "오늘"
+        },
+        {
+          "word": "we're",
+          "pos": "대명사 + 조동사",
+          "meaning": "우리는 (are의 축약형)"
+        },
+        {
+          "word": "going",
+          "pos": "동사",
+          "meaning": "가고 있다 (go의 현재진행형)"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "…에"
+        },
+        {
+          "word": "have",
+          "pos": "동사",
+          "meaning": "가지다, 할 것이다"
+        },
+        {
+          "word": "some",
+          "pos": "관사",
+          "meaning": "일부의"
+        },
+        {
+          "word": "fun",
+          "pos": "명사",
+          "meaning": "재미"
+        },
+        {
+          "word": "with",
+          "pos": "전치사",
+          "meaning": "…와 함께"
+        },
+        {
+          "word": "colors",
+          "pos": "명사",
+          "meaning": "색깔들 (color의 복수형)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "Are you ready?",
+      "words": [
+        {
+          "word": "Are",
+          "pos": "조동사",
+          "meaning": "be 동사의 복수형, ~이다 등의 의미"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "당신, 너"
+        },
+        {
+          "word": "ready",
+          "pos": "형용사",
+          "meaning": "준비된, 준비가 된"
+        },
+        {
+          "word": "?",
+          "pos": "감탄사",
+          "meaning": "질문을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "Let's begin with the color red.",
+      "words": [
+        {
+          "word": "Let's",
+          "pos": "접속사",
+          "meaning": "우리 함께 ~하자 (let us의 축약형)"
+        },
+        {
+          "word": "begin",
+          "pos": "동사",
+          "meaning": "시작하다"
+        },
+        {
+          "word": "with",
+          "pos": "전치사",
+          "meaning": "~와 함께"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그, 특정한"
+        },
+        {
+          "word": "color",
+          "pos": "명사",
+          "meaning": "색깔"
+        },
+        {
+          "word": "red",
+          "pos": "형용사",
+          "meaning": "빨간"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "Red is like a juicy apple or a bright fire truck.",
+      "words": [
+        {
+          "word": "Red",
+          "pos": "형용사",
+          "meaning": "빨간 색"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "현재형 '이다'"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "같은"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의"
+        },
+        {
+          "word": "juicy",
+          "pos": "형용사",
+          "meaning": "즙이 많은"
+        },
+        {
+          "word": "apple",
+          "pos": "명사",
+          "meaning": "사과"
+        },
+        {
+          "word": "or",
+          "pos": "접속사",
+          "meaning": "또는"
+        },
+        {
+          "word": "bright",
+          "pos": "형용사",
+          "meaning": "밝은"
+        },
+        {
+          "word": "fire",
+          "pos": "명사",
+          "meaning": "불"
+        },
+        {
+          "word": "truck",
+          "pos": "명사",
+          "meaning": "트럭"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "What fun things can you think of that are red?",
+      "words": [
+        {
+          "word": "What",
+          "pos": "의문사",
+          "meaning": "무엇"
+        },
+        {
+          "word": "fun",
+          "pos": "형용사",
+          "meaning": "재미있는"
+        },
+        {
+          "word": "things",
+          "pos": "명사",
+          "meaning": "물건들, 것들"
+        },
+        {
+          "word": "can",
+          "pos": "조동사",
+          "meaning": "할 수 있다"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너, 당신"
+        },
+        {
+          "word": "think",
+          "pos": "동사",
+          "meaning": "생각하다"
+        },
+        {
+          "word": "of",
+          "pos": "전치사",
+          "meaning": "의, 에 대한"
+        },
+        {
+          "word": "that",
+          "pos": "관사",
+          "meaning": "그 것, 저"
+        },
+        {
+          "word": "are",
+          "pos": "동사",
+          "meaning": "be 동사의 현재형, 이다"
+        },
+        {
+          "word": "red",
+          "pos": "형용사",
+          "meaning": "빨간"
+        },
+        {
+          "word": "?",
+          "pos": "기호",
+          "meaning": "질문을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "Now, let's move on to the color blue.",
+      "words": [
+        {
+          "word": "Now",
+          "pos": "부사",
+          "meaning": "현재, 지금"
+        },
+        {
+          "word": "let's",
+          "pos": "조동사",
+          "meaning": "let의 축약형으로, ~하자고 하다"
+        },
+        {
+          "word": "move",
+          "pos": "동사",
+          "meaning": "움직이다"
+        },
+        {
+          "word": "on",
+          "pos": "전치사",
+          "meaning": "~에 대해, ~으로"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "~로, ~에"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정성을 나타내는 한정사"
+        },
+        {
+          "word": "color",
+          "pos": "명사",
+          "meaning": "색, 색깔"
+        },
+        {
+          "word": "blue",
+          "pos": "형용사",
+          "meaning": "푸른, 파란"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "Blue is like the big, wide sky or the deep ocean.",
+      "words": [
+        {
+          "word": "Blue",
+          "pos": "형용사",
+          "meaning": "푸른 색을 의미함"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "존재를 나타내는 동사"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "비교를 나타내는 전치사"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정 대상을 나타내는 정관사"
+        },
+        {
+          "word": "big",
+          "pos": "형용사",
+          "meaning": "큰"
+        },
+        {
+          "word": "wide",
+          "pos": "형용사",
+          "meaning": "넓은"
+        },
+        {
+          "word": "sky",
+          "pos": "명사",
+          "meaning": "하늘"
+        },
+        {
+          "word": "or",
+          "pos": "접속사",
+          "meaning": "선택을 나타내는 접속사"
+        },
+        {
+          "word": "deep",
+          "pos": "형용사",
+          "meaning": "깊은"
+        },
+        {
+          "word": "ocean",
+          "pos": "명사",
+          "meaning": "바다"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "Isn't it relaxing to think of the color blue?",
+      "words": [
+        {
+          "word": "Isn't",
+          "pos": "동사",
+          "meaning": "is not의 축약형, ~이 아니다"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "relaxing",
+          "pos": "형용사",
+          "meaning": "편안하게 하는, 휴식을 주는"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "목적이나 방향을 나타내는 전치사"
+        },
+        {
+          "word": "think",
+          "pos": "동사",
+          "meaning": "생각하다"
+        },
+        {
+          "word": "of",
+          "pos": "전치사",
+          "meaning": "~에 대한, ~의"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 것을 지칭하는 관사"
+        },
+        {
+          "word": "color",
+          "pos": "명사",
+          "meaning": "색깔"
+        },
+        {
+          "word": "blue",
+          "pos": "형용사",
+          "meaning": "파란, 파란색"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "Next, let's dive into yellow.",
+      "words": [
+        {
+          "word": "Next",
+          "pos": "부사",
+          "meaning": "다음에"
+        },
+        {
+          "word": "let's",
+          "pos": "조동사",
+          "meaning": "let의 축약형, ~하자"
+        },
+        {
+          "word": "dive",
+          "pos": "동사",
+          "meaning": "잠수하다, 뛰어들다"
+        },
+        {
+          "word": "into",
+          "pos": "전치사",
+          "meaning": "~로 들어가다"
+        },
+        {
+          "word": "yellow",
+          "pos": "형용사",
+          "meaning": "노란"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "Yellow is like a shiny sun or a yummy banana.",
+      "words": [
+        {
+          "word": "Yellow",
+          "pos": "형용사",
+          "meaning": "노란색"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "이다"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "~처럼"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의"
+        },
+        {
+          "word": "shiny",
+          "pos": "형용사",
+          "meaning": "번쩍이는, 빛나는"
+        },
+        {
+          "word": "sun",
+          "pos": "명사",
+          "meaning": "태양"
+        },
+        {
+          "word": "or",
+          "pos": "접속사",
+          "meaning": "또는"
+        },
+        {
+          "word": "yummy",
+          "pos": "형용사",
+          "meaning": "맛있는"
+        },
+        {
+          "word": "banana",
+          "pos": "명사",
+          "meaning": "바나나"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "Can you feel the happiness of yellow?",
+      "words": [
+        {
+          "word": "Can",
+          "pos": "조동사",
+          "meaning": "할 수 있다"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너"
+        },
+        {
+          "word": "feel",
+          "pos": "동사",
+          "meaning": "느끼다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그"
+        },
+        {
+          "word": "happiness",
+          "pos": "명사",
+          "meaning": "행복"
+        },
+        {
+          "word": "of",
+          "pos": "전치사",
+          "meaning": "~의"
+        },
+        {
+          "word": "yellow",
+          "pos": "형용사",
+          "meaning": "노란"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "Great job!",
+      "words": [
+        {
+          "word": "Great",
+          "pos": "형용사",
+          "meaning": "매우 좋다, 뛰어난"
+        },
+        {
+          "word": "job",
+          "pos": "명사",
+          "meaning": "일, 직무, 작업"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "강조나 느낌을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "Now, let's mix it up a little.",
+      "words": [
+        {
+          "word": "Now",
+          "pos": "부사",
+          "meaning": "지금"
+        },
+        {
+          "word": "let's",
+          "pos": "조동사",
+          "meaning": "let의 축약형, 하자"
+        },
+        {
+          "word": "mix",
+          "pos": "동사",
+          "meaning": "혼합하다"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "up",
+          "pos": "전치사",
+          "meaning": "위로"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의 또는 어떤"
+        },
+        {
+          "word": "little",
+          "pos": "형용사",
+          "meaning": "적은, 작은"
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "text": "What happens when you mix red and blue?",
+      "words": [
+        {
+          "word": "What",
+          "pos": "대명사",
+          "meaning": "무엇"
+        },
+        {
+          "word": "happens",
+          "pos": "동사",
+          "meaning": "happen의 현재형, 발생하다"
+        },
+        {
+          "word": "when",
+          "pos": "접속사",
+          "meaning": "언제"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너"
+        },
+        {
+          "word": "mix",
+          "pos": "동사",
+          "meaning": "섞다"
+        },
+        {
+          "word": "red",
+          "pos": "형용사",
+          "meaning": "빨간"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "blue",
+          "pos": "형용사",
+          "meaning": "파란"
+        },
+        {
+          "word": "?",
+          "pos": "기타",
+          "meaning": "물음표"
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "text": "That's right, you get purple, like a bunch of grapes.",
+      "words": [
+        {
+          "word": "That's",
+          "pos": "대명사 + 동사",
+          "meaning": "That is의 축약형, 그것은"
+        },
+        {
+          "word": "right",
+          "pos": "형용사",
+          "meaning": "옳은, 맞는"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "당신, 너"
+        },
+        {
+          "word": "get",
+          "pos": "동사",
+          "meaning": "얻다, 생기다"
+        },
+        {
+          "word": "purple",
+          "pos": "형용사",
+          "meaning": "보라색의"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "같은, ~처럼"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 어떤"
+        },
+        {
+          "word": "bunch",
+          "pos": "명사",
+          "meaning": "다발, 한 묶음"
+        },
+        {
+          "word": "of",
+          "pos": "전치사",
+          "meaning": "~의"
+        },
+        {
+          "word": "grapes",
+          "pos": "명사",
+          "meaning": "포도 (복수형)"
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "text": "Isn't that amazing?",
+      "words": [
+        {
+          "word": "Isn't",
+          "pos": "조동사",
+          "meaning": "is not의 축약형, ~이 아니다"
+        },
+        {
+          "word": "that",
+          "pos": "대명사",
+          "meaning": "그것, 그"
+        },
+        {
+          "word": "amazing",
+          "pos": "형용사",
+          "meaning": "놀라운, 경이로운"
+        },
+        {
+          "word": "?",
+          "pos": "구두점",
+          "meaning": "의문을 나타내는 마침표"
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "text": "And what about mixing blue and yellow?",
+      "words": [
+        {
+          "word": "And",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "what",
+          "pos": "대명사",
+          "meaning": "무엇"
+        },
+        {
+          "word": "about",
+          "pos": "전치사",
+          "meaning": "에 관하여"
+        },
+        {
+          "word": "mixing",
+          "pos": "동사",
+          "meaning": "mix의 현재분사, 섞다"
+        },
+        {
+          "word": "blue",
+          "pos": "형용사",
+          "meaning": "파란색"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "yellow",
+          "pos": "형용사",
+          "meaning": "노란색"
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "text": "You get green, like the leaves on a tree or a cute frog.",
+      "words": [
+        {
+          "word": "You",
+          "pos": "대명사",
+          "meaning": "당신"
+        },
+        {
+          "word": "get",
+          "pos": "동사",
+          "meaning": "얻다, 받다"
+        },
+        {
+          "word": "green",
+          "pos": "형용사",
+          "meaning": "초록색의"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "처럼"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그 (특정한 것을 나타냄)"
+        },
+        {
+          "word": "leaves",
+          "pos": "명사",
+          "meaning": "잎들 (leaf의 복수형)"
+        },
+        {
+          "word": "on",
+          "pos": "전치사",
+          "meaning": "위에"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의 (불특정한 것을 나타냄)"
+        },
+        {
+          "word": "tree",
+          "pos": "명사",
+          "meaning": "나무"
+        },
+        {
+          "word": "or",
+          "pos": "접속사",
+          "meaning": "또는"
+        },
+        {
+          "word": "cute",
+          "pos": "형용사",
+          "meaning": "귀여운"
+        },
+        {
+          "word": "frog",
+          "pos": "명사",
+          "meaning": "개구리"
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "text": "Mixing colors is like a magic trick, isn't it?",
+      "words": [
+        {
+          "word": "Mixing",
+          "pos": "동사",
+          "meaning": "혼합하는, mix의 현재분사형"
+        },
+        {
+          "word": "colors",
+          "pos": "명사",
+          "meaning": "색깔들, color의 복수형"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "이다"
+        },
+        {
+          "word": "like",
+          "pos": "전치사",
+          "meaning": "~같은"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의"
+        },
+        {
+          "word": "magic",
+          "pos": "형용사",
+          "meaning": "마법의"
+        },
+        {
+          "word": "trick",
+          "pos": "명사",
+          "meaning": "속임수"
+        },
+        {
+          "word": "isn't",
+          "pos": "조동사",
+          "meaning": "아니다의 축약형, is not"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "?",
+          "pos": "감탄사",
+          "meaning": "물음표, 질문의 끝을 나타냄"
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "text": "So, remember, colors are all around us.",
+      "words": [
+        {
+          "word": "So",
+          "pos": "부사",
+          "meaning": "그래서"
+        },
+        {
+          "word": "remember",
+          "pos": "동사",
+          "meaning": "기억하다"
+        },
+        {
+          "word": "colors",
+          "pos": "명사",
+          "meaning": "색깔들 (color의 복수형)"
+        },
+        {
+          "word": "are",
+          "pos": "조동사",
+          "meaning": "이다 (be 동사의 현재형)"
+        },
+        {
+          "word": "all",
+          "pos": "형용사",
+          "meaning": "모든"
+        },
+        {
+          "word": "around",
+          "pos": "전치사",
+          "meaning": "주변에"
+        },
+        {
+          "word": "us",
+          "pos": "대명사",
+          "meaning": "우리를, 우리에게"
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "text": "They make our world so colorful and fun.",
+      "words": [
+        {
+          "word": "They",
+          "pos": "대명사",
+          "meaning": "그들, 사람들을 지칭하는 대명사"
+        },
+        {
+          "word": "make",
+          "pos": "동사",
+          "meaning": "만들다"
+        },
+        {
+          "word": "our",
+          "pos": "대명사",
+          "meaning": "우리의, 소속을 나타내는 대명사"
+        },
+        {
+          "word": "world",
+          "pos": "명사",
+          "meaning": "세계, 세상"
+        },
+        {
+          "word": "so",
+          "pos": "부사",
+          "meaning": "매우, 그렇게"
+        },
+        {
+          "word": "colorful",
+          "pos": "형용사",
+          "meaning": "다채로운, 색깔이 많은"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "fun",
+          "pos": "형용사",
+          "meaning": "재미있는, 즐거운"
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "text": "Keep exploring and finding new colors every day.",
+      "words": [
+        {
+          "word": "Keep",
+          "pos": "동사",
+          "meaning": "계속하다"
+        },
+        {
+          "word": "exploring",
+          "pos": "동사",
+          "meaning": "탐험하다의 현재분사, 탐색하다"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "finding",
+          "pos": "동사",
+          "meaning": "찾다의 현재분사, 발견하다"
+        },
+        {
+          "word": "new",
+          "pos": "형용사",
+          "meaning": "새로운"
+        },
+        {
+          "word": "colors",
+          "pos": "명사",
+          "meaning": "색깔의 복수형, 색상"
+        },
+        {
+          "word": "every",
+          "pos": "형용사",
+          "meaning": "모든, 각각의"
+        },
+        {
+          "word": "day",
+          "pos": "명사",
+          "meaning": "날, 하루"
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "text": "Learning is a wonderful adventure, and it makes us happy!",
+      "words": [
+        {
+          "word": "Learning",
+          "pos": "명사",
+          "meaning": "학습, 배우는 과정"
+        },
+        {
+          "word": "is",
+          "pos": "동사",
+          "meaning": "be 동사의 현재형, 이다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 어떤"
+        },
+        {
+          "word": "wonderful",
+          "pos": "형용사",
+          "meaning": "아주 멋진, 경이로운"
+        },
+        {
+          "word": "adventure",
+          "pos": "명사",
+          "meaning": "모험, 특별한 경험"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것, 그것은"
+        },
+        {
+          "word": "makes",
+          "pos": "동사",
+          "meaning": "make의 3인칭 단수형, 만들다"
+        },
+        {
+          "word": "us",
+          "pos": "대명사",
+          "meaning": "우리, 우리를"
+        },
+        {
+          "word": "happy",
+          "pos": "형용사",
+          "meaning": "행복한"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "느낌표, 감탄이나 강조를 나타냄"
+        }
+      ]
+    }
+  ]
+}

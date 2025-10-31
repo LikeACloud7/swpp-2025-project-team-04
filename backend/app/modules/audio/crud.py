@@ -1,0 +1,53 @@
+from sqlalchemy.orm import Session
+from typing import Optional, Dict, Any
+from datetime import datetime
+from .model import GeneratedContent
+
+
+def insert_generated_content(
+    db: Session,
+    *,
+    user_id: int,
+    title: str,
+    script_data: Optional[str] = None,
+    audio_url: Optional[str] = None,
+    response_json: Optional[Dict[str, Any]] = None,
+) -> GeneratedContent:
+    record = GeneratedContent(
+        user_id=user_id,
+        title=title,
+        script_data=script_data,
+        audio_url=audio_url,
+        response_json=response_json,
+        script_vocabs=None,  # ✅ 초기에는 비워둔다
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+def update_generated_content_vocabs(
+    db: Session,
+    *,
+    content_id: int,
+    script_vocabs: Dict[str, Any],
+) -> Optional[GeneratedContent]:
+    """
+    비동기 contextual vocab 생성 완료 후 script_vocabs 필드 갱신
+    """
+    content = (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id == content_id)
+        .first()
+    )
+    if not content:
+        return None
+
+    content.script_vocabs = script_vocabs
+    content.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(content)
+    return content

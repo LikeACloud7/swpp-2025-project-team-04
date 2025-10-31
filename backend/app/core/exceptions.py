@@ -140,3 +140,9 @@ class InvalidAuthHeaderException(AppException):
         super().__init__(401, "INVALID_AUTH_HEADER", "Invalid authorization header")
 
 
+# script vocabs
+class ScriptVocabsNotFoundException(AppException):
+    def __init__(self):
+        super().__init__(404, "SCRIPT_VOCABS_NOT_FOUND", "Contextual vocab data (script_vocabs) is not available for this content.")
+
+

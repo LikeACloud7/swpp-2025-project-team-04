@@ -5,18 +5,18 @@ import json
 import random
 import re
 import base64
-import uuid
-from datetime import datetime
+import asyncio
 from openai import AsyncOpenAI
 from fastapi import HTTPException
 from elevenlabs import ElevenLabs
+from sqlalchemy.orm import Session
 from ..users.models import User, CEFRLevel
-
 from .schemas import AudioGenerateRequest
 from .utils import parse_tts_by_newlines
-
-# --- Configuration ---
-from ...core.config import settings
+from ..vocab.service import VocabService 
+from . import crud 
+import time 
+from ...core.config import SessionLocal, settings
 
 def get_openai_client():
     return AsyncOpenAI(api_key=settings.openai_api_key)
@@ -157,6 +157,9 @@ class AudioService:
         each sentence on a new line.
         )
         """
+
+        start_total = time.time()  # ⏱ 전체 시작
+
         voice_detail = (
             f"{selected_voice['name']} (Gender: {selected_voice['tags']['gender']}, "
             f"Accent: {selected_voice['tags']['accent']}, Style: {selected_voice['tags']['style']})"
@@ -221,6 +224,9 @@ class AudioService:
         sentences = re.split(r'(?<=[.!?])\s+', script_only)
         formatted_script = "\n".join(sentence.strip() for sentence in sentences if sentence.strip())
         
+        total_elapsed = time.time() - start_total
+        print(f"[TIMER] 🧾 Total script generation took {total_elapsed:.2f}s\n")
+
         return title, formatted_script
 
     @staticmethod
@@ -256,39 +262,49 @@ class AudioService:
         return cleaned[:50]  # Limit length
 
     @staticmethod
-    def _generate_audio_with_timestamps(
+    async def _generate_audio_with_timestamps(
         script: str,
         voice_id: str
     ) -> dict:
         """
-        Generate audio using ElevenLabs API and parse timestamps
-        Returns parsed sentence data with timestamps
+        Generate audio asynchronously using ElevenLabs API (non-blocking).
+        Runs blocking I/O in a thread executor so the event loop remains free.
         """
         try:
-            # Call ElevenLabs API with alignment enabled
             elevenlabs_client = get_elevenlabs_client()
-            response = elevenlabs_client.text_to_speech.convert_with_timestamps(
-                voice_id=voice_id,
-                text=script,
-                model_id="eleven_multilingual_v2",
-                enable_logging=False
+            loop = asyncio.get_event_loop()
+
+            # 🚀 핵심 변화:
+            # run_in_executor() → blocking call을 별도의 스레드에서 실행
+            response = await loop.run_in_executor(
+                None,  # 기본 ThreadPoolExecutor 사용
+                lambda: elevenlabs_client.text_to_speech.convert_with_timestamps(
+                    voice_id=voice_id,
+                    text=script,
+                    model_id="eleven_multilingual_v2",
+                    enable_logging=False,
+                ),
             )
-            
+
             response_dict = response.model_dump()
-            # Parse the response using our timestamp utility
             sentences_with_timestamps = parse_tts_by_newlines(response_dict)
-            
+
             return {
                 "audio_base_64": response_dict.get("audio_base_64"),
-                "sentences": sentences_with_timestamps
+                "sentences": sentences_with_timestamps,
             }
-            
+
         except Exception as e:
             print(f"Error during audio generation: {e}")
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail=f"Failed to generate audio: {str(e)}"
             )
+
+
+
+
+
 
     @classmethod
     async def generate_audio_script(
@@ -326,15 +342,63 @@ class AudioService:
         Returns audio_base_64 and sentences with timestamps
         """
         # Step 1: Generate script and select voice
-        title, script, selected_voice = await cls.generate_audio_script(request, user)
         
+
+        print("\n[DEBUG] === Step 1: Generate script and select voice ===")
+        print(f"[DEBUG] User Info: id={user.id}, username={user.username}, level={user.level}")
+        title, script, selected_voice = await cls.generate_audio_script(request, user)
+        print(f"[DEBUG] title: {title[:80]}{'...' if len(title) > 80 else ''}")
+        print(f"[DEBUG] script (len={len(script)}):")
+        print(script)
+        print(f"[DEBUG] selected_voice keys: {list(selected_voice.keys())}")
+        print(f"[DEBUG] selected_voice: {json.dumps(selected_voice, indent=2)[:400]}")
+
+        # ============================================================
+        # ✅ Step 1.5: Placeholder DB entry 생성 (generated_content_id 확보)
+        # ============================================================
+        try:
+            db: Session = SessionLocal()
+            content = crud.insert_generated_content(
+                db,
+                user_id=user.id,
+                title=title,
+                script_data=script,
+                audio_url=None,
+                response_json=None,
+            )
+            generated_id = content.generated_content_id
+            print(f"[DEBUG] Inserted placeholder GeneratedContent (id={generated_id})")
+        except Exception as e:
+            print(f"[DEBUG] Failed to insert GeneratedContent: {e}")
+            generated_id = None
+    
+
+        # ✅ New step: Launch contextual vocabulary generation in background
+        try:
+            sentences = cls._split_script_by_newlines(script)
+            print(f"[DEBUG] Launching contextual vocab processing for {len(sentences)} sentences...")
+            # ✅ content_id 넘겨서 background에서 DB 업데이트 가능하도록
+            asyncio.create_task(VocabService.build_contextual_vocab(sentences, generated_id))
+        except Exception as e:
+            print(f"[DEBUG] Failed to launch VocabService: {e}")
+
+
+
         # Step 2: Generate audio with timestamps using ElevenLabs
-        audio_result = cls._generate_audio_with_timestamps(
+        print("\n[DEBUG] === Step 2: Generate audio with timestamps ===")
+        start_audio = time.time()  # ⏱ 전체 시작
+        audio_result = await cls._generate_audio_with_timestamps(
             script=script,
             voice_id=selected_voice["voice_id"]
         )
         
+
+        print(f"[DEBUG] audio_result keys: {list(audio_result.keys())}")
+        print(f"[DEBUG] audio_base_64 length: {len(audio_result.get('audio_base_64', ''))}")
+        print(f"[DEBUG] sentences count: {len(audio_result.get('sentences', []))}")
+
         # Step 3: Save audio file using title
+        print("\n[DEBUG] === Step 3: Save audio file ===")
         cleaned_title = AudioService._clean_filename(title)
         filename = f"{cleaned_title}_{user.id}.mp3"
         file_path = os.path.join(TEMP_AUDIO_DIR, filename)
@@ -345,8 +409,30 @@ class AudioService:
             audio_file.write(audio_data)
         
         # Step 4: Return final response with file URL
+        print("\n[DEBUG] === Step 4: Final Response ===")
+        audio_elapsed = time.time() - start_audio
+        print(f"[TIMER] 🔊 Audio synthesis took {audio_elapsed:.2f}s")
         return {
             "title": title,
             "audio_url": f"/api/v1/audio/files/{filename}",
             "sentences": audio_result["sentences"]
         }
+    
+
+    @staticmethod
+    def _split_script_by_newlines(script: str) -> list[str]:
+        """
+        Split the generated script (already newline-separated by GPT)
+        into a clean list of sentences.
+        Empty lines and stray whitespace are removed.
+        """
+        if not isinstance(script, str):
+            return []
+
+        # Split by literal newline
+        raw_sentences = script.split("\n")
+
+        # Clean and remove empty lines
+        sentences = [s.strip() for s in raw_sentences if s.strip()]
+
+        return sentences

@@ -1,5 +1,4 @@
-from backend.app.modules.tts.utils import parse_tts_by_newlines
-
+from backend.app.modules.audio.utils import parse_tts_by_newlines
 
 
 FAKE_TTS_RESPONSE = {
@@ -24,24 +23,45 @@ FAKE_TTS_RESPONSE = {
 }
 
 def test_parse_tts_by_newlines_basic():
-    """Verify that the parser correctly splits text by newline characters and extracts start times."""
-    sentences = parse_tts_by_newlines(FAKE_TTS_RESPONSE)
-
+    """Verify that the parser correctly splits text by newline characters and extracts start times and words."""
+    sentences_response = parse_tts_by_newlines(FAKE_TTS_RESPONSE)
+    print(sentences_response)
     # Result should be a list of sentences
-    assert isinstance(sentences, list)
-    assert len(sentences) == 3  # Expect three sentences
+    assert isinstance(sentences_response, list)
+    assert len(sentences_response) == 3  # Expect three sentences
 
     # Validate structure and field types
-    for sentence in sentences:
-        assert set(sentence.keys()) == {"id", "start_time", "text"}
+    for sentence in sentences_response:
+        assert set(sentence.keys()) == {"id", "start_time", "text", "words"}
+        assert isinstance(sentence["words"], list)
+        for w in sentence["words"]:
+            assert isinstance(w, str)
+
         assert isinstance(sentence["id"], int)
         assert isinstance(sentence["start_time"], float)
         assert isinstance(sentence["text"], str)
         assert len(sentence["text"]) > 0
 
-    assert sentences[0]["text"].startswith("Good morning")
-    assert sentences[1]["text"].startswith("How are you")
-    assert sentences[2]["text"].startswith("I hope you")
+    assert sentences_response[0]["text"].startswith("Good morning")
+    assert sentences_response[1]["text"].startswith("How are you")
+    assert sentences_response[2]["text"].startswith("I hope you")
+
+    # --- 🔹 Expected word lists for each sentence ---
+    expected_words = [
+        ["good", "morning"],
+        ["how", "are", "you", "today"],
+        ["i", "hope", "you", "slept", "well"],
+    ]
+
+    # Verify exact match for each sentence's words
+    for i, expected in enumerate(expected_words):
+        assert sentences_response[i]["words"] == expected, f"Sentence {i} words mismatch: {sentences_response[i]['words']} != {expected}"
+
+    # Verify all unique words combined
+    all_expected_words = [w for group in expected_words for w in group]
+    all_extracted_words = [w for s in sentences_response for w in s["words"]]
+    assert all_extracted_words == all_expected_words, f"Global word list mismatch: {all_extracted_words}"
+
 
 
 def test_parse_tts_by_newlines_trailing_newline():
@@ -58,3 +78,6 @@ def test_parse_tts_by_newlines_trailing_newline():
     assert len(sentences) == 2
     assert sentences[0]["text"] == "Hi!"
     assert sentences[1]["text"] == "Bye!"
+
+
+# TODO : audio/service에 정의된 _split_script_by_newlines 유닛 테스트 코드 작성하기.

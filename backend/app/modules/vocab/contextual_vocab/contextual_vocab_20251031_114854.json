@@ -1,0 +1,1114 @@
+{
+  "sentences": [
+    {
+      "index": 0,
+      "text": "Welcome to the magic game world.",
+      "words": [
+        {
+          "word": "Welcome",
+          "pos": "감탄사",
+          "meaning": "환영합니다"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "…에"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그, 특정한"
+        },
+        {
+          "word": "magic",
+          "pos": "형용사",
+          "meaning": "마법의"
+        },
+        {
+          "word": "game",
+          "pos": "명사",
+          "meaning": "게임"
+        },
+        {
+          "word": "world",
+          "pos": "명사",
+          "meaning": "세계"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "Today, we will start an exciting adventure.",
+      "words": [
+        {
+          "word": "Today",
+          "pos": "부사",
+          "meaning": "오늘"
+        },
+        {
+          "word": "we",
+          "pos": "대명사",
+          "meaning": "우리"
+        },
+        {
+          "word": "will",
+          "pos": "조동사",
+          "meaning": "미래를 나타내는 조동사"
+        },
+        {
+          "word": "start",
+          "pos": "동사",
+          "meaning": "시작하다"
+        },
+        {
+          "word": "an",
+          "pos": "관사",
+          "meaning": "하나의 (모음 앞에서 사용)"
+        },
+        {
+          "word": "exciting",
+          "pos": "형용사",
+          "meaning": "신나는"
+        },
+        {
+          "word": "adventure",
+          "pos": "명사",
+          "meaning": "모험"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "In this game, you are a hero.",
+      "words": [
+        {
+          "word": "In",
+          "pos": "전치사",
+          "meaning": "어떤 장소나 상태에 있음을 나타내는 전치사"
+        },
+        {
+          "word": "this",
+          "pos": "대명사",
+          "meaning": "지금 언급하는 것, 이것"
+        },
+        {
+          "word": "game",
+          "pos": "명사",
+          "meaning": "게임, 놀이"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "당신, 너"
+        },
+        {
+          "word": "are",
+          "pos": "조동사",
+          "meaning": "be 동사의 현재형, ~이다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 어떤"
+        },
+        {
+          "word": "hero",
+          "pos": "명사",
+          "meaning": "영웅, 주인공"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "You must find the golden key.",
+      "words": [
+        {
+          "word": "You",
+          "pos": "대명사",
+          "meaning": "너, 당신"
+        },
+        {
+          "word": "must",
+          "pos": "조동사",
+          "meaning": "해야 한다, 필수적이다"
+        },
+        {
+          "word": "find",
+          "pos": "동사",
+          "meaning": "찾다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그, 특정한"
+        },
+        {
+          "word": "golden",
+          "pos": "형용사",
+          "meaning": "금색의, 황금의"
+        },
+        {
+          "word": "key",
+          "pos": "명사",
+          "meaning": "열쇠"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "First, let's enter the forest.",
+      "words": [
+        {
+          "word": "First",
+          "pos": "부사",
+          "meaning": "첫 번째로, 먼저"
+        },
+        {
+          "word": "let's",
+          "pos": "조동사",
+          "meaning": "let의 축약형으로, ~하자"
+        },
+        {
+          "word": "enter",
+          "pos": "동사",
+          "meaning": "들어가다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "정관사, 특정한 대상을 지칭할 때 사용"
+        },
+        {
+          "word": "forest",
+          "pos": "명사",
+          "meaning": "숲"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "The trees are tall and dark.",
+      "words": [
+        {
+          "word": "The",
+          "pos": "관사",
+          "meaning": "지정된 대상을 나타내는 정관사"
+        },
+        {
+          "word": "trees",
+          "pos": "명사",
+          "meaning": "나무의 복수형, 나무들"
+        },
+        {
+          "word": "are",
+          "pos": "조동사",
+          "meaning": "be 동사의 현재형, 존재하다"
+        },
+        {
+          "word": "tall",
+          "pos": "형용사",
+          "meaning": "키가 큰, 높이가 있는"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고, 그리고는"
+        },
+        {
+          "word": "dark",
+          "pos": "형용사",
+          "meaning": "어두운"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "Listen!",
+      "words": [
+        {
+          "word": "Listen!",
+          "pos": "동사",
+          "meaning": "듣다! (명령형)"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "Do you hear the birds singing?",
+      "words": [
+        {
+          "word": "Do",
+          "pos": "조동사",
+          "meaning": "주어의 행동을 묻는 질문을 만드는 조동사"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너 또는 당신을 나타내는 대명사"
+        },
+        {
+          "word": "hear",
+          "pos": "동사",
+          "meaning": "듣다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 대상을 지칭할 때 쓰는 정관사"
+        },
+        {
+          "word": "birds",
+          "pos": "명사",
+          "meaning": "새들 (bird의 복수형)"
+        },
+        {
+          "word": "singing",
+          "pos": "동사",
+          "meaning": "노래하는 (sing의 현재분사)"
+        },
+        {
+          "word": "?",
+          "pos": "감탄사",
+          "meaning": "질문을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "They guide you to the river.",
+      "words": [
+        {
+          "word": "They",
+          "pos": "대명사",
+          "meaning": "그들"
+        },
+        {
+          "word": "guide",
+          "pos": "동사",
+          "meaning": "안내하다"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "당신"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "~로"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그 (특정한 것을 지칭)"
+        },
+        {
+          "word": "river",
+          "pos": "명사",
+          "meaning": "강"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "At the river, there is a bridge.",
+      "words": [
+        {
+          "word": "At",
+          "pos": "전치사",
+          "meaning": "어디에 위치해 있음을 나타내는 전치사"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 것을 가리키는 정관사"
+        },
+        {
+          "word": "river",
+          "pos": "명사",
+          "meaning": "물줄기가 흐르는 자연적인 지역"
+        },
+        {
+          "word": "there",
+          "pos": "부사",
+          "meaning": "어디에 존재함을 나타내는 부사"
+        },
+        {
+          "word": "is",
+          "pos": "동사",
+          "meaning": "be 동사의 현재형, ~이다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "불특정한 것을 나타내는 부정관사"
+        },
+        {
+          "word": "bridge",
+          "pos": "명사",
+          "meaning": "강이나 도로 등을 가로지르는 구조물"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "It looks old and creaky.",
+      "words": [
+        {
+          "word": "It",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "looks",
+          "pos": "동사",
+          "meaning": "보다, ~처럼 보이다 (look의 3인칭 단수형)"
+        },
+        {
+          "word": "old",
+          "pos": "형용사",
+          "meaning": "오래된, 낡은"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고"
+        },
+        {
+          "word": "creaky",
+          "pos": "형용사",
+          "meaning": "삐걱거리는"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "Be careful as you cross it.",
+      "words": [
+        {
+          "word": "Be",
+          "pos": "조동사",
+          "meaning": "존재하다, 있다 (명령형으로 사용됨)"
+        },
+        {
+          "word": "careful",
+          "pos": "형용사",
+          "meaning": "조심하는, 신중한"
+        },
+        {
+          "word": "as",
+          "pos": "전치사",
+          "meaning": "~로서, ~할 때"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너, 당신"
+        },
+        {
+          "word": "cross",
+          "pos": "동사",
+          "meaning": "건너다"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "Look!",
+      "words": [
+        {
+          "word": "Look!",
+          "pos": "동사",
+          "meaning": "보다, 주목하라는 감탄사"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "Do you see something shiny?",
+      "words": [
+        {
+          "word": "Do",
+          "pos": "조동사",
+          "meaning": "질문을 할 때 사용하는 조동사"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "너 또는 당신을 의미하는 대명사"
+        },
+        {
+          "word": "see",
+          "pos": "동사",
+          "meaning": "보다"
+        },
+        {
+          "word": "something",
+          "pos": "대명사",
+          "meaning": "무언가, 어떤 것"
+        },
+        {
+          "word": "shiny",
+          "pos": "형용사",
+          "meaning": "빛나는, 반짝이는"
+        },
+        {
+          "word": "?",
+          "pos": "감탄사",
+          "meaning": "질문을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "text": "Yes!",
+      "words": [
+        {
+          "word": "Yes!",
+          "pos": "감탄사",
+          "meaning": "동의 또는 긍정을 나타내는 표현"
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "text": "It is a silver coin.",
+      "words": [
+        {
+          "word": "It",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "이다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의"
+        },
+        {
+          "word": "silver",
+          "pos": "형용사",
+          "meaning": "은색의"
+        },
+        {
+          "word": "coin",
+          "pos": "명사",
+          "meaning": "동전"
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "text": "Great!",
+      "words": [
+        {
+          "word": "Great!",
+          "pos": "감탄사",
+          "meaning": "훌륭한! - 긍정적인 감정이나 반응을 나타내는 표현"
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "text": "Now, let's go to the magic castle.",
+      "words": [
+        {
+          "word": "Now",
+          "pos": "부사",
+          "meaning": "지금, 현재"
+        },
+        {
+          "word": "let's",
+          "pos": "조동사",
+          "meaning": "let의 축약형으로, ~하자"
+        },
+        {
+          "word": "go",
+          "pos": "동사",
+          "meaning": "가다"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "에, 으로"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 것을 지칭할 때 쓰는 관사"
+        },
+        {
+          "word": "magic",
+          "pos": "형용사",
+          "meaning": "마법의, 마법 같은"
+        },
+        {
+          "word": "castle",
+          "pos": "명사",
+          "meaning": "성, castle"
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "text": "The castle is big and mysterious.",
+      "words": [
+        {
+          "word": "The",
+          "pos": "관사",
+          "meaning": "그, 특정한 대상을 지칭하는 관사"
+        },
+        {
+          "word": "castle",
+          "pos": "명사",
+          "meaning": "성, 방어용 건물"
+        },
+        {
+          "word": "is",
+          "pos": "동사",
+          "meaning": "be의 현재형, ~이다"
+        },
+        {
+          "word": "big",
+          "pos": "형용사",
+          "meaning": "큰, 사이즈가 큰"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "~와, 그리고"
+        },
+        {
+          "word": "mysterious",
+          "pos": "형용사",
+          "meaning": "신비한, 불가사의한"
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "text": "The doors are grand and tall.",
+      "words": [
+        {
+          "word": "The",
+          "pos": "관사",
+          "meaning": "특정한 것을 지칭할 때 사용하는 관사"
+        },
+        {
+          "word": "doors",
+          "pos": "명사",
+          "meaning": "문들의 복수형, 출입구를 의미하는 단어"
+        },
+        {
+          "word": "are",
+          "pos": "조동사",
+          "meaning": "be 동사의 복수형, 존재를 나타내는 조동사"
+        },
+        {
+          "word": "grand",
+          "pos": "형용사",
+          "meaning": "웅장한, 인상 깊은"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고, 두 문장을 연결하는 접속사"
+        },
+        {
+          "word": "tall",
+          "pos": "형용사",
+          "meaning": "키가 큰, 길이가 긴"
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "text": "Inside, there is a big room.",
+      "words": [
+        {
+          "word": "Inside",
+          "pos": "부사",
+          "meaning": "안쪽에, 내부에"
+        },
+        {
+          "word": "there",
+          "pos": "대명사",
+          "meaning": "거기에, 그곳에"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "존재하다 (현재형)"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 일종의"
+        },
+        {
+          "word": "big",
+          "pos": "형용사",
+          "meaning": "큰"
+        },
+        {
+          "word": "room",
+          "pos": "명사",
+          "meaning": "방"
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "text": "In the corner, you spot a chest.",
+      "words": [
+        {
+          "word": "In",
+          "pos": "전치사",
+          "meaning": "안에, 안쪽에"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 대상을 지칭할 때 사용하는 관사"
+        },
+        {
+          "word": "corner",
+          "pos": "명사",
+          "meaning": "모서리, 구석"
+        },
+        {
+          "word": "you",
+          "pos": "대명사",
+          "meaning": "당신, 너"
+        },
+        {
+          "word": "spot",
+          "pos": "동사",
+          "meaning": "발견하다,보다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "어떤 하나의 대상을 지칭할 때 사용하는 관사"
+        },
+        {
+          "word": "chest",
+          "pos": "명사",
+          "meaning": "상자, 가슴, 침대"
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "text": "But wait!",
+      "words": [
+        {
+          "word": "But",
+          "pos": "접속사",
+          "meaning": "그러나"
+        },
+        {
+          "word": "wait",
+          "pos": "동사",
+          "meaning": "기다리다"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "감정을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "text": "There is a puzzle to solve.",
+      "words": [
+        {
+          "word": "There",
+          "pos": "대명사",
+          "meaning": "어디에, 어떤 존재가 있음"
+        },
+        {
+          "word": "is",
+          "pos": "조동사",
+          "meaning": "있다, 존재하다 (be 동사의 현재형)"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 어느 (불특정한 하나를 나타냄)"
+        },
+        {
+          "word": "puzzle",
+          "pos": "명사",
+          "meaning": "퍼즐, 문제, 수수께끼"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "~하기 위해, ~로 (목적을 나타냄)"
+        },
+        {
+          "word": "solve",
+          "pos": "동사",
+          "meaning": "해결하다, 풀다"
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "text": "The pieces are colorful and bright.",
+      "words": [
+        {
+          "word": "The",
+          "pos": "관사",
+          "meaning": "특정성을 나타내는 정관사"
+        },
+        {
+          "word": "pieces",
+          "pos": "명사",
+          "meaning": "조각들, piece의 복수형"
+        },
+        {
+          "word": "are",
+          "pos": "조동사",
+          "meaning": "be 동사의 현재형 복수형"
+        },
+        {
+          "word": "colorful",
+          "pos": "형용사",
+          "meaning": "다채로운, 색깔이 많은"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "그리고, 연결의 의미"
+        },
+        {
+          "word": "bright",
+          "pos": "형용사",
+          "meaning": "밝은, 선명한"
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "text": "Put them together to find a clue.",
+      "words": [
+        {
+          "word": "Put",
+          "pos": "동사",
+          "meaning": "놓다, 두다 (명령형)"
+        },
+        {
+          "word": "them",
+          "pos": "대명사",
+          "meaning": "그들, 그 것들 (복수형)"
+        },
+        {
+          "word": "together",
+          "pos": "부사",
+          "meaning": "함께, 합쳐서"
+        },
+        {
+          "word": "to",
+          "pos": "전치사",
+          "meaning": "…에, …로"
+        },
+        {
+          "word": "find",
+          "pos": "동사",
+          "meaning": "찾다"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의"
+        },
+        {
+          "word": "clue",
+          "pos": "명사",
+          "meaning": "단서"
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "text": "Congratulations!",
+      "words": [
+        {
+          "word": "Congratulations!",
+          "pos": "감탄사",
+          "meaning": "축하의 표현"
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "text": "You solved the puzzle.",
+      "words": [
+        {
+          "word": "You",
+          "pos": "대명사",
+          "meaning": "너 또는 당신"
+        },
+        {
+          "word": "solved",
+          "pos": "동사",
+          "meaning": "solve의 과거형, 풀다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 것을 지칭하는 정관사"
+        },
+        {
+          "word": "puzzle",
+          "pos": "명사",
+          "meaning": "퍼즐, 문제"
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "text": "Open the chest now.",
+      "words": [
+        {
+          "word": "Open",
+          "pos": "동사",
+          "meaning": "열다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "정관사"
+        },
+        {
+          "word": "chest",
+          "pos": "명사",
+          "meaning": "상자"
+        },
+        {
+          "word": "now",
+          "pos": "부사",
+          "meaning": "지금"
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "text": "There it is!",
+      "words": [
+        {
+          "word": "There",
+          "pos": "부사",
+          "meaning": "거기에, 그곳에"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "is",
+          "pos": "동사",
+          "meaning": "이다"
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "text": "The golden key!",
+      "words": [
+        {
+          "word": "The",
+          "pos": "관사",
+          "meaning": "특정한 대상을 지칭하는 정관사"
+        },
+        {
+          "word": "golden",
+          "pos": "형용사",
+          "meaning": "금색의, 또는 귀한 것에 비유적인 형용사"
+        },
+        {
+          "word": "key",
+          "pos": "명사",
+          "meaning": "열쇠, 또는 문제를 해결하는 중요한 요소"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "강한 감정이나 놀라움을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "text": "You did it, brave hero!",
+      "words": [
+        {
+          "word": "You",
+          "pos": "대명사",
+          "meaning": "너"
+        },
+        {
+          "word": "did",
+          "pos": "동사",
+          "meaning": "do의 과거형, 하다"
+        },
+        {
+          "word": "it",
+          "pos": "대명사",
+          "meaning": "그것"
+        },
+        {
+          "word": "brave",
+          "pos": "형용사",
+          "meaning": "용감한"
+        },
+        {
+          "word": "hero",
+          "pos": "명사",
+          "meaning": "영웅"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "감정을 표현하는 기호"
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "text": "You found the key and won the game.",
+      "words": [
+        {
+          "word": "You",
+          "pos": "대명사",
+          "meaning": "너 또는 당신"
+        },
+        {
+          "word": "found",
+          "pos": "동사",
+          "meaning": "find의 과거형, 찾다"
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "그, 이 (특정한 것을 지칭할 때 사용)"
+        },
+        {
+          "word": "key",
+          "pos": "명사",
+          "meaning": "열쇠"
+        },
+        {
+          "word": "and",
+          "pos": "접속사",
+          "meaning": "~과, ~와 (두 개 이상의 요소를 연결할 때 사용)"
+        },
+        {
+          "word": "won",
+          "pos": "동사",
+          "meaning": "win의 과거형, 이기다"
+        },
+        {
+          "word": "game",
+          "pos": "명사",
+          "meaning": "게임"
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "text": "What a fantastic adventure!",
+      "words": [
+        {
+          "word": "What",
+          "pos": "감탄사",
+          "meaning": "놀라움을 나타내는 말"
+        },
+        {
+          "word": "a",
+          "pos": "관사",
+          "meaning": "하나의, 어떤"
+        },
+        {
+          "word": "fantastic",
+          "pos": "형용사",
+          "meaning": "환상적인, 멋진"
+        },
+        {
+          "word": "adventure",
+          "pos": "명사",
+          "meaning": "모험"
+        },
+        {
+          "word": "!",
+          "pos": "감탄사",
+          "meaning": "감정이나 놀라움을 나타내는 기호"
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "text": "Thanks for playing the magic game with us today.",
+      "words": [
+        {
+          "word": "Thanks",
+          "pos": "감탄사",
+          "meaning": "감사합니다."
+        },
+        {
+          "word": "for",
+          "pos": "전치사",
+          "meaning": "의미의 목적이나 이유를 나타냄."
+        },
+        {
+          "word": "playing",
+          "pos": "동사",
+          "meaning": "play의 현재진행형, 놀다, 게임을 하다."
+        },
+        {
+          "word": "the",
+          "pos": "관사",
+          "meaning": "특정한 것을 지칭하는 정관사."
+        },
+        {
+          "word": "magic",
+          "pos": "형용사",
+          "meaning": "마법의, 마법처럼 신비로운."
+        },
+        {
+          "word": "game",
+          "pos": "명사",
+          "meaning": "게임, 놀이."
+        },
+        {
+          "word": "with",
+          "pos": "전치사",
+          "meaning": "함께, ~와 함께."
+        },
+        {
+          "word": "us",
+          "pos": "대명사",
+          "meaning": "우리(를), 우리에게."
+        },
+        {
+          "word": "today",
+          "pos": "부사",
+          "meaning": "오늘."
+        }
+      ]
+    }
+  ]
+}
