@@ -1,5 +1,4 @@
-from backend.tests.test_main import client
-import json
+from backend.tests.integration.test_main import client
 
 API_VERSION = "/api/v1"
 
