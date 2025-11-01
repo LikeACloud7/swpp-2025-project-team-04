@@ -8,7 +8,11 @@ import pytest
 from backend.app.core.llm import LLMServiceError
 from backend.app.modules.level_management import crud, schemas
 from backend.app.modules.level_management.models import CEFRLevel, LevelTestScript
-from backend.app.modules.level_management.service import LevelManagementService, LevelTestScriptNotFoundException
+from backend.app.modules.level_management.service import (
+    LevelManagementService,
+    LevelTestScriptNotFoundException,
+    GeneratedContentNotFoundException,
+)
 from backend.app.modules.users import crud as user_crud
 
 
@@ -206,9 +210,21 @@ def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
     )
     service = LevelManagementService(llm_client=llm)
 
-    def fake_get_scripts_by_ids(db_arg, ids):
-        scripts = make_scripts()
-        return {script_id: scripts[script_id] for script_id in ids}
+    def fake_get_generated_contents_by_ids(db_arg, ids):
+        assert db_arg is db
+        payload = {
+            101: SimpleNamespace(
+                generated_content_id=101,
+                script_data="Welcome to the placement test.",
+                title="Session recap A",
+            ),
+            202: SimpleNamespace(
+                generated_content_id=202,
+                script_data="Advanced discussion about economics.",
+                title="Session recap B",
+            ),
+        }
+        return {content_id: payload[content_id] for content_id in ids}
 
     def fake_update_user_level(
         db_arg,
@@ -252,14 +268,14 @@ def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
         assert sample_count == 2
         return SimpleNamespace(user_id=user_id, level=level)
 
-    monkeypatch.setattr(crud, "get_scripts_by_ids", fake_get_scripts_by_ids)
+    monkeypatch.setattr(crud, "get_generated_contents_by_ids", fake_get_generated_contents_by_ids)
     monkeypatch.setattr(user_crud, "update_user_level", fake_update_user_level)
     monkeypatch.setattr(crud, "insert_level_history", fake_insert_level_history)
 
     payload = schemas.LevelTestRequest(
         tests=[
-            schemas.LevelTestItem(script_id="script-a", understanding=50),
-            schemas.LevelTestItem(script_id="script-b", understanding=60),
+            schemas.LevelTestItem(generated_content_id=101, understanding=50),
+            schemas.LevelTestItem(generated_content_id=202, understanding=60),
         ]
     )
 
@@ -388,6 +404,34 @@ def test_evaluate_level_raises_when_script_missing(monkeypatch):
 
     with pytest.raises(LevelTestScriptNotFoundException):
         service.evaluate_initial_level(db=db, user=user, payload=payload)
+
+
+def test_session_feedback_raises_when_generated_content_missing(monkeypatch):
+    db = DummySession()
+    user = SimpleNamespace(
+        id=5,
+        level=CEFRLevel.B1,
+        level_score=52,
+        llm_confidence=48,
+        initial_level_completed=True,
+        level_updated_at=None,
+    )
+
+    service = LevelManagementService(llm_client=FakeLLMClient())
+
+    def fake_get_generated_contents_by_ids(db_arg, ids):
+        return {}
+
+    monkeypatch.setattr(crud, "get_generated_contents_by_ids", fake_get_generated_contents_by_ids)
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(generated_content_id=999, understanding=70),
+        ]
+    )
+
+    with pytest.raises(GeneratedContentNotFoundException):
+        service.evaluate_session_feedback(db=db, user=user, payload=payload)
 
 
 def test_resolve_llm_client_creates_instance(monkeypatch):

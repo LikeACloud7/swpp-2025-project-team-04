@@ -16,6 +16,7 @@ from . import schemas
 from .service import (
     LevelManagementService,
     LevelTestScriptNotFoundException,
+    GeneratedContentNotFoundException,
 )
 
 router = APIRouter(prefix="/level-management", tags=["level-management"])
@@ -69,6 +70,7 @@ def evaluate_level(
             InvalidTokenException,
             InvalidTokenTypeException,
             LevelTestScriptNotFoundException,
+            GeneratedContentNotFoundException,
         ]
     ),
 )

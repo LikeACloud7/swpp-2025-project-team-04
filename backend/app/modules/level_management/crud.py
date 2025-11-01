@@ -4,6 +4,7 @@ from typing import Mapping, Sequence
 from sqlalchemy.orm import Session
 
 from .models import CEFRLevel, LevelTestScript, UserLevelHistory
+from ..audio.model import GeneratedContent
 
 
 def get_scripts_by_ids(db: Session, script_ids: Sequence[str]) -> Mapping[str, LevelTestScript]:
@@ -17,6 +18,20 @@ def get_scripts_by_ids(db: Session, script_ids: Sequence[str]) -> Mapping[str, L
     lookup = defaultdict(lambda: None)
     for row in rows:
         lookup[row.id] = row
+    return lookup
+
+
+def get_generated_contents_by_ids(db: Session, content_ids: Sequence[int]) -> Mapping[int, GeneratedContent]:
+    if not content_ids:
+        return {}
+    rows = (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id.in_(content_ids))
+        .all()
+    )
+    lookup = defaultdict(lambda: None)
+    for row in rows:
+        lookup[row.generated_content_id] = row
     return lookup
 
 
