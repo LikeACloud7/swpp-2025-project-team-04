@@ -6,9 +6,9 @@ from typing import Dict
 import pytest
 
 from backend.app.core.llm import LLMServiceError
-from backend.app.modules.personalization import crud, schemas
-from backend.app.modules.personalization.models import CEFRLevel, LevelTestScript
-from backend.app.modules.personalization.service import PersonalizationService
+from backend.app.modules.level_management import crud, schemas
+from backend.app.modules.level_management.models import CEFRLevel, LevelTestScript
+from backend.app.modules.level_management.service import LevelManagementService, LevelTestScriptNotFoundException
 from backend.app.modules.users import crud as user_crud
 
 
@@ -19,7 +19,7 @@ class FakePrompt:
 
 @pytest.fixture(autouse=True)
 def patch_prompt_store(monkeypatch):
-    from backend.app.modules.personalization import service as service_module
+    from backend.app.modules.level_management import service as service_module
     monkeypatch.setattr(service_module._PROMPT_STORE, "load", lambda _: FakePrompt)
 
 
@@ -62,7 +62,7 @@ def test_summarize_level_test_with_llm_success():
             }
         )
     )
-    service = PersonalizationService(llm_client=llm)
+    service = LevelManagementService(llm_client=llm)
 
     tests = [
         schemas.LevelTestItem(script_id="script-a", understanding=55),
@@ -91,7 +91,7 @@ def test_summarize_level_test_invalid_llm_payload_uses_defaults():
             }
         )
     )
-    service = PersonalizationService(llm_client=llm)
+    service = LevelManagementService(llm_client=llm)
 
     tests = [
         schemas.LevelTestItem(script_id="script-a", understanding=30),
@@ -170,7 +170,7 @@ def test_set_manual_level_updates_user_and_history(monkeypatch):
     monkeypatch.setattr(user_crud, "update_user_level", fake_update_user_level)
     monkeypatch.setattr(crud, "insert_level_history", fake_insert_level_history)
 
-    service = PersonalizationService()
+    service = LevelManagementService()
     payload = schemas.ManualLevelUpdateRequest(level=CEFRLevel.B2)
 
     response = service.set_manual_level(db=db, user=user, payload=payload)
@@ -204,7 +204,7 @@ def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
             }
         )
     )
-    service = PersonalizationService(llm_client=llm)
+    service = LevelManagementService(llm_client=llm)
 
     def fake_get_scripts_by_ids(db_arg, ids):
         scripts = make_scripts()
@@ -270,3 +270,195 @@ def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
     assert response.level == CEFRLevel.B2
     assert response.scores.level_score == 70
     assert '"context": "session_feedback"' in llm.calls[0]["user_prompt"]
+
+
+def test_evaluate_initial_level_updates_user_and_history(monkeypatch):
+    db = DummySession()
+    updated_at = datetime.now(timezone.utc)
+    user = SimpleNamespace(
+        id=12,
+        level=CEFRLevel.A2,
+        level_score=40,
+        llm_confidence=35,
+        initial_level_completed=False,
+        level_updated_at=updated_at,
+    )
+
+    llm = FakeLLMClient(
+        response=json.dumps(
+            {
+                "level": "B1",
+                "level_score": 50,
+                "llm_confidence": 55,
+                "rationale": "Learner shows enough understanding for B1.",
+            }
+        )
+    )
+    service = LevelManagementService(llm_client=llm)
+
+    def fake_get_scripts_by_ids(db_arg, ids):
+        scripts = make_scripts()
+        return {script_id: scripts[script_id] for script_id in ids}
+
+    def fake_update_user_level(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        initial_level_completed=None,
+        commit,
+    ):
+        assert db_arg is db
+        assert user_id == user.id
+        assert level == CEFRLevel.B1
+        assert level_score == 50
+        assert llm_confidence == 55
+        assert initial_level_completed is True
+        assert commit is False
+        return SimpleNamespace(
+            id=user_id,
+            level=level,
+            level_updated_at=updated_at,
+        )
+
+    def fake_insert_level_history(
+        db_arg,
+        *,
+        user_id,
+        level,
+        level_score=None,
+        llm_confidence=None,
+        average_understanding=None,
+        sample_count=None,
+    ):
+        assert db_arg is db
+        assert user_id == user.id
+        assert level == CEFRLevel.B1
+        assert level_score == 50
+        assert llm_confidence == 55
+        assert average_understanding == 55
+        assert sample_count == 2
+        return SimpleNamespace(user_id=user_id, level=level)
+
+    monkeypatch.setattr(crud, "get_scripts_by_ids", fake_get_scripts_by_ids)
+    monkeypatch.setattr(user_crud, "update_user_level", fake_update_user_level)
+    monkeypatch.setattr(crud, "insert_level_history", fake_insert_level_history)
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(script_id="script-a", understanding=50),
+            schemas.LevelTestItem(script_id="script-b", understanding=60),
+        ]
+    )
+
+    response = service.evaluate_initial_level(db=db, user=user, payload=payload)
+
+    assert db.commits == 1
+    assert len(db.refreshed) == 2
+    assert response.level == CEFRLevel.B1
+    assert response.scores.level_score == 50
+    assert '"context": "initial_level_assessment"' in llm.calls[0]["user_prompt"]
+
+
+def test_evaluate_level_raises_when_script_missing(monkeypatch):
+    db = DummySession()
+    user = SimpleNamespace(
+        id=3,
+        level=CEFRLevel.A1,
+        level_score=None,
+        llm_confidence=None,
+        initial_level_completed=False,
+        level_updated_at=None,
+    )
+
+    service = LevelManagementService(llm_client=FakeLLMClient())
+
+    def fake_get_scripts_by_ids(db_arg, ids):
+        return {}
+
+    monkeypatch.setattr(crud, "get_scripts_by_ids", fake_get_scripts_by_ids)
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(script_id="missing-script", understanding=40),
+        ]
+    )
+
+    with pytest.raises(LevelTestScriptNotFoundException):
+        service.evaluate_initial_level(db=db, user=user, payload=payload)
+
+
+def test_resolve_llm_client_creates_instance(monkeypatch):
+    from backend.app.modules.level_management import service as service_module
+
+    class DummyLLM:
+        pass
+
+    monkeypatch.setattr(service_module, "OpenAILLMClient", DummyLLM)
+
+    service = LevelManagementService()
+    client = service._resolve_llm_client()
+
+    assert isinstance(client, DummyLLM)
+    assert service._resolve_llm_client() is client
+
+
+def test_get_scripts_by_ids_returns_lookup():
+    scripts = [
+        LevelTestScript(
+            id="script-a",
+            transcript="Intro",
+            target_level=CEFRLevel.A2,
+        ),
+        LevelTestScript(
+            id="script-b",
+            transcript="Advanced",
+            target_level=CEFRLevel.C1,
+        ),
+    ]
+
+    class FakeQuery:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def filter(self, *args, **kwargs):
+            return self
+
+        def all(self):
+            return self._rows
+
+    class QuerySession(DummySession):
+        def query(self, model):
+            assert model is LevelTestScript
+            return FakeQuery(scripts)
+
+    db = QuerySession()
+    result = crud.get_scripts_by_ids(db, ["script-a", "missing"])
+
+    assert result["script-a"] is scripts[0]
+    assert result["missing"] is None
+
+
+def test_insert_level_history_adds_record():
+    added = []
+
+    class AddSession(DummySession):
+        def add(self, obj):
+            added.append(obj)
+
+    db = AddSession()
+    record = crud.insert_level_history(
+        db,
+        user_id=5,
+        level=CEFRLevel.B1,
+        level_score=60,
+        llm_confidence=58,
+        average_understanding=55,
+        sample_count=3,
+    )
+
+    assert record in added
+    assert record.user_id == 5
+    assert record.level == CEFRLevel.B1
