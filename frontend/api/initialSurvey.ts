@@ -32,8 +32,6 @@ export type ManualLevelResponse = {
   updated_at: string;
 };
 
-
-
 export const mapLevelIdToCEFR = (levelId: string): CEFRLevel => {
   const levelMap: Record<string, CEFRLevel> = {
     '1': 'A1',
@@ -47,28 +45,39 @@ export const mapLevelIdToCEFR = (levelId: string): CEFRLevel => {
   return levelMap[levelId];
 };
 
+export const generateScriptId = (
+  level: CEFRLevel,
+  questionNumber: number,
+): string => {
+  const levelBaseMap: Record<CEFRLevel, number> = {
+    A1: 0, // script_ids 1-5
+    A2: 5, // 6-10
+    B1: 10, // 11-15
+    B2: 15, // 16-20
+    C1: 20, // 21-25
+    C2: 25, // 26-30
+  };
 
-export const generateScriptId = (level: CEFRLevel, questionNumber: number): string => {
-  return `${level}_${questionNumber}`;
+  const baseId = levelBaseMap[level];
+  const scriptId = baseId + questionNumber;
+
+  return scriptId.toString();
 };
 
-
-export const getAudioUrl = (levelId: string, questionNumber: number): string => {
+export const getAudioUrl = (
+  levelId: string,
+  questionNumber: number,
+): string => {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL;
   const cefrLevel = mapLevelIdToCEFR(levelId);
   return `${baseUrl}/api/v1/initial-survey/${cefrLevel}/${questionNumber}`;
 };
 
-
-
-
-
 export const submitLevelTest = async (
   levelId: string,
-  percentages: number[]
+  percentages: number[],
 ): Promise<LevelTestResponse> => {
   const cefrLevel = mapLevelIdToCEFR(levelId);
-
 
   const tests: LevelTestItem[] = percentages.map((understanding, index) => ({
     script_id: generateScriptId(cefrLevel, index + 1),
@@ -77,21 +86,20 @@ export const submitLevelTest = async (
 
   const payload: LevelTestPayload = { tests };
 
-  return customFetch<LevelTestResponse>('/personalization/level-test', {
+  return customFetch<LevelTestResponse>('/level-management/level-test', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
 };
 
-
 export const submitManualLevel = async (
-  levelId: string
+  levelId: string,
 ): Promise<ManualLevelResponse> => {
   const cefrLevel = mapLevelIdToCEFR(levelId);
 
   const payload: ManualLevelPayload = { level: cefrLevel };
 
-  return customFetch<ManualLevelResponse>('/personalization/manual-level', {
+  return customFetch<ManualLevelResponse>('/level-management/manual-level', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

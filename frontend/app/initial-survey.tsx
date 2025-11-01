@@ -17,7 +17,7 @@ import {
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
-import { submitLevelTest } from '@/api/initialSurvey';
+import { submitLevelTest, submitManualLevel } from '@/api/initialSurvey';
 
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -70,35 +70,25 @@ export default function InitialSurveyScreen() {
     setIsSubmitting(true);
 
     try {
-      // Mock
-      console.log('=== MOCK: Submitting Initial Survey ===');
-      console.log('Level:', userInput.proficiencyLevel);
-      console.log('Comprehension scores:', [
-        userInput.percent1,
-        userInput.percent2,
-        userInput.percent3,
-        userInput.percent4,
-        userInput.percent5,
-      ]);
-      console.log('Selected topics:', userInput.selectedTopics);
-      console.log('=== MOCK: Submission successful ===');
-
-      // TODO: backend
-      // const response = await submitLevelTest(userInput.proficiencyLevel, [
-      //   userInput.percent1,
-      //   userInput.percent2,
-      //   userInput.percent3,
-      //   userInput.percent4,
-      //   userInput.percent5,
-      // ]);
+      // 백엔드로 보내기
+      if (skipTest === true) {
+        await submitManualLevel(userInput.proficiencyLevel);
+      } else {
+        await submitLevelTest(userInput.proficiencyLevel, [
+          userInput.percent1,
+          userInput.percent2,
+          userInput.percent3,
+          userInput.percent4,
+          userInput.percent5,
+        ]);
+      }
 
       router.replace('/(main)');
     } catch (error) {
-      console.error('Failed to submit level test');
       Alert.alert(
         '제출 실패',
         '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
-        [{ text: '확인' }]
+        [{ text: '확인' }],
       );
     } finally {
       setIsSubmitting(false);
@@ -159,9 +149,7 @@ export default function InitialSurveyScreen() {
           />
         );
       case 2:
-        return (
-          <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />
-        );
+        return <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />;
       case 3:
         return (
           <>

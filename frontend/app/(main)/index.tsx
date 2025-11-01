@@ -1,25 +1,65 @@
 import Button from '@/components/home/Button';
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
-import { MOOD_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import { MOOD_OPTIONS } from '@/constants/homeOptions';
+import { TOPIC_CATEGORIES } from '@/constants/initialSurveyData';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { getBaseUrl } from '@/api/client';
+import { useUser } from '@/hooks/queries/useUserQueries';
+import { getStats } from '@/api/stats';
+import { STATS_QUERY_KEY } from '@/constants/queryKeys';
+import TrackPlayer from 'react-native-track-player';
 
 export default function HomeScreen() {
   const qc = useQueryClient();
   const baseURL = getBaseUrl();
   const router = useRouter();
 
-  const [selectedTheme, setSelectedTheme] = useState<THEME_OPTIONS | null>(
-    null,
-  );
+  const { data: user, isLoading: isUserLoading } = useUser();
+  const { data: stats } = useQuery({
+    queryKey: STATS_QUERY_KEY,
+    queryFn: getStats,
+  });
+
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<MOOD_OPTIONS | null>(null);
+  const [displayedThemes, setDisplayedThemes] = useState<string[]>([]);
+
+  const allAvailableTopics = useMemo(() => {
+    return TOPIC_CATEGORIES.flatMap((category) =>
+      category.topics.map((topic) => topic.id),
+    );
+  }, []);
+
+  const generateDisplayedThemes = useCallback(() => {
+    const userInterests = user?.interests || [];
+    const totalThemesToShow = 5;
+    const randomNeeded = totalThemesToShow - userInterests.length;
+
+    if (randomNeeded <= 0) {
+      return userInterests.slice(0, totalThemesToShow);
+    }
+
+    const remainingTopics = allAvailableTopics.filter(
+      (topic) => !userInterests.includes(topic),
+    );
+
+    const shuffled = [...remainingTopics].sort(() => Math.random() - 0.5);
+    const randomTopics = shuffled.slice(0, randomNeeded);
+
+    return [...userInterests, ...randomTopics];
+  }, [user, allAvailableTopics]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setDisplayedThemes(generateDisplayedThemes());
+    }, [generateDisplayedThemes]),
+  );
 
   // 오디오 API 훅
   const { mutate: audioMutate, isPending: isAudioLoading } = useGenerateAudio();
@@ -88,6 +128,14 @@ export default function HomeScreen() {
     );
   };
 
+  if (isUserLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#EBF4FB]">
+        <ActivityIndicator size="large" color="#0EA5E9" />
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-[#EBF4FB]">
       <ScrollView
@@ -106,23 +154,30 @@ export default function HomeScreen() {
                 <Text className="text-sm font-black text-neutral-600">
                   연속 학습
                 </Text>
-                <Text className="text-xl font-black text-neutral-900">0일</Text>
+                <Text className="text-xl font-black text-neutral-900">
+                  {stats?.streak.consecutive_days ?? 0}일
+                </Text>
               </View>
             </View>
 
             <View className="flex-row justify-between">
-              {['월', '화', '수', '목', '금', '토', '일'].map((day, index) => (
-                <View key={day} className="items-center">
-                  <Text className="mb-2 text-xs font-semibold text-neutral-400">
-                    {day}
-                  </Text>
-                  <View className="h-8 w-8 items-center justify-center rounded-full bg-neutral-200">
-                    <View
-                      className={`h-2 w-2 rounded-full ${index === 0 ? 'bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500' : 'bg-transparent'}`}
-                    />
+              {['월', '화', '수', '목', '금', '토', '일'].map((day, index) => {
+                const dayData = stats?.streak.daily_minutes[index];
+                const hasActivity = dayData ? dayData.minutes > 1 : false;
+
+                return (
+                  <View key={day} className="items-center">
+                    <Text className="mb-2 text-xs font-semibold text-neutral-400">
+                      {day}
+                    </Text>
+                    <View className="h-8 w-8 items-center justify-center rounded-full bg-neutral-200">
+                      <View
+                        className={`h-2 w-2 rounded-full ${hasActivity ? 'bg-orange-500' : 'bg-transparent'}`}
+                      />
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 
@@ -137,10 +192,8 @@ export default function HomeScreen() {
         <View className="px-5 pt-3">
           <ChipSelectorGroup
             title="테마"
-            chips={Object.values(THEME_OPTIONS)}
-            onSelectionChange={(value) =>
-              setSelectedTheme(value ? (value as THEME_OPTIONS) : null)
-            }
+            chips={displayedThemes}
+            onSelectionChange={(value) => setSelectedTheme(value || null)}
           />
 
           <ChipSelectorGroup

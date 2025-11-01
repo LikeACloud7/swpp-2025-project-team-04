@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  focusManager,
+} from '@tanstack/react-query';
 import { ReactNode, useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 
@@ -31,5 +35,7 @@ function useAppStateRefocus() {
 export function QueryProvider({ children }: { children: ReactNode }) {
   useAppStateRefocus();
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 }
