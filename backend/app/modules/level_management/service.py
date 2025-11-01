@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from types import SimpleNamespace
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -11,7 +12,7 @@ from ...core.exceptions import AppException
 from ..users import crud as user_crud
 from ..users.models import User
 from . import crud, schemas
-from .models import CEFRLevel, LevelTestScript
+from .models import CEFRLevel
 
 
 class LevelTestScriptNotFoundException(AppException):
@@ -20,6 +21,15 @@ class LevelTestScriptNotFoundException(AppException):
             status_code=400,
             custom_code="LEVEL_TEST_SCRIPT_NOT_FOUND",
             detail=f"요청한 스크립트({script_id})를 찾을 수 없습니다.",
+        )
+
+
+class GeneratedContentNotFoundException(AppException):
+    def __init__(self, content_id: int | str = "unknown"):
+        super().__init__(
+            status_code=400,
+            custom_code="GENERATED_CONTENT_NOT_FOUND",
+            detail=f"요청한 생성 콘텐츠({content_id})를 찾을 수 없습니다.",
         )
 
 
@@ -78,12 +88,17 @@ class LevelManagementService:
         user: User,
         payload: schemas.LevelTestRequest,
     ) -> schemas.LevelTestResponse:
-        script_ids = [item.script_id for item in payload.tests]
+        script_ids: List[str] = []
+        for item in payload.tests:
+            if item.script_id is None:
+                raise LevelTestScriptNotFoundException()
+            script_ids.append(item.script_id)
+
         scripts = crud.get_scripts_by_ids(db, script_ids)
 
-        for item in payload.tests:
-            if scripts.get(item.script_id) is None:
-                raise LevelTestScriptNotFoundException(item.script_id)
+        for script_id in script_ids:
+            if scripts.get(script_id) is None:
+                raise LevelTestScriptNotFoundException(script_id)
 
         evaluation = self._summarize_level_test(
             tests=payload.tests,
@@ -132,17 +147,36 @@ class LevelManagementService:
         user: User,
         payload: schemas.LevelTestRequest,
     ) -> schemas.LevelTestResponse:
-        script_ids = [item.script_id for item in payload.tests]
-        scripts = crud.get_scripts_by_ids(db, script_ids)
-
+        content_ids: List[int] = []
         for item in payload.tests:
-            if scripts.get(item.script_id) is None:
-                raise LevelTestScriptNotFoundException(item.script_id)
+            if item.generated_content_id is None:
+                raise GeneratedContentNotFoundException()
+            content_ids.append(item.generated_content_id)
+
+        contents = crud.get_generated_contents_by_ids(db, content_ids)
+
+        script_lookup: Dict[str, SimpleNamespace] = {}
+        default_target_level = self._coerce_user_level(user)
+
+        for content_id in content_ids:
+            record = contents.get(content_id)
+            if record is None:
+                raise GeneratedContentNotFoundException(content_id)
+            if record.script_data is None:
+                raise GeneratedContentNotFoundException(content_id)
+
+            script_lookup[str(content_id)] = SimpleNamespace(
+                transcript=record.script_data,
+                target_level=default_target_level,
+                title=record.title,
+            )
+
 
         evaluation = self._summarize_level_test(
             tests=payload.tests,
-            scripts=scripts,
+            scripts=script_lookup,
             current_profile=self._build_user_profile(user, context="session_feedback"),
+            default_target_level=default_target_level,
         )
 
         user_record = user_crud.update_user_level(
@@ -214,24 +248,46 @@ class LevelManagementService:
         self,
         *,
         tests: List[schemas.LevelTestItem],
-        scripts: Dict[str, LevelTestScript],
+        scripts: Mapping[str, object],
         current_profile: Optional[Dict[str, object]] = None,
+        default_target_level: Optional[CEFRLevel] = None,
     ) -> LevelEvaluationResult:
         average_understanding = round(
             sum(item.understanding for item in tests) / len(tests)
         )
         sample_count = len(tests)
         fallback_level = self._infer_level_from_score(average_understanding)
+        default_target_level = default_target_level or fallback_level
 
-        test_payload = [
-            {
-                "script_id": item.script_id,
-                "target_level": scripts[item.script_id].target_level.value,
-                "transcript": scripts[item.script_id].transcript,
+        test_payload = []
+        for item in tests:
+            identifier = self._resolve_test_identifier(item)
+            script_entry = scripts.get(identifier)
+
+            if script_entry is None:
+                if item.script_id is not None:
+                    raise LevelTestScriptNotFoundException(item.script_id)
+                raise GeneratedContentNotFoundException(item.generated_content_id or "unknown")
+
+            target_level = self._coerce_target_level(script_entry, default_target_level)
+            transcript = self._extract_transcript(script_entry)
+
+            payload_entry = {
+                "identifier": identifier,
+                "target_level": target_level.value,
+                "transcript": transcript,
                 "self_reported_understanding": item.understanding,
             }
-            for item in tests
-        ]
+            if item.script_id is not None:
+                payload_entry["script_id"] = item.script_id
+            if item.generated_content_id is not None:
+                payload_entry["generated_content_id"] = item.generated_content_id
+            title = getattr(script_entry, "title", None)
+            if isinstance(title, str) and title.strip():
+                payload_entry["title"] = title.strip()
+
+            test_payload.append(payload_entry)
+
         cefr_payload = [
             {
                 "level": level.value,
@@ -333,3 +389,46 @@ class LevelManagementService:
         if isinstance(rationale, str) and rationale.strip():
             return rationale.strip()
         return "평가 근거가 제공되지 않았습니다."
+
+    @staticmethod
+    def _resolve_test_identifier(item: schemas.LevelTestItem) -> str:
+        if item.script_id is not None:
+            return item.script_id
+        if item.generated_content_id is not None:
+            return str(item.generated_content_id)
+        raise ValueError("레벨 평가 항목에 식별자가 없습니다.")
+
+    def _coerce_user_level(self, user: User, fallback: Optional[CEFRLevel] = None) -> CEFRLevel:
+        effective_fallback = fallback or CEFRLevel.B1
+        source_level = getattr(user, "level", None)
+        return self._coerce_level_value(source_level, effective_fallback)
+
+    def _coerce_target_level(self, source: object, fallback: CEFRLevel) -> CEFRLevel:
+        candidate = getattr(source, "target_level", None)
+        return self._coerce_level_value(candidate, fallback)
+
+    def _coerce_level_value(self, candidate: object, fallback: CEFRLevel) -> CEFRLevel:
+        if isinstance(candidate, CEFRLevel):
+            return candidate
+        value = getattr(candidate, "value", None)
+        if isinstance(value, str):
+            try:
+                return CEFRLevel(value)
+            except ValueError:
+                pass
+        if isinstance(candidate, str):
+            try:
+                return CEFRLevel(candidate)
+            except ValueError:
+                pass
+        return fallback
+
+    @staticmethod
+    def _extract_transcript(source: object) -> str:
+        transcript = getattr(source, "transcript", None)
+        if isinstance(transcript, str) and transcript.strip():
+            return transcript
+        script_data = getattr(source, "script_data", None)
+        if isinstance(script_data, str):
+            return script_data
+        return ""

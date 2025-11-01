@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Annotated, List, Optional
 
 from annotated_types import Len, Le, Ge
-from pydantic import BaseModel, Field, conint, conlist, field_validator
+from pydantic import BaseModel, Field, conint, conlist, field_validator, model_validator
 
 from .models import CEFRLevel
 
@@ -24,8 +24,20 @@ class LevelScores(BaseModel):
 
 
 class LevelTestItem(BaseModel):
-    script_id: str = Field(..., max_length=64)
+    script_id: Optional[str] = Field(default=None, max_length=64)
+    generated_content_id: Optional[int] = Field(default=None, ge=1)
     understanding: UnderstandingScore
+
+    @model_validator(mode="after")
+    def ensure_identifier(cls, values: "LevelTestItem") -> "LevelTestItem":
+        script_id_present = values.script_id is not None
+        content_id_present = values.generated_content_id is not None
+
+        if not script_id_present and not content_id_present:
+            raise ValueError("script_id 또는 generated_content_id 중 하나는 반드시 포함되어야 합니다.")
+        if script_id_present and content_id_present:
+            raise ValueError("script_id와 generated_content_id는 동시에 제공할 수 없습니다.")
+        return values
 
 
 class LevelTestRequest(BaseModel):
