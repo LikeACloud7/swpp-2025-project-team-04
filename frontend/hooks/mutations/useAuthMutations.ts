@@ -8,6 +8,7 @@ import {
 } from '@/utils/tokenManager';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 
 export const useSignup = () => {
   const queryClient = useQueryClient();
@@ -21,7 +22,7 @@ export const useSignup = () => {
       setAccessToken(data.access_token);
       saveRefreshToken(data.refresh_token);
       console.log('회원가입 성공 및 모든 토큰/정보 저장 완료');
-      router.replace('/');
+      router.replace('/initial-survey');
     },
     onError: (error) => console.error('회원가입 실패:', error),
   });
@@ -48,7 +49,9 @@ export const useLogin = () => {
 export const useLogout = () => {
   const queryClient = useQueryClient();
 
-  setAccessToken(null);
-  deleteRefreshToken();
-  queryClient.setQueryData(USER_QUERY_KEY, null);
+  return useCallback(async () => {
+    setAccessToken(null);
+    await deleteRefreshToken();
+    queryClient.setQueryData<User | null>(USER_QUERY_KEY, null);
+  }, [queryClient]);
 };
