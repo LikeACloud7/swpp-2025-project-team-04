@@ -31,7 +31,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 
 MIN_SCRIPT_WORDS = 100
-TARGET_SCRIPT_WORDS = 200
+TARGET_SCRIPT_WORDS = 240
 MAX_GENERATION_TRIES = 3
 
 # 1. Map CEFR Level to a challenge score range (0-100)
@@ -149,7 +149,8 @@ class AudioService:
         mood: str, 
         theme: str, 
         user_level: CEFRLevel,
-        selected_voice: dict
+        selected_voice: dict,
+        level_score: int | None = None ,
     ) -> tuple[str, str]:
         """
         (Special Points 1 & 3)
@@ -172,9 +173,21 @@ class AudioService:
         
         Theme: {theme}
         Mood: {mood}
-        User Level: {user_level.value} 
-        (This means vocabulary and sentence structure should be appropriate. 
-        'A1'/'A2' = simple, 'B1'/'B2' = intermediate, 'C1'/'C2' = complex).
+        
+        User Information:
+        - CEFR Level: {user_level.value}
+        - Level Score: {level_score if level_score is not None else "N/A"} (0 = early stage of this level, 100 = right before advancing to the next level)
+        
+        Use both the CEFR level and the level score to determine the vocabulary, grammar complexity, and sentence length.
+        For example:
+        CEFR Guidance:
+        - **A1** →  simple vocabulary and grammar, short and direct sentences. Avoid complex tenses or subordinate clauses.
+        - **A2** → still simple, but can include basic descriptions and connectors like “and,” “but,” or “because.” Slightly longer sentences are acceptable.
+        - **B1** → moderate vocabulary, clear explanations, and occasional use of relative or conditional clauses. Sentences can be 10–15 words on average.
+        - **B2** → upper-intermediate range, using more abstract vocabulary and natural discourse markers. Sentences can combine ideas logically and vary in structure.
+        - **C1** → advanced vocabulary, idiomatic expressions, and flexible sentence structures. Grammar may include participial phrases or inversion for emphasis.
+        - **C2** → near-native proficiency, sophisticated and nuanced vocabulary, and complex, natural rhythm. Sentences can be long and varied in tone and style.
+        Within each level, a higher level_score means slightly more advanced expressions and richer sentence variety.
 
         *** IMPORTANT FORMATTING RULES ***
         1. Start with a title on the first line formatted as: TITLE: [Your Title Here]
@@ -196,7 +209,7 @@ class AudioService:
             try:
                 client = get_openai_client()
                 response = await client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gpt-4.1-mini",
                     messages=[{"role": "system", "content": prompt}]
                 )
                 script_content = response.choices[0].message.content.strip()
@@ -281,7 +294,7 @@ class AudioService:
                 lambda: elevenlabs_client.text_to_speech.convert_with_timestamps(
                     voice_id=voice_id,
                     text=script,
-                    model_id="eleven_multilingual_v2",
+                    model_id="eleven_turbo_v2",
                     enable_logging=False,
                 ),
             )
@@ -316,7 +329,8 @@ class AudioService:
         all_voices = cls._load_voices()
         
         user_level = user.level 
-        
+        level_score = user.level_score
+
         selected_voice = cls._select_voice_algorithmically(
             all_voices=all_voices,
             user_level=user_level
@@ -326,6 +340,7 @@ class AudioService:
             mood=request.mood,
             theme=request.theme,
             user_level=user_level,
+            level_score=level_score,
             selected_voice=selected_voice
         )
         
@@ -398,7 +413,7 @@ class AudioService:
         # ===Step 2-2: Generate audio with timestamps using ElevenLabs===
         logger.info("=== Step 2: Generate audio with ElevenLabs ===")
         start_audio = time.time()
-
+    
         audio_result = await cls._generate_audio_with_timestamps(
             script=script,
             voice_id=selected_voice["voice_id"]
