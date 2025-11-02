@@ -1,31 +1,60 @@
-import { useColorScheme } from '@/hooks/useColorScheme';
+// app/_layout.tsx
 import '@/global.css';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { QueryProvider } from '@/lib/QueryProvider';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 export { ErrorBoundary } from 'expo-router';
 
-// 스플래시 자동 종료 방지
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import TrackPlayer, { Capability } from 'react-native-track-player';
+import { PlaybackService } from './PlaybackService';
+
 SplashScreen.preventAutoHideAsync();
 
+// 전역 가드 (Fast Refresh 대비)
+declare global {
+  // eslint-disable-next-line no-var
+  var __PLAYER_INITIALIZED__: boolean | undefined;
+  // eslint-disable-next-line no-var
+  var __SERVICE_REGISTERED__: boolean | undefined;
+}
+
+async function setupPlayerOnce() {
+  if (global.__PLAYER_INITIALIZED__) return;
+  try {
+    await TrackPlayer.setupPlayer();
+    await TrackPlayer.updateOptions({
+      capabilities: [Capability.Play, Capability.Pause, Capability.SeekTo],
+      // 필요하면 compactCapabilities, android 옵션 등 추가
+    });
+    global.__PLAYER_INITIALIZED__ = true;
+  } catch (e) {
+    // 이미 초기화된 경우 등: 조용히 무시
+    global.__PLAYER_INITIALIZED__ = true;
+  }
+}
+
+// 서비스 등록은 모듈 최상단에서 1회
+if (!global.__SERVICE_REGISTERED__) {
+  TrackPlayer.registerPlaybackService(() => PlaybackService);
+  global.__SERVICE_REGISTERED__ = true;
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    // 앱 시작 시 1회만 초기화 시도
+    setupPlayerOnce();
+  }, []);
 
   return (
-    <QueryProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <SafeAreaProvider>
+      <QueryProvider>
         <RootNavigation />
-      </ThemeProvider>
-    </QueryProvider>
+      </QueryProvider>
+    </SafeAreaProvider>
   );
 }
 
@@ -34,13 +63,11 @@ function RootNavigation() {
 
   useEffect(() => {
     let didHide = false;
-
     if (!isAuthLoading) {
       const start = Date.now();
-
       const hide = async () => {
         const elapsed = Date.now() - start;
-        const remaining = Math.max(0, 1000 - elapsed); // 최소 1초 보장
+        const remaining = Math.max(0, 1000 - elapsed);
         setTimeout(async () => {
           if (!didHide) {
             await SplashScreen.hideAsync();
@@ -48,28 +75,24 @@ function RootNavigation() {
           }
         }, remaining);
       };
-
       hide();
     }
-
     return () => {
-      didHide = true; // cleanup
+      didHide = true;
     };
   }, [isAuthLoading]);
 
-  // 아직 로딩 중이면 네이티브 스플래시 유지
-  if (isAuthLoading) {
-    return null;
-  }
+  if (isAuthLoading) return null;
 
   return (
     <Stack>
       <Stack.Protected guard={!!user}>
-        <Stack.Screen name="(main)" />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
+      <Stack.Screen name="initial-survey" options={{ headerShown: false }} />
     </Stack>
   );
 }
