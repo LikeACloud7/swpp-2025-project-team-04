@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,19 +9,11 @@ import {
   View,
 } from 'react-native';
 
-import { getStats } from '@/api/stats';
 import type { Achievement } from '@/api/stats';
-import { STATS_QUERY_KEY } from '@/constants/queryKeys';
+import { useStats } from '@/hooks/queries/useStatsQueries';
 
 export default function StatsScreen() {
-  const {
-    data: stats,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: STATS_QUERY_KEY,
-    queryFn: getStats,
-  });
+  const { data: stats, isLoading, error } = useStats();
 
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null);

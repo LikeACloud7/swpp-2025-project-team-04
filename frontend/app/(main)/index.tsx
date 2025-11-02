@@ -6,13 +6,12 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { getBaseUrl } from '@/api/client';
 import { useUser } from '@/hooks/queries/useUserQueries';
-import { getStats } from '@/api/stats';
-import { STATS_QUERY_KEY } from '@/constants/queryKeys';
+import { useStats } from '@/hooks/queries/useStatsQueries';
 import TrackPlayer from 'react-native-track-player';
 
 export default function HomeScreen() {
@@ -21,10 +20,7 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const { data: user, isLoading: isUserLoading } = useUser();
-  const { data: stats } = useQuery({
-    queryKey: STATS_QUERY_KEY,
-    queryFn: getStats,
-  });
+  const { data: stats } = useStats();
 
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<MOOD_OPTIONS | null>(null);
