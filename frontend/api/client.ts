@@ -144,7 +144,15 @@ export const customFetch = async <T>(
     headers,
   };
 
-  let response = await fetch(`${baseUrl}/api/v1${endpoint}`, requestInit);
+  const fullUrl = `${baseUrl}/api/v1${endpoint}`;
+  console.log(`[API Request] ${options.method || 'GET'} ${fullUrl}`);
+  if (options.body) {
+    console.log('[API Request Body]', options.body);
+  }
+
+  let response = await fetch(fullUrl, requestInit);
+
+  console.log(`[API Response] ${response.status} ${response.statusText}`);
 
   if (response.status === 401) {
     if (isRefreshing) {

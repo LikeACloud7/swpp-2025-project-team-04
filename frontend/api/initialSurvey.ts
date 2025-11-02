@@ -49,7 +49,19 @@ export const generateScriptId = (
   level: CEFRLevel,
   questionNumber: number,
 ): string => {
-  return `${level}_${questionNumber}`;
+  const levelBaseMap: Record<CEFRLevel, number> = {
+    A1: 0, // script_ids 1-5
+    A2: 5, // 6-10
+    B1: 10, // 11-15
+    B2: 15, // 16-20
+    C1: 20, // 21-25
+    C2: 25, // 26-30
+  };
+
+  const baseId = levelBaseMap[level];
+  const scriptId = baseId + questionNumber;
+
+  return scriptId.toString();
 };
 
 export const getAudioUrl = (
@@ -74,7 +86,7 @@ export const submitLevelTest = async (
 
   const payload: LevelTestPayload = { tests };
 
-  return customFetch<LevelTestResponse>('/personalization/level-test', {
+  return customFetch<LevelTestResponse>('/level-management/level-test', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -87,7 +99,7 @@ export const submitManualLevel = async (
 
   const payload: ManualLevelPayload = { level: cefrLevel };
 
-  return customFetch<ManualLevelResponse>('/personalization/manual-level', {
+  return customFetch<ManualLevelResponse>('/level-management/manual-level', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

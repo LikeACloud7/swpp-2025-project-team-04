@@ -17,11 +17,13 @@ import {
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
-import { submitLevelTest } from '@/api/initialSurvey';
+import {
+  useSubmitLevelTest,
+  useSubmitManualLevel,
+} from '@/hooks/mutations/useInitialSurveyMutations';
 
 export default function InitialSurveyScreen() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [skipTest, setSkipTest] = useState<boolean | null>(null);
   const [userInput, setUserInput] = useState({
     proficiencyLevel: '',
@@ -32,6 +34,13 @@ export default function InitialSurveyScreen() {
     percent5: 50,
     selectedTopics: [] as string[],
   });
+
+  const { mutate: submitLevelTest, isPending: isLevelTestPending } =
+    useSubmitLevelTest();
+  const { mutate: submitManualLevel, isPending: isManualLevelPending } =
+    useSubmitManualLevel();
+
+  const isSubmitting = isLevelTestPending || isManualLevelPending;
 
   const handleNext = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) {
@@ -64,44 +73,51 @@ export default function InitialSurveyScreen() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (isSubmitting) return;
 
-    setIsSubmitting(true);
-
-    try {
-      // Mock
-      console.log('=== MOCK: Submitting Initial Survey ===');
-      console.log('Level:', userInput.proficiencyLevel);
-      console.log('Comprehension scores:', [
-        userInput.percent1,
-        userInput.percent2,
-        userInput.percent3,
-        userInput.percent4,
-        userInput.percent5,
-      ]);
-      console.log('Selected topics:', userInput.selectedTopics);
-      console.log('=== MOCK: Submission successful ===');
-
-      // TODO: backend
-      // const response = await submitLevelTest(userInput.proficiencyLevel, [
-      //   userInput.percent1,
-      //   userInput.percent2,
-      //   userInput.percent3,
-      //   userInput.percent4,
-      //   userInput.percent5,
-      // ]);
-
-      router.replace('/(main)');
-    } catch (error) {
-      console.error('Failed to submit level test');
-      Alert.alert(
-        '제출 실패',
-        '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
-        [{ text: '확인' }],
+    // 백엔드로 보내기
+    if (skipTest === true) {
+      submitManualLevel(
+        { levelId: userInput.proficiencyLevel },
+        {
+          onSuccess: () => {
+            router.replace('/(main)');
+          },
+          onError: () => {
+            Alert.alert(
+              '제출 실패',
+              '레벨 설정에 실패했습니다. 다시 시도해주세요.',
+              [{ text: '확인' }],
+            );
+          },
+        },
       );
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      submitLevelTest(
+        {
+          levelId: userInput.proficiencyLevel,
+          percentages: [
+            userInput.percent1,
+            userInput.percent2,
+            userInput.percent3,
+            userInput.percent4,
+            userInput.percent5,
+          ],
+        },
+        {
+          onSuccess: () => {
+            router.replace('/(main)');
+          },
+          onError: () => {
+            Alert.alert(
+              '제출 실패',
+              '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
+              [{ text: '확인' }],
+            );
+          },
+        },
+      );
     }
   };
 
