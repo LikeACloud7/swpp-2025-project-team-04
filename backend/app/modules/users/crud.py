@@ -1,4 +1,7 @@
 from sqlalchemy.orm import Session
+
+from ...core.exceptions import UserNotFoundException
+from ..level_management.models import CEFRLevel
 from .models import User
 
 def create_user(db: Session, username: str, hashed_password: str, nickname: str = None):
@@ -20,3 +23,32 @@ def delete_user(db: Session, username: str):
         db.commit()
         return True
     return False
+
+def update_user_level(
+    db: Session,
+    *,
+    user_id: int,
+    level: CEFRLevel,
+    level_score: int | None = None,
+    llm_confidence: int | None = None,
+    initial_level_completed: bool | None = None,
+    commit: bool = True,
+) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise UserNotFoundException()
+
+    user.level = level
+    if level_score is not None:
+        user.level_score = level_score
+    if llm_confidence is not None:
+        user.llm_confidence = llm_confidence
+    if initial_level_completed is not None:
+        user.initial_level_completed = initial_level_completed
+    db.add(user)
+
+    if commit:
+        db.commit()
+        db.refresh(user)
+
+    return user

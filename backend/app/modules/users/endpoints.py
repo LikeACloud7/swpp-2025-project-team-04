@@ -18,8 +18,7 @@ from ...core.exceptions import (
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-
-def get_current_user(authorization: str = Header(), db: Session = Depends(get_db)):
+def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
     if not authorization.startswith("Bearer "):
         raise InvalidAuthHeaderException()
     
@@ -41,21 +40,17 @@ def read_users(skip: int = 0, limit: int = 100):
 
 
 @router.get("/me", response_model=schemas.User,
-             responses=AppException.to_openapi_examples([
-                 InvalidAuthHeaderException,
-                 UserNotFoundException,
-                 AuthTokenExpiredException,
-                 InvalidTokenException,
-                 InvalidTokenTypeException
-             ]))
+            responses=AppException.to_openapi_examples([
+                InvalidAuthHeaderException,
+                UserNotFoundException,
+                AuthTokenExpiredException,
+                InvalidTokenException,
+                InvalidTokenTypeException
+            ]))
 def get_me(current_user = Depends(get_current_user)):
-    return {
-        "id": current_user.id,
-        "username": current_user.username,
-        "nickname": current_user.nickname
-    }
+    return current_user
 
 
 @router.get("/{user_id}", response_model=schemas.User)
 def read_user(user_id: int):
-    return {"id": user_id, "username": "user"}
+    return {"id": user_id, "username": "user", "nickname": "user"}
