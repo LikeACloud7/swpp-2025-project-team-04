@@ -32,8 +32,6 @@ export type ManualLevelResponse = {
   updated_at: string;
 };
 
-
-
 export const mapLevelIdToCEFR = (levelId: string): CEFRLevel => {
   const levelMap: Record<string, CEFRLevel> = {
     '1': 'A1',
@@ -47,28 +45,27 @@ export const mapLevelIdToCEFR = (levelId: string): CEFRLevel => {
   return levelMap[levelId];
 };
 
-
-export const generateScriptId = (level: CEFRLevel, questionNumber: number): string => {
+export const generateScriptId = (
+  level: CEFRLevel,
+  questionNumber: number,
+): string => {
   return `${level}_${questionNumber}`;
 };
 
-
-export const getAudioUrl = (levelId: string, questionNumber: number): string => {
+export const getAudioUrl = (
+  levelId: string,
+  questionNumber: number,
+): string => {
   const baseUrl = process.env.EXPO_PUBLIC_API_URL;
   const cefrLevel = mapLevelIdToCEFR(levelId);
   return `${baseUrl}/api/v1/initial-survey/${cefrLevel}/${questionNumber}`;
 };
 
-
-
-
-
 export const submitLevelTest = async (
   levelId: string,
-  percentages: number[]
+  percentages: number[],
 ): Promise<LevelTestResponse> => {
   const cefrLevel = mapLevelIdToCEFR(levelId);
-
 
   const tests: LevelTestItem[] = percentages.map((understanding, index) => ({
     script_id: generateScriptId(cefrLevel, index + 1),
@@ -83,9 +80,8 @@ export const submitLevelTest = async (
   });
 };
 
-
 export const submitManualLevel = async (
-  levelId: string
+  levelId: string,
 ): Promise<ManualLevelResponse> => {
   const cefrLevel = mapLevelIdToCEFR(levelId);
 

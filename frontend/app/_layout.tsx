@@ -92,10 +92,7 @@ function RootNavigation() {
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Screen
-        name="initial-survey"
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="initial-survey" options={{ headerShown: false }} />
     </Stack>
   );
 }

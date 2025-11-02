@@ -98,7 +98,7 @@ export default function InitialSurveyScreen() {
       Alert.alert(
         '제출 실패',
         '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
-        [{ text: '확인' }]
+        [{ text: '확인' }],
       );
     } finally {
       setIsSubmitting(false);
@@ -159,9 +159,7 @@ export default function InitialSurveyScreen() {
           />
         );
       case 2:
-        return (
-          <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />
-        );
+        return <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />;
       case 3:
         return (
           <>
