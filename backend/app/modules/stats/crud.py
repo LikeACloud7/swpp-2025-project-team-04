@@ -126,3 +126,22 @@ def ensure_user_achievement(
     db.commit()
     db.refresh(record)
     return record
+
+
+def insert_study_session(
+    db: Session,
+    *,
+    user_id: int,
+    duration_minutes: int,
+    activity_type: str | None = None,
+) -> StudySession:
+    """Insert a StudySession record and return it."""
+    record = StudySession(
+        user_id=user_id,
+        duration_minutes=duration_minutes,
+        activity_type=activity_type,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record

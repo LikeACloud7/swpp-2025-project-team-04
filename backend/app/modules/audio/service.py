@@ -13,13 +13,16 @@ from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
-from .utils import parse_tts_by_newlines, get_elevenlabs_client
+from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences
 from . import crud
 from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
 from ...core.s3setting import upload_audio_to_s3
 import time
 from ...core.logger import logger
+import math
+# stats crud
+from ..stats import crud as stats_crud
 # --- Configuration ---
 from ...core.config import settings
 
@@ -434,8 +437,14 @@ class AudioService:
 
         logger.info(f"Audio uploaded to S3 | key={key}")
 
-        
 
+        # === Step 3.5: Insert study session into stats based on audio duration ===
+        try:
+            insert_study_session_from_sentences(user.id, audio_result.get("sentences", []) if audio_result else [])
+        except Exception as e:
+            logger.error(f"Error computing/inserting study session: {e}", exc_info=True)
+
+        
 
         
         
