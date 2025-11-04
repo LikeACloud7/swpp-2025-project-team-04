@@ -1,7 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
-from ..users.crud import create_user
-from .schemas import SignupRequest, SignupResponse, LoginRequest, LoginResponse, RefreshTokenRequest, AccessTokenResponse,RefreshTokenResponse, DeleteAccountResponse
+from ..users.crud import create_user, update_user_password
+from .schemas import (
+    SignupRequest,
+    SignupResponse,
+    LoginRequest,
+    LoginResponse,
+    RefreshTokenRequest,
+    AccessTokenResponse,
+    RefreshTokenResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+    DeleteAccountResponse,
+)
 from ...core.auth import hash_password, create_access_token, verify_password, verify_token, TokenType
 from ...core.config import get_db
 from ..users.crud import get_user_by_username, delete_user
@@ -18,6 +29,7 @@ from ...core.exceptions import (
     InvalidUsernameFormatException,
     InvalidPasswordFormatException
 )
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -77,6 +89,44 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     )
 
 
+@router.post(
+    "/change-password",
+    response_model=ChangePasswordResponse,
+    responses=AppException.to_openapi_examples([
+        InvalidAuthHeaderException,
+        UserNotFoundException,
+        AuthTokenExpiredException,
+        InvalidTokenException,
+        InvalidTokenTypeException,
+        InvalidCredentialsException,
+        InvalidPasswordFormatException,
+    ]),
+)
+def change_password(
+    request: ChangePasswordRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    if not authorization.startswith("Bearer "):
+        raise InvalidAuthHeaderException()
+
+    access_token = authorization[7:]
+    token_data = verify_token(access_token, TokenType.ACCESS_TOKEN)
+    username = token_data["username"]
+
+    user = get_user_by_username(db, username)
+    if not user:
+        raise UserNotFoundException()
+
+    if not verify_password(request.current_password, user.hashed_password):
+        raise InvalidCredentialsException()
+
+    hashed_pw = hash_password(request.new_password)
+    update_user_password(db, user, hashed_pw)
+
+    return ChangePasswordResponse(message="Password updated successfully")
+
+
 @router.post("/refresh/access", response_model=AccessTokenResponse, 
             responses=AppException.to_openapi_examples([
                 UserNotFoundException,
@@ -132,4 +182,3 @@ def delete_account(authorization: str = Header(), db: Session = Depends(get_db))
         return DeleteAccountResponse(message="Account deleted successfully")
     else:
         raise AccountDeletionFailedException()
-
