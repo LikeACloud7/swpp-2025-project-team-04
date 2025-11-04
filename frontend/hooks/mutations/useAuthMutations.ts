@@ -1,4 +1,4 @@
-import { login, signup } from '@/api/auth';
+import { changePassword, deleteAccount, login, signup } from '@/api/auth';
 import { USER_QUERY_KEY } from '@/constants/queryKeys';
 import type { User } from '@/types/type';
 import {
@@ -53,5 +53,24 @@ export const useLogout = () => {
     setAccessToken(null);
     await deleteRefreshToken();
     queryClient.setQueryData<User | null>(USER_QUERY_KEY, null);
+    await queryClient.cancelQueries();
+    queryClient.clear();
   }, [queryClient]);
+};
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: changePassword,
+  });
+};
+
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      queryClient.setQueryData<User | null>(USER_QUERY_KEY, null);
+    },
+  });
 };
