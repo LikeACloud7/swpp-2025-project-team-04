@@ -52,3 +52,14 @@ def update_user_level(
         db.refresh(user)
 
     return user
+
+
+def update_user_password(db: Session, user: User, hashed_password: str) -> User:
+    """
+    Persist a password change for the given user.
+    """
+    user.hashed_password = hashed_password
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user

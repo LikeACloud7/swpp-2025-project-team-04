@@ -1,6 +1,7 @@
 
 from backend.tests.integration.test_main import client
 import json
+from uuid import uuid4
 
 API_VERSION = "/api/v1"
 
@@ -139,6 +140,100 @@ def test_reissue_access_token_with_access_token():
     
     reissue_response_data = reissue_response.json()
     assert reissue_response_data["custom_code"] == "INVALID_TOKEN_TYPE"
+
+
+def test_change_password_success():
+    username = f"cpw{uuid4().hex[:9]}"
+    original_password = "ChangePass123!"
+    new_password = "NewPass1234!"
+
+    signup_data = {
+        "username": username,
+        "password": original_password,
+        "nickname": "changepw_user"
+    }
+    signup_response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    assert signup_response.status_code == 201
+
+    access_token = signup_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    change_payload = {
+        "current_password": original_password,
+        "new_password": new_password
+    }
+    change_response = client.post(
+        f"{API_VERSION}/auth/change-password",
+        json=change_payload,
+        headers=headers,
+    )
+
+    assert change_response.status_code == 200
+    assert change_response.json()["message"] == "Password updated successfully"
+
+    old_login_response = client.post(
+        f"{API_VERSION}/auth/login",
+        json={"username": username, "password": original_password},
+    )
+    assert old_login_response.status_code == 401
+    assert old_login_response.json()["custom_code"] == "INVALID_CREDENTIALS"
+
+    new_login_response = client.post(
+        f"{API_VERSION}/auth/login",
+        json={"username": username, "password": new_password},
+    )
+    assert new_login_response.status_code == 200
+    new_access_token = new_login_response.json()["access_token"]
+
+    cleanup_headers = {"Authorization": f"Bearer {new_access_token}"}
+    delete_response = client.delete(
+        f"{API_VERSION}/auth/delete-account",
+        headers=cleanup_headers,
+    )
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Account deleted successfully"
+
+
+def test_change_password_invalid_current_password():
+    username = f"cpw{uuid4().hex[:9]}"
+    password = "StillOriginal123!"
+
+    signup_data = {
+        "username": username,
+        "password": password,
+        "nickname": "changepw_invalid"
+    }
+    signup_response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    assert signup_response.status_code == 201
+
+    access_token = signup_response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {access_token}"}
+    change_payload = {
+        "current_password": "WrongPassword123!",
+        "new_password": "NewPassword987!"
+    }
+    change_response = client.post(
+        f"{API_VERSION}/auth/change-password",
+        json=change_payload,
+        headers=headers,
+    )
+
+    assert change_response.status_code == 401
+    assert change_response.json()["custom_code"] == "INVALID_CREDENTIALS"
+
+    login_response = client.post(
+        f"{API_VERSION}/auth/login",
+        json={"username": username, "password": password},
+    )
+    assert login_response.status_code == 200
+    access_token = login_response.json()["access_token"]
+
+    cleanup_headers = {"Authorization": f"Bearer {access_token}"}
+    delete_response = client.delete(
+        f"{API_VERSION}/auth/delete-account",
+        headers=cleanup_headers,
+    )
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == "Account deleted successfully"
 
 
 def test_delete_account_success():
