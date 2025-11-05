@@ -1,7 +1,7 @@
-import Button from '@/components/home/Button';
+import { GradientButton } from '@/components/home/GradientButton';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 const DIFFICULTY_LEVELS = [
   { value: 1, label: '매우 쉬움', emoji: '😊', color: '#10b981' },
@@ -16,15 +16,19 @@ export default function FeedbackScreen() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(
     null,
   );
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (selectedDifficulty === null) {
-      return;
+  const handleSubmit = async () => {
+    if (!selectedDifficulty || submitting) return;
+
+    setSubmitting(true);
+    try {
+      // TODO: 오디오페이지 연결 & 백엔드 연동
+      // await api.submitDifficulty(selectedDifficulty);
+      router.replace('/');
+    } finally {
+      setSubmitting(false);
     }
-
-    // TODO: 오디오페이지랑 연결, 백엔드 연동
-
-    router.push('/');
   };
 
   const selectedLevel = DIFFICULTY_LEVELS.find(
@@ -34,6 +38,7 @@ export default function FeedbackScreen() {
   return (
     <View className="flex-1 bg-[#EBF4FB]">
       <View className="flex-1 px-5">
+        {/* 헤드라인 */}
         <View className="pt-16">
           <Text className="mb-2 text-3xl font-black text-neutral-900">
             학습 세션 완료!
@@ -43,14 +48,13 @@ export default function FeedbackScreen() {
           </Text>
         </View>
 
+        {/* 선택 상태 미리보기 */}
         <View className="flex-1 items-center justify-center">
           {selectedLevel ? (
             <View className="items-center">
               <View
                 className="mb-6 h-32 w-32 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: selectedLevel.color + '20',
-                }}
+                style={{ backgroundColor: selectedLevel.color + '20' }}
               >
                 <Text className="text-7xl">{selectedLevel.emoji}</Text>
               </View>
@@ -65,43 +69,54 @@ export default function FeedbackScreen() {
           )}
         </View>
 
+        {/* 선택 버튼들 + 제출 */}
         <View className="pb-8">
           <Text className="mb-4 text-center text-lg font-bold text-neutral-900">
             난이도 평가
           </Text>
 
           <View className="mb-6 flex-row justify-between">
-            {DIFFICULTY_LEVELS.map((level) => (
-              <Pressable
-                key={level.value}
-                onPress={() => setSelectedDifficulty(level.value)}
-                className={`items-center justify-center rounded-xl border-2 p-3 ${
-                  selectedDifficulty === level.value
-                    ? 'border-primary bg-sky-50'
-                    : 'border-neutral-200 bg-white'
-                }`}
-                style={{ width: '18%', height: 60 }}
-              >
-                <Text
-                  className={`text-center text-xs font-semibold ${
-                    selectedDifficulty === level.value
-                      ? 'text-primary'
-                      : 'text-neutral-900'
-                  }`}
-                  numberOfLines={2}
+            {DIFFICULTY_LEVELS.map((level) => {
+              const isSelected = selectedDifficulty === level.value;
+              return (
+                <Pressable
+                  key={level.value}
+                  onPress={() => setSelectedDifficulty(level.value)}
+                  android_ripple={{
+                    color: 'rgba(0,0,0,0.08)',
+                    borderless: false,
+                  }}
+                  style={({ pressed }) => ({
+                    width: '18%',
+                    height: 68,
+                    borderRadius: 12,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  })}
+                  className={`items-center justify-center rounded-xl border transition-all duration-150
+          ${
+            isSelected ? 'border-sky-500 bg-sky-50' : 'border-gray-300 bg-white'
+          }
+        `}
                 >
-                  {level.label}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text
+                    className={`p-2 text-center text-[13px] font-semibold ${
+                      isSelected ? 'text-sky-700' : 'text-gray-700'
+                    }`}
+                  >
+                    {level.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           <View className="px-2">
-            <Button
+            <GradientButton
               title="제출하기"
+              icon="send"
+              loading={submitting}
+              disabled={!selectedDifficulty}
               onPress={handleSubmit}
-              disabled={selectedDifficulty === null}
-              style={{ width: '100%' }}
             />
           </View>
         </View>
