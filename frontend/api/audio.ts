@@ -14,6 +14,7 @@ export type Sentence = {
 };
 
 export type AudioGenerationResponse = {
+  generated_content_id: number;
   title: string;
   audio_url: string;
   sentences: Sentence[];
@@ -24,7 +25,7 @@ export type AudioGenerationResponse = {
 export const generateAudio = async (
   payload: AudioGenerationPayload,
 ): Promise<AudioGenerationResponse> => {
-  return customFetch<AudioGenerationResponse>('/audio/test-generate', {
+  return customFetch<AudioGenerationResponse>('/audio/generate', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
