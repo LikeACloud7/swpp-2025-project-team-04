@@ -7,7 +7,7 @@ import re
 import base64
 import asyncio
 from openai import AsyncOpenAI
-from fastapi import HTTPException
+from fastapi import HTTPException, WebSocket
 from elevenlabs import ElevenLabs
 from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
@@ -484,6 +484,145 @@ class AudioService:
         logger.info(f"Full pipeline completed in {elapsed:.2f}s")
         
         return response_payload
+    
+    @classmethod
+    async def generate_full_audio_streaming(
+        cls,
+        request: AudioGenerateRequest,
+        user: User,
+        websocket: WebSocket
+    ) -> None:
+        """
+        실시간 진행 상황 파악을 위해 만든 websocket으로 통신하는 함수
+        """
+        total_start = time.time()
+        generated_id = None
+        db: Session = SessionLocal()
+
+        try:
+            # === Step 1: Generate script and select voice ===
+            logger.info("=== [WS] Step 1: Generate script and select voice ===")
+            await websocket.send_json({
+                "type": "status_update",
+                "payload": {
+                    "step_code": "script_generation",
+                    "message": f"'{request.theme}' 테마의 AI 스크립트 생성을 시작합니다..."
+                }
+            })
+            
+            start_script = time.time()
+            title, script, selected_voice = await cls.generate_audio_script(request, user)
+            logger.info(f"[WS] Script generation completed in {time.time() - start_script:.2f}s")
+
+
+            # === Step 1.5: DB placeholder entry ===
+            try:
+                content = crud.insert_generated_content(
+                    db,
+                    user_id=user.id,
+                    title=title,
+                    script_data=script,
+                    audio_url=None,
+                    response_json=None,
+                )
+                generated_id = content.generated_content_id
+                logger.info(f"[WS] Inserted placeholder GeneratedContent (id={generated_id})")
+            except Exception as e:
+                logger.error(f"[WS] Failed to insert GeneratedContent: {e}", exc_info=True)
+                raise HTTPException(status_code=500, detail="DB 저장 중 오류가 발생했습니다.")
+
+
+            # === Step 2-1: Background contextual vocab (No update needed) ===
+            try:
+                sentences = cls._split_script_by_newlines(script)
+                asyncio.create_task(VocabService.build_contextual_vocab(sentences, generated_id))
+            except Exception as e:
+                logger.error(f"[WS] Failed to launch VocabService: {e}", exc_info=True)
+
+
+            # === Step 2-2: Generate audio with timestamps ===
+            logger.info("=== [WS] Step 2: Generate audio with ElevenLabs ===")
+            await websocket.send_json({
+                "type": "status_update",
+                "payload": {
+                    "step_code": "audio_generation",
+                    "message": "스크립트를 기반으로 음성 오디오를 생성 중입니다..."
+                }
+            })
+            
+            start_audio = time.time()
+            audio_result = await cls._generate_audio_with_timestamps(
+                script=script,
+                voice_id=selected_voice["voice_id"]
+            )
+            logger.info(f"[WS] Audio generation took {time.time() - start_audio:.2f}s")
+
+
+            # === Step 3: Upload to S3 ===
+            logger.info("=== [WS] Step 3: Upload audio to S3 ===")
+            await websocket.send_json({
+                "type": "status_update",
+                "payload": {
+                    "step_code": "saving",
+                    "message": "생성된 오디오 파일을 클라우드에 저장 중입니다..."
+                }
+            })
+
+            audio_data = base64.b64decode(audio_result["audio_base_64"])
+            key = generate_s3_object_key("mp3")
+            audio_url = upload_audio_to_s3(audio_data, key)
+            logger.info(f"[WS] Audio uploaded to S3 | key={key}")
+
+
+            # === Step 3.5: Insert study session ===
+            try:
+                insert_study_session_from_sentences(user.id, audio_result.get("sentences", []) if audio_result else [])
+            except Exception as e:
+                logger.error(f"[WS] Error computing/inserting study session: {e}", exc_info=True)
+
+            
+            # === Step 4: Final Response ===
+            logger.info("=== [WS] Step 4: Response generation ===")
+            response_payload = {
+                "generated_content_id": generated_id,
+                "title": title,
+                "audio_url": audio_url,
+                "sentences": audio_result["sentences"],
+            }
+
+            try:
+                crud.update_generated_content_audio(
+                    db,
+                    content_id=generated_id,
+                    audio_url=audio_url,
+                    response_json=response_payload, 
+                )
+                logger.info(f"[WS] Updated GeneratedContent with final response for id={generated_id}")
+            except Exception as e:
+                logger.error(f"[WS] Failed to update audio_url in DB: {e}", exc_info=True)
+
+            # === Step 5: Send final "complete" message ===
+            await websocket.send_json({
+                "type": "generation_complete",
+                "payload": response_payload
+            })
+
+            elapsed = time.time() - total_start
+            logger.info(f"[WS] Full pipeline completed in {elapsed:.2f}s")
+
+        except Exception as e:
+            logger.error(f"[WS] Error during streaming generation: {e}", exc_info=True)
+            # 클라이언트에게 오류 메시지 전송
+            await websocket.send_json({
+                "type": "error",
+                "payload": {
+                    "step_code": "unknown",
+                    "message": f"오디오 생성 중 오류가 발생했습니다: {str(e)}"
+                }
+            })
+        finally:
+            if db:
+                db.close()
     
 
     @staticmethod
