@@ -185,3 +185,26 @@ def add_word_to_vocab(
 
     print(f"[DEBUG] Inserted vocab entry for '{requested_word}' with TTS URL.")
     return Response(status_code=201)
+
+
+@router.get("/{generated_content_id}")
+def get_script_vocabs(generated_content_id: int, db: Session = Depends(get_db)):
+    """Return the script_vocabs JSON stored on GeneratedContent.
+
+    If the GeneratedContent or its script_vocabs are not present,
+    raise the appropriate exception.
+    """
+    content = (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id == generated_content_id)
+        .first()
+    )
+
+    if not content:
+        raise HTTPException(status_code=404, detail="generated content not found")
+
+    script_vocabs = content.script_vocabs
+    if not script_vocabs:
+        raise ScriptVocabsNotFoundException()
+
+    return script_vocabs
