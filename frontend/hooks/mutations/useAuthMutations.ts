@@ -1,4 +1,4 @@
-import { login, signup } from '@/api/auth';
+import { changePassword, deleteAccount, login, signup } from '@/api/auth';
 import { USER_QUERY_KEY } from '@/constants/queryKeys';
 import type { User } from '@/types/type';
 import {
@@ -53,5 +53,47 @@ export const useLogout = () => {
     setAccessToken(null);
     await deleteRefreshToken();
     queryClient.setQueryData<User | null>(USER_QUERY_KEY, null);
+    await queryClient.cancelQueries();
+    queryClient.clear();
   }, [queryClient]);
+};
+
+export const useChangePassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: changePassword,
+    // Prevent transient loss of cached user while password-change may
+    // trigger a short-lived 401/getMe failure (server may revoke tokens).
+    // Capture current user and restore it after the mutation so the
+    // global auth guard doesn't immediately redirect to the auth stack.
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: [USER_QUERY_KEY] });
+      const previousUser = queryClient.getQueryData(USER_QUERY_KEY);
+      return { previousUser };
+    },
+    onError: (_err, _vars, context) => {
+      if (context && (context as any).previousUser !== undefined) {
+        queryClient.setQueryData(USER_QUERY_KEY, (context as any).previousUser);
+      }
+    },
+    onSuccess: (_data, _vars, context) => {
+      // Restore previous user cache if it was overwritten by a concurrent
+      // getMe returning 401 during password change.
+      if (context && (context as any).previousUser !== undefined) {
+        queryClient.setQueryData(USER_QUERY_KEY, (context as any).previousUser);
+      }
+    },
+  });
+};
+
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      queryClient.setQueryData<User | null>(USER_QUERY_KEY, null);
+    },
+  });
 };

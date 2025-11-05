@@ -26,6 +26,19 @@ export type LoginResponse = {
   refresh_token: string;
 };
 
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type ChangePasswordResponse = {
+  message: string;
+};
+
+export type DeleteAccountResponse = {
+  message: string;
+};
+
 // --- API functions ---
 
 export const signup = async (
@@ -41,5 +54,23 @@ export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
   return customFetch<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+};
+
+export const changePassword = async (
+  payload: ChangePasswordPayload,
+): Promise<ChangePasswordResponse> => {
+  return customFetch<ChangePasswordResponse>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      current_password: payload.currentPassword,
+      new_password: payload.newPassword,
+    }),
+  });
+};
+
+export const deleteAccount = async (): Promise<DeleteAccountResponse> => {
+  return customFetch<DeleteAccountResponse>('/auth/delete-account', {
+    method: 'DELETE',
   });
 };
