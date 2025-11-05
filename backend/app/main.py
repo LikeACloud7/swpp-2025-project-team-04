@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .modules.auth.endpoints import router as auth_router
 from .modules.users.endpoints import router as users_router
 from .modules.audio.endpoints import router as audio_router
@@ -10,6 +11,15 @@ from .core.config import engine, Base
 from .core.config import engine, Base, apply_startup_migrations
 from .core.exceptions import register_exception_handlers
 app = FastAPI(title="LingoFit")
+
+# CORS 설정 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 개발 환경용 - 프로덕션에서는 특정 도메인만 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 테이블 생성
 Base.metadata.create_all(bind=engine)
