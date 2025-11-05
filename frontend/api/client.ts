@@ -29,7 +29,8 @@ export const getBaseUrl = (): string => {
   if (!baseUrl) {
     throw new Error('API base URL is not configured. Set EXPO_PUBLIC_API_URL.');
   }
-  return baseUrl;
+  // return baseUrl;
+  return 'http://52.78.135.45:3000';
 };
 
 const processQueue = (error: Error | null, token: string | null = null) => {
