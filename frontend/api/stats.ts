@@ -16,6 +16,7 @@ export type CurrentLevel = {
   level_score: number; // 0-100
   llm_confidence: number; // 0-100
   updated_at: string;
+  level_description: string;
 };
 
 export type Achievement = {
