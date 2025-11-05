@@ -1,93 +1,166 @@
-import Button from '@/components/home/Button';
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
-import { MOOD_OPTIONS } from '@/constants/homeOptions';
-import { TOPIC_CATEGORIES } from '@/constants/initialSurveyData';
+import { MOOD_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
 import { useQueryClient } from '@tanstack/react-query';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
-import { getBaseUrl } from '@/api/client';
 import { useUser } from '@/hooks/queries/useUserQueries';
-import { useStats } from '@/hooks/queries/useStatsQueries';
 import TrackPlayer from 'react-native-track-player';
+import { GradientButton } from '@/components/home/GradientButton';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { VOCAB_QUERY_KEY } from '@/constants/queryKeys';
+import { getVocab } from '@/api/vocab';
 
 export default function HomeScreen() {
   const qc = useQueryClient();
-  const baseURL = getBaseUrl();
   const router = useRouter();
 
   const { data: user, isLoading: isUserLoading } = useUser();
-  const { data: stats } = useStats();
 
-  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
-  const [selectedMood, setSelectedMood] = useState<MOOD_OPTIONS | null>(null);
-  const [displayedThemes, setDisplayedThemes] = useState<string[]>([]);
+  // --- 타입 & 유틸
+  type TopicKey = keyof typeof THEME_OPTIONS;
+  type MoodKey = keyof typeof MOOD_OPTIONS;
 
-  const allAvailableTopics = useMemo(() => {
-    return TOPIC_CATEGORIES.flatMap((category) =>
-      category.topics.map((topic) => topic.id),
-    );
-  }, []);
+  const THEME_KEYS = useMemo(
+    () => Object.keys(THEME_OPTIONS) as TopicKey[],
+    [],
+  );
+  const MOOD_KEYS = useMemo(() => Object.keys(MOOD_OPTIONS) as MoodKey[], []);
 
-  const generateDisplayedThemes = useCallback(() => {
-    const userInterests = user?.interests || [];
-    const totalThemesToShow = 5;
-    const randomNeeded = totalThemesToShow - userInterests.length;
+  const toThemeDisplay = (k: TopicKey) =>
+    `${THEME_OPTIONS[k].emoji} ${THEME_OPTIONS[k].label}`;
+  const toMoodDisplay = (k: MoodKey) =>
+    `${MOOD_OPTIONS[k].emoji} ${MOOD_OPTIONS[k].label}`;
 
-    if (randomNeeded <= 0) {
-      return userInterests.slice(0, totalThemesToShow);
+  // display → key 역매핑 레코드
+  const themeDisplayToKey = useMemo(
+    () =>
+      Object.fromEntries(
+        THEME_KEYS.map((k) => [toThemeDisplay(k), k]),
+      ) as Record<string, TopicKey>,
+    [THEME_KEYS],
+  );
+  const moodDisplayToKey = useMemo(
+    () =>
+      Object.fromEntries(MOOD_KEYS.map((k) => [toMoodDisplay(k), k])) as Record<
+        string,
+        MoodKey
+      >,
+    [MOOD_KEYS],
+  );
+
+  // --- 주제(Theme) 관리: 키 기반
+  const [selectedTheme, setSelectedTheme] = useState<TopicKey | null>(null);
+  const [displayedThemes, setDisplayedThemes] = useState<TopicKey[]>([]);
+
+  // 유저 관심사가 있다면 우선 채우고, 모자라면 랜덤 보충
+  const generateDisplayedThemes = useCallback((): TopicKey[] => {
+    const TOTAL = 5;
+
+    // user?.interests 가 TopicKey[] 라고 가정 (아니라면 매핑 로직 추가 필요)
+    const userInterests = (user?.interests ?? []) as TopicKey[];
+
+    // 유효한 키만 추림
+    const validInterests = userInterests.filter((k) => THEME_KEYS.includes(k));
+
+    if (validInterests.length >= TOTAL) {
+      return validInterests.slice(0, TOTAL);
     }
 
-    const remainingTopics = allAvailableTopics.filter(
-      (topic) => !userInterests.includes(topic),
-    );
+    const remaining = THEME_KEYS.filter((k) => !validInterests.includes(k));
+    const shuffled = [...remaining].sort(() => Math.random() - 0.5);
+    const need = TOTAL - validInterests.length;
 
-    const shuffled = [...remainingTopics].sort(() => Math.random() - 0.5);
-    const randomTopics = shuffled.slice(0, randomNeeded);
+    return [
+      ...validInterests,
+      ...shuffled.slice(0, Math.min(need, shuffled.length)),
+    ];
+  }, [user, THEME_KEYS]);
 
-    return [...userInterests, ...randomTopics];
-  }, [user, allAvailableTopics]);
+  // --- 분위기(Mood) 관리: 키 기반
+  const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
+  const [displayedMoods, setDisplayedMoods] = useState<MoodKey[]>(() => {
+    const shuffled = [...MOOD_KEYS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, MOOD_KEYS.length));
+  });
 
+  const generateDisplayedMoods = useCallback((): MoodKey[] => {
+    const shuffled = [...MOOD_KEYS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, MOOD_KEYS.length));
+  }, []);
+
+  // --- 화면 복귀 시 한 번에 갱신
   useFocusEffect(
     useCallback(() => {
       setDisplayedThemes(generateDisplayedThemes());
-    }, [generateDisplayedThemes]),
+      setDisplayedMoods(generateDisplayedMoods());
+    }, [generateDisplayedThemes, generateDisplayedMoods]),
   );
 
   // 오디오 API 훅
   const { mutate: audioMutate, isPending: isAudioLoading } = useGenerateAudio();
 
-  // 상단 안내 문구
+  // 하단 안내 문구
   const focusMessage = useMemo(() => {
-    if (!selectedTheme) {
+    const moodLabel = selectedMood ? MOOD_OPTIONS[selectedMood].label : null;
+    const themeLabel = selectedTheme
+      ? THEME_OPTIONS[selectedTheme].label
+      : null;
+
+    if (!selectedTheme && !selectedMood) {
       return (
-        <Text className="text-base leading-6 text-neutral-600">
-          테마와 분위기를 선택하면 맞춤 학습 계획이 제공됩니다.
+        <Text className="text-base leading-7 text-slate-600">
+          주제와 분위기를 선택해주세요.
         </Text>
       );
     }
 
     if (!selectedMood) {
       return (
-        <Text className="text-base leading-6 text-neutral-600">
-          <Text className="font-bold">{selectedTheme}</Text> 주제로 맞춤
-          콘텐츠를 준비해드립니다.
+        <Text className="text-base leading-7 text-slate-600">
+          <Text className="font-bold text-slate-900">{themeLabel}</Text> 주제로
+          듣고싶어요.
+        </Text>
+      );
+    }
+
+    if (!selectedTheme) {
+      return (
+        <Text className="text-base leading-7 text-slate-600">
+          <Text className="font-bold text-slate-900">{moodLabel}</Text> 분위기로
+          듣고싶어요.
         </Text>
       );
     }
 
     return (
-      <Text className="text-base leading-6 text-neutral-600">
-        <Text className="font-bold">{selectedTheme}</Text> 주제로{' '}
-        <Text className="font-bold">{selectedMood}</Text> 분위기의 콘텐츠를
-        준비해드립니다.
+      <Text className="text-base leading-7 text-slate-600">
+        <Text className="font-bold text-slate-900">{themeLabel}</Text> 주제와{' '}
+        <Text className="font-bold text-slate-900">{moodLabel}</Text> 분위기로
+        듣고싶어요.
       </Text>
     );
   }, [selectedTheme, selectedMood]);
 
+  // Theme 및 Mood 선택 비우기
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setSelectedTheme(null);
+        setSelectedMood(null);
+      };
+    }, []),
+  );
+
+  // 오디오 생성 핸들러
   const handleGenerateAudio = () => {
     if (!selectedTheme || !selectedMood) {
       console.warn('테마와 분위기를 모두 선택하세요.');
@@ -102,18 +175,29 @@ export default function HomeScreen() {
             // RNTP 트랙 세팅
             await TrackPlayer.reset();
             await TrackPlayer.add({
-              url: `${baseURL}${data.audio_url}`,
+              id: data.generated_content_id,
+              url: data.audio_url,
+              // url: require('@/assets/audio/1_audio.mp3'),
               title: data.title,
               artist: 'LingoFit',
             });
 
             // 세션 ID 생성 후 캐시에 원본 응답 저장
-            const id = uuidv4();
-            qc.setQueryData(['audio', id], data);
+            qc.setQueryData(['audio', String(data.generated_content_id)], data);
+
+            // navigation과 동시에 백그라운드에서 실행 (await 불필요)
+            qc.prefetchQuery({
+              queryKey: [VOCAB_QUERY_KEY, data.generated_content_id],
+              queryFn: () => getVocab(data.generated_content_id),
+              staleTime: 5 * 60 * 1000, // useVocab의 staleTime과 일치
+              retry: 30, // 최대 30회 재시도
+              retryDelay: 1000, // 1초 간격
+            });
 
             // 플레이어 화면으로 라우팅 (id만 전달)
-            router.push(`/audioPlayer/${id}`);
+            router.push(`/audioPlayer/${data.generated_content_id}`);
           } catch (e) {
+            4;
             console.error('TrackPlayer 처리 중 오류:', e);
           }
         },
@@ -124,6 +208,10 @@ export default function HomeScreen() {
     );
   };
 
+  // 사용자 이름 표시 로직
+  const displayName = (user?.nickname || user?.username)?.trim();
+
+  // 로딩 상태 처리
   if (isUserLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-[#EBF4FB]">
@@ -133,92 +221,110 @@ export default function HomeScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#EBF4FB]">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="bg-gradient-to-br from-primary to-sky-600 px-6 pb-4 pt-24">
-          <View className="mb-6 rounded-2xl bg-white px-5 py-4">
-            <View className="mb-3 flex-row items-center">
-              <View className="mr-3 h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-500">
-                <Text className="text-2xl">🔥</Text>
-              </View>
+    <ScrollView
+      className="flex-1 px-5 bg-[#EBF4FB]"
+      showsVerticalScrollIndicator={false}
+    >
+      {/* 인사말 */}
 
-              <View>
-                <Text className="text-sm font-black text-neutral-600">
-                  연속 학습
+      <View className="px-5 pt-6 pb-2">
+        <Text className="text-3xl font-black leading-tight text-slate-900">
+          {/* 한 줄 안에 배치 */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'baseline',
+              flexWrap: 'wrap',
+            }}
+          >
+            <MaskedView
+              maskElement={
+                <Text className="text-3xl font-black leading-tight">
+                  {displayName}
                 </Text>
-                <Text className="text-xl font-black text-neutral-900">
-                  {stats?.streak.consecutive_days ?? 0}일
+              }
+            >
+              <LinearGradient
+                colors={['#38BDF8', '#0EA5E9', '#0284C7'] as const}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text className="text-3xl font-black leading-tight opacity-0">
+                  {displayName}
                 </Text>
-              </View>
-            </View>
-
-            <View className="flex-row justify-between">
-              {['월', '화', '수', '목', '금', '토', '일'].map((day, index) => {
-                const dayData = stats?.streak.daily_minutes[index];
-                const hasActivity = dayData ? dayData.minutes > 1 : false;
-
-                return (
-                  <View key={day} className="items-center">
-                    <Text className="mb-2 text-xs font-semibold text-neutral-400">
-                      {day}
-                    </Text>
-                    <View className="h-8 w-8 items-center justify-center rounded-full bg-neutral-200">
-                      <View
-                        className={`h-2 w-2 rounded-full ${hasActivity ? 'bg-orange-500' : 'bg-transparent'}`}
-                      />
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
+              </LinearGradient>
+            </MaskedView>
+            <Text className="text-3xl font-black leading-tight text-slate-900">
+              님,
+            </Text>
           </View>
+          {'\n'}
+          바로 학습을 시작해볼까요?
+        </Text>
 
-          <Text className="mb-2 text-2xl font-black text-neutral-900">
-            맞춤 학습 시작하기
-          </Text>
-          <Text className="text-base font-black leading-6 text-neutral-700">
-            오늘의 학습을 위해 테마와 분위기를 선택하세요.
-          </Text>
-        </View>
+        <Text className="my-3 text-[15px] leading-6 text-slate-600">
+          아래에서 듣고 싶은{' '}
+          <Text className="font-semibold text-slate-800">주제</Text>와{' '}
+          <Text className="font-semibold text-slate-800">분위기</Text>를 고르면
+          맞춤 오디오를 만들어드릴게요.
+        </Text>
+      </View>
 
-        <View className="px-5 pt-3">
+      {/* 주제 & 분위기 선택 칩 카드 */}
+      <View className="mb-5 rounded-3xl border border-slate-100 bg-white shadow-sm">
+        {/* 주제 */}
+        <View className="p-4 pb-2">
           <ChipSelectorGroup
-            title="테마"
-            chips={displayedThemes}
-            onSelectionChange={(value) => setSelectedTheme(value || null)}
-          />
-
-          <ChipSelectorGroup
-            title="분위기"
-            chips={Object.values(MOOD_OPTIONS)}
+            title="주제"
+            chips={displayedThemes.map(toThemeDisplay)}
+            value={selectedTheme ? toThemeDisplay(selectedTheme) : null}
             onSelectionChange={(value) =>
-              setSelectedMood(value ? (value as MOOD_OPTIONS) : null)
+              setSelectedTheme(
+                value ? (themeDisplayToKey[value] ?? null) : null,
+              )
             }
           />
-
-          <View className="mt-2 rounded-2xl bg-white p-6 shadow-sm">
-            <View className="mb-3 flex-row items-center">
-              <Text className="flex-1 text-lg font-bold text-neutral-900">
-                오늘의 학습
-              </Text>
-            </View>
-            {focusMessage}
-          </View>
-
-          <View className="mt-6">
-            <Button
-              title={isAudioLoading ? '생성 중...' : '오디오 생성하기'}
-              onPress={handleGenerateAudio}
-              disabled={isAudioLoading}
-              style={{ width: '100%' }}
-            />
-          </View>
         </View>
-      </ScrollView>
-    </View>
+
+        {/* 구분선 */}
+        <View className="h-[1px] bg-sky-100 mb-5" />
+
+        {/* 분위기 */}
+        <View className="p-4 pt-2">
+          <ChipSelectorGroup
+            title="분위기"
+            chips={displayedMoods.map(toMoodDisplay)}
+            value={selectedMood ? toMoodDisplay(selectedMood) : null}
+            onSelectionChange={(value) =>
+              setSelectedMood(value ? (moodDisplayToKey[value] ?? null) : null)
+            }
+          />
+        </View>
+      </View>
+
+      {/* 하단 안내 문구 */}
+      {/* 하단 안내 + 버튼 카드 */}
+      <View className="rounded-3xl bg-white border border-sky-100 shadow-md shadow-sky-200/40 px-6 py-5">
+        {/* 섹션 타이틀 */}
+        <Text className="text-sm font-semibold text-sky-600 mb-2">
+          오늘의 선택
+        </Text>
+
+        {/* 안내 문구 */}
+        <View className="mb-6">{focusMessage}</View>
+
+        {/* 구분선 */}
+        <View className="h-[1px] bg-sky-100 mb-5" />
+
+        {/* 오디오 생성 버튼 */}
+        <GradientButton
+          title="나만의 오디오 만들기"
+          icon="musical-notes"
+          loading={isAudioLoading}
+          disabled={!selectedTheme || !selectedMood}
+          onPress={handleGenerateAudio}
+        />
+      </View>
+    </ScrollView>
   );
 }
