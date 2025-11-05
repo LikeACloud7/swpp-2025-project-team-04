@@ -10,37 +10,25 @@ export { ErrorBoundary } from 'expo-router';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { Capability } from 'react-native-track-player';
-import { PlaybackService } from './PlaybackService';
 
 SplashScreen.preventAutoHideAsync();
 
-// 전역 가드 (Fast Refresh 대비)
-declare global {
-  // eslint-disable-next-line no-var
-  var __PLAYER_INITIALIZED__: boolean | undefined;
-  // eslint-disable-next-line no-var
-  var __SERVICE_REGISTERED__: boolean | undefined;
-}
-
 async function setupPlayerOnce() {
-  if (global.__PLAYER_INITIALIZED__) return;
-  try {
-    await TrackPlayer.setupPlayer();
-    await TrackPlayer.updateOptions({
-      capabilities: [Capability.Play, Capability.Pause, Capability.SeekTo],
-      // 필요하면 compactCapabilities, android 옵션 등 추가
-    });
-    global.__PLAYER_INITIALIZED__ = true;
-  } catch (e) {
-    // 이미 초기화된 경우 등: 조용히 무시
-    global.__PLAYER_INITIALIZED__ = true;
-  }
-}
-
-// 서비스 등록은 모듈 최상단에서 1회
-if (!global.__SERVICE_REGISTERED__) {
-  TrackPlayer.registerPlaybackService(() => PlaybackService);
-  global.__SERVICE_REGISTERED__ = true;
+  console.log('[TP] setupPlayerOnce');
+  await TrackPlayer.setupPlayer();
+  await TrackPlayer.updateOptions({
+    // Service에서 처리하는 모든 기능 명시
+    capabilities: [
+      Capability.Play,
+      Capability.Pause,
+      Capability.Stop,
+      Capability.SeekTo,
+      Capability.SkipToNext,
+      Capability.SkipToPrevious,
+    ],
+    // 알림 센터(Compact)에 표시할 버튼 (iOS/Android 공통)
+    compactCapabilities: [Capability.Play, Capability.Pause],
+  });
 }
 
 export default function RootLayout() {
@@ -88,6 +76,11 @@ function RootNavigation() {
     <Stack>
       <Stack.Protected guard={!!user}>
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="audioPlayer/[id]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="feedback" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
