@@ -1,4 +1,5 @@
-import { useState } from 'react';
+// screens/InitialSurveyScreen.tsx
+import { useMemo, useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 
@@ -10,13 +11,15 @@ import ProgressBar from '@/components/initial-survey/ProgressBar';
 import TestOptionStep from '@/components/initial-survey/TestOptionStep';
 import TopicGrid from '@/components/initial-survey/TopicGrid';
 import WelcomeStep from '@/components/initial-survey/WelcomeStep';
+
 import {
   LISTENING_LEVELS,
-  TOPIC_CATEGORIES,
   WELCOME_CONTENT,
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
+import { THEME_OPTIONS } from '@/constants/homeOptions';
+
 import {
   useSubmitLevelTest,
   useSubmitManualLevel,
@@ -48,13 +51,9 @@ export default function InitialSurveyScreen() {
       return;
     }
     // 레벨 선택 없이 Step 2로 넘어가기 방지
-    if (currentStep === 1 && !userInput.proficiencyLevel) {
-      return;
-    }
+    if (currentStep === 1 && !userInput.proficiencyLevel) return;
     // Step 2에서 선택 없이 넘어가기 방지
-    if (currentStep === 2 && skipTest === null) {
-      return;
-    }
+    if (currentStep === 2 && skipTest === null) return;
     // Step 2에서 Skip하면 바로 Step 8로 이동
     if (currentStep === 2 && skipTest === true) {
       setCurrentStep(8);
@@ -76,24 +75,22 @@ export default function InitialSurveyScreen() {
   const handleSubmit = () => {
     if (isSubmitting) return;
 
-    // 백엔드로 보내기
     if (skipTest === true) {
+      // 수동 레벨 설정
       submitManualLevel(
         { levelId: userInput.proficiencyLevel },
         {
-          onSuccess: () => {
-            router.replace('/(main)');
-          },
-          onError: () => {
+          onSuccess: () => router.replace('/(main)'),
+          onError: () =>
             Alert.alert(
               '제출 실패',
               '레벨 설정에 실패했습니다. 다시 시도해주세요.',
               [{ text: '확인' }],
-            );
-          },
+            ),
         },
       );
     } else {
+      // 레벨 테스트 제출
       submitLevelTest(
         {
           levelId: userInput.proficiencyLevel,
@@ -106,16 +103,13 @@ export default function InitialSurveyScreen() {
           ],
         },
         {
-          onSuccess: () => {
-            router.replace('/(main)');
-          },
-          onError: () => {
+          onSuccess: () => router.replace('/(main)'),
+          onError: () =>
             Alert.alert(
               '제출 실패',
               '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
               [{ text: '확인' }],
-            );
-          },
+            ),
         },
       );
     }
@@ -153,6 +147,32 @@ export default function InitialSurveyScreen() {
     if (currentStep === 2 && skipTest === null) return false;
     return true;
   };
+
+  // THEME_OPTIONS -> TopicGrid용 구조로 변환
+  // TopicGrid expects: { category: string, topics: { id, label, emoji }[] }[]
+  const themeCategories = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        category: string;
+        topics: { id: string; label: string; emoji: string }[];
+      }
+    >();
+
+    Object.entries(THEME_OPTIONS).forEach(([id, v]) => {
+      const cat = v.category;
+      if (!map.has(cat)) map.set(cat, { category: cat, topics: [] });
+      map.get(cat)!.topics.push({ id, label: v.label, emoji: v.emoji });
+    });
+
+    const arr = Array.from(map.values());
+    // 카테고리/토픽 정렬(선택)
+    arr.sort((a, b) => a.category.localeCompare(b.category, 'ko'));
+    arr.forEach((g) =>
+      g.topics.sort((a, b) => a.label.localeCompare(b.label, 'ko')),
+    );
+    return arr;
+  }, []);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -264,7 +284,7 @@ export default function InitialSurveyScreen() {
       case 8:
         return (
           <TopicGrid
-            categories={TOPIC_CATEGORIES}
+            categories={themeCategories}
             selectedTopics={userInput.selectedTopics}
             onToggle={handleTopicToggle}
             maxSelections={MAX_TOPIC_SELECTIONS}
