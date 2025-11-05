@@ -46,10 +46,60 @@ export default function StatsScreen() {
     );
   }
 
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const currentDayOfWeek = today.getDay();
+  const daysSinceMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+  const mondayDate = new Date(today);
+  mondayDate.setDate(today.getDate() - daysSinceMonday);
+  mondayDate.setHours(0, 0, 0, 0);
+
+  console.log('=== WEEKLY ACTIVITY DEBUG ===');
+  console.log('Today:', formatLocalDate(today));
+  console.log('Monday of this week:', formatLocalDate(mondayDate));
+  console.log(
+    'API daily_minutes data:',
+    JSON.stringify(stats.streak.daily_minutes, null, 2),
+  );
+
   const weeklyActivity = weekDays.map((_, index) => {
-    const dayData = stats.streak.daily_minutes[index];
-    return dayData ? dayData.minutes : 0;
+    const currentDate = new Date(mondayDate);
+    currentDate.setDate(mondayDate.getDate() + index);
+    currentDate.setHours(0, 0, 0, 0);
+
+    const dateString = formatLocalDate(currentDate);
+
+    if (currentDate > today) {
+      console.log(
+        `${weekDays[index]} (${dateString}): FUTURE DATE - showing 0`,
+      );
+      return 0;
+    }
+
+    const dayData = stats.streak.daily_minutes.find(
+      (d) => d.date === dateString,
+    );
+    const minutes = dayData ? dayData.minutes : 0;
+    console.log(
+      `${weekDays[index]} (${dateString}): ${minutes} minutes ${dayData ? '✓ FOUND' : '✗ NOT FOUND'}`,
+    );
+    return minutes;
   });
+
+  console.log('Final weeklyActivity array:', weeklyActivity);
+  console.log('=== END DEBUG ===');
+
+  const actualWeeklyTotal = weeklyActivity.reduce(
+    (sum, minutes) => sum + minutes,
+    0,
+  );
 
   //Mock
   const mockAchievements = [
@@ -201,22 +251,6 @@ export default function StatsScreen() {
               <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
                 {stats.current_level.level_description}
               </Text>
-              <View className="mt-2 w-full rounded-xl bg-neutral-50 p-3">
-                <View className="mb-2 flex-row items-center justify-between">
-                  <Text className="text-xs font-semibold text-neutral-600">
-                    레벨 점수
-                  </Text>
-                  <Text className="text-sm font-bold text-primary">
-                    {stats.current_level.level_score}/100
-                  </Text>
-                </View>
-                <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                  <View
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${stats.current_level.level_score}%` }}
-                  />
-                </View>
-              </View>
             </View>
           </View>
 
@@ -244,11 +278,9 @@ export default function StatsScreen() {
                 </Text>
               </View>
               <Text className="text-3xl font-black text-neutral-900">
-                {Math.floor(stats.total_time_spent_minutes / 60)}
+                {stats.total_time_spent_minutes}
               </Text>
-              <Text className="text-xs font-semibold text-neutral-400">
-                시간 {stats.total_time_spent_minutes % 60}분
-              </Text>
+              <Text className="text-xs font-semibold text-neutral-400">분</Text>
             </View>
           </View>
         </View>
@@ -264,22 +296,24 @@ export default function StatsScreen() {
               </View>
               <View className="rounded-full bg-primary/10 px-3 py-1">
                 <Text className="text-sm font-bold text-primary">
-                  {stats.streak.weekly_total_minutes}분
+                  {actualWeeklyTotal}분
                 </Text>
               </View>
             </View>
 
             <View
               className="flex-row items-end justify-between gap-2"
-              style={{ height: 120 }}
+              style={{ height: 140 }}
             >
               {weeklyActivity.map((minutes, index) => {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
-                const isToday =
-                  (index === new Date().getDay()) === 0
-                    ? 6
-                    : new Date().getDay() - 1;
+
+                const currentDate = new Date(mondayDate);
+                currentDate.setDate(mondayDate.getDate() + index);
+
+                const isToday = index === daysSinceMonday;
+                const dateString = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
 
                 return (
                   <View key={index} className="flex-1 items-center">
@@ -305,6 +339,13 @@ export default function StatsScreen() {
                       }`}
                     >
                       {weekDays[index]}
+                    </Text>
+                    <Text
+                      className={`text-[10px] font-semibold ${
+                        isToday ? 'text-primary' : 'text-neutral-400'
+                      }`}
+                    >
+                      {dateString}
                     </Text>
                   </View>
                 );
