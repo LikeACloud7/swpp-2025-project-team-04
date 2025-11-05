@@ -37,3 +37,18 @@ def get_vocab_for_user(db: Session, user_id: int) -> List[VocabEntry]:
         .order_by(VocabEntry.created_at.desc())
         .all()
     )
+
+
+def delete_vocab_entry(db: Session, *, entry_id: int, user_id: int) -> bool:
+    """Delete a vocab entry if it belongs to the specified user.
+
+    Returns:
+        bool: True if entry was found and deleted, False if not found
+    """
+    result = (
+        db.query(VocabEntry)
+        .filter(VocabEntry.id == entry_id, VocabEntry.user_id == user_id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return result > 0

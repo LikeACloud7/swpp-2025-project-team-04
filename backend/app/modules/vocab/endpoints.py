@@ -187,6 +187,22 @@ def add_word_to_vocab(
     return Response(status_code=201)
 
 
+@router.delete("/me/{entry_id}", status_code=204)
+def delete_my_vocab_entry(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    """Delete a vocab entry from the current user's vocab list.
+
+    Returns 204 if successful, 404 if entry not found or doesn't belong to user.
+    """
+    deleted = vocab_crud.delete_vocab_entry(db, entry_id=entry_id, user_id=current_user.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="vocab entry not found")
+    return Response(status_code=204)
+
+
 @router.get("/{generated_content_id}")
 def get_script_vocabs(generated_content_id: int, db: Session = Depends(get_db)):
     """Return the script_vocabs JSON stored on GeneratedContent.
