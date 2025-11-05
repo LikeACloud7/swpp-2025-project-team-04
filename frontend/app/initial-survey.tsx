@@ -51,6 +51,26 @@ export default function InitialSurveyScreen() {
     if (currentStep === 1 && !userInput.proficiencyLevel) {
       return;
     }
+    // Step 1에서 레벨 선택 후 다음으로 넘어갈 때 API 호출
+    if (currentStep === 1) {
+      if (isSubmitting) return;
+      submitManualLevel(
+        { levelId: userInput.proficiencyLevel },
+        {
+          onSuccess: () => {
+            setCurrentStep(currentStep + 1);
+          },
+          onError: () => {
+            Alert.alert(
+              '제출 실패',
+              '레벨 설정에 실패했습니다. 다시 시도해주세요.',
+              [{ text: '확인' }],
+            );
+          },
+        },
+      );
+      return;
+    }
     // Step 2에서 선택 없이 넘어가기 방지
     if (currentStep === 2 && skipTest === null) {
       return;
@@ -78,21 +98,8 @@ export default function InitialSurveyScreen() {
 
     // 백엔드로 보내기
     if (skipTest === true) {
-      submitManualLevel(
-        { levelId: userInput.proficiencyLevel },
-        {
-          onSuccess: () => {
-            router.replace('/(main)');
-          },
-          onError: () => {
-            Alert.alert(
-              '제출 실패',
-              '레벨 설정에 실패했습니다. 다시 시도해주세요.',
-              [{ text: '확인' }],
-            );
-          },
-        },
-      );
+      // 레벨은 이미 Step 1에서 제출했으므로, 바로 메인 화면으로 이동
+      router.replace('/(main)');
     } else {
       submitLevelTest(
         {

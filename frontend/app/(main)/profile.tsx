@@ -55,7 +55,6 @@ const infoModalCopy: Record<
   },
 };
 
-
 const initialPasswordForm = {
   currentPassword: '',
   newPassword: '',
@@ -64,8 +63,6 @@ const initialPasswordForm = {
 
 const PASSWORD_RULE_MESSAGE =
   '비밀번호는 8~32자이며 영문과 숫자를 모두 포함해야 합니다.';
-
-
 
 type ProfileModalProps = {
   visible: boolean;
@@ -190,10 +187,8 @@ const ActionRow = ({
   className = '',
 }: ActionRowProps) => {
   const iconColor = variant === 'danger' ? '#b91c1c' : '#0ea5e9';
-  const badgeBg =
-    variant === 'danger' ? 'bg-red-100' : 'bg-primary/10';
-  const textColor =
-    variant === 'danger' ? 'text-red-600' : 'text-neutral-900';
+  const badgeBg = variant === 'danger' ? 'bg-red-100' : 'bg-primary/10';
+  const textColor = variant === 'danger' ? 'text-red-600' : 'text-neutral-900';
 
   return (
     <Pressable
@@ -212,9 +207,7 @@ const ActionRow = ({
             {title}
           </Text>
           {description ? (
-            <Text className="mt-1 text-sm text-neutral-500">
-              {description}
-            </Text>
+            <Text className="mt-1 text-sm text-neutral-500">{description}</Text>
           ) : null}
         </View>
       </View>
@@ -374,7 +367,11 @@ export default function ProfileScreen() {
             <Text
               key={`${activeModal}-${index}`}
               className="text-sm leading-6 text-neutral-600"
-              style={index === content.body.length - 1 ? undefined : { marginBottom: 12 }}
+              style={
+                index === content.body.length - 1
+                  ? undefined
+                  : { marginBottom: 12 }
+              }
             >
               {paragraph}
             </Text>
@@ -402,11 +399,11 @@ export default function ProfileScreen() {
               <Ionicons name="lock-closed" size={28} color="#0ea5e9" />
             </View>
             <View className="w-full rounded-2xl bg-neutral-50 p-4">
-          <Text className="text-center text-sm font-semibold text-neutral-700">
-            현재 비밀번호를 확인하고 새 비밀번호를 설정하세요.
-          </Text>
-          <Text className="mt-2 text-center text-xs text-neutral-500">
-            비밀번호 규칙: {PASSWORD_RULE_MESSAGE}
+              <Text className="text-center text-sm font-semibold text-neutral-700">
+                현재 비밀번호를 확인하고 새 비밀번호를 설정하세요.
+              </Text>
+              <Text className="mt-2 text-center text-xs text-neutral-500">
+                비밀번호 규칙: {PASSWORD_RULE_MESSAGE}
               </Text>
             </View>
           </View>
@@ -496,7 +493,6 @@ export default function ProfileScreen() {
         </ProfileModal>
       );
     }
-
 
     if (activeModal === 'passwordSuccess') {
       return (
@@ -676,17 +672,3 @@ export default function ProfileScreen() {
     </View>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
