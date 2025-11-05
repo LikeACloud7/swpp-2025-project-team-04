@@ -182,10 +182,8 @@ export default function StatsScreen() {
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-primary px-6 pb-8 pt-16">
-          <Text className="mb-6 text-3xl font-black text-white">학습 통계</Text>
-
-          <View className="mb-4 rounded-3xl bg-white p-6 shadow-lg">
+        <View className="bg-primary px-6 py-6">
+          <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
             <View className="mb-3 flex-row items-center justify-between">
               <Text className="text-base font-bold text-neutral-700">
                 현재 레벨
@@ -193,7 +191,7 @@ export default function StatsScreen() {
               <Ionicons name="trophy" size={24} color="#F59E0B" />
             </View>
             <View className="items-center py-4">
-              <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-lg">
+              <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-sm">
                 <Text className="text-4xl font-black text-white">
                   {stats.current_level.level}
                 </Text>
@@ -221,7 +219,7 @@ export default function StatsScreen() {
           </View>
 
           <View className="flex-row gap-3">
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-lg">
+            <View className="flex-1 rounded-2xl bg-white p-5 shadow-sm">
               <View className="mb-2 flex-row items-center gap-2">
                 <Ionicons name="flame" size={20} color="#EF4444" />
                 <Text className="text-xs font-bold text-neutral-600">
@@ -236,7 +234,7 @@ export default function StatsScreen() {
               </Text>
             </View>
 
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-lg">
+            <View className="flex-1 rounded-2xl bg-white p-5 shadow-sm">
               <View className="mb-2 flex-row items-center gap-2">
                 <Ionicons name="time" size={20} color="#8B5CF6" />
                 <Text className="text-xs font-bold text-neutral-600">
@@ -254,7 +252,7 @@ export default function StatsScreen() {
         </View>
 
         <View className="px-5 pt-4">
-          <View className="mb-4 rounded-3xl bg-white p-6 shadow-lg">
+          <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
             <View className="mb-6 flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="bar-chart" size={24} color="#0EA5E9" />
@@ -312,7 +310,7 @@ export default function StatsScreen() {
             </View>
           </View>
 
-          <View className="rounded-3xl bg-white p-6 shadow-lg">
+          <View className="rounded-3xl bg-white p-6 shadow-sm">
             <View className="mb-6 flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="medal" size={24} color="#F59E0B" />
@@ -399,14 +397,14 @@ export default function StatsScreen() {
           onPress={() => setModalVisible(false)}
         >
           <Pressable
-            className="mx-6 w-4/5 rounded-3xl bg-white p-6 shadow-2xl"
+            className="mx-6 w-4/5 rounded-3xl bg-white p-6 shadow-sm"
             onPress={(e) => e.stopPropagation()}
           >
             {selectedAchievement && (
               <>
                 <View className="items-center">
                   <View
-                    className={`mb-4 h-24 w-24 items-center justify-center rounded-3xl shadow-lg ${
+                    className={`mb-4 h-24 w-24 items-center justify-center rounded-3xl shadow-sm ${
                       selectedAchievement.achieved
                         ? 'bg-amber-500'
                         : 'bg-neutral-200'
