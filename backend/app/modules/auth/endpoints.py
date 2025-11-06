@@ -29,6 +29,7 @@ from ...core.exceptions import (
     InvalidUsernameFormatException,
     InvalidPasswordFormatException
 )
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,7 +44,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def signup(request: SignupRequest, db: Session = Depends(get_db)):
     # username 중복 체크
     if get_user_by_username(db, request.username):
-        raise UsernameExistsException()
+        raise PlainTextResponse("이미 존재하는 아이디입니다.", status_code=400);
     # 비밀번호 해싱
     hashed_pw = hash_password(request.password)
     # 유저 생성
@@ -71,11 +72,11 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     # 사용자 조회
     user = get_user_by_username(db, request.username)
     if not user:
-        raise InvalidCredentialsException()
+        return PlainTextResponse("존재하지 않는 아이디입니다.", status_code=400)
     
     # 비밀번호 검증
     if not verify_password(request.password, user.hashed_password):
-        raise InvalidCredentialsException()
+        return PlainTextResponse("비밀번호가 올바르지 않습니다.", status_code=400)
     
     # 토큰 생성
     data = {"sub": user.username}
@@ -108,7 +109,7 @@ def change_password(
     db: Session = Depends(get_db),
 ):
     if not authorization.startswith("Bearer "):
-        raise InvalidAuthHeaderException()
+        return PlainTextResponse("인증 토큰이 포함되지 않았습니다. 개발자 문의해주세요.", status_code=401)
 
     access_token = authorization[7:]
     token_data = verify_token(access_token, TokenType.ACCESS_TOKEN)
@@ -119,7 +120,7 @@ def change_password(
         raise UserNotFoundException()
 
     if not verify_password(request.current_password, user.hashed_password):
-        raise InvalidCredentialsException()
+        return PlainTextResponse("인증 정보가 올바르지 않습니다.", status_code=401)
 
     hashed_pw = hash_password(request.new_password)
     update_user_password(db, user, hashed_pw)
@@ -141,7 +142,7 @@ def reissue_access_token(request: RefreshTokenRequest, db: Session = Depends(get
     
     user = get_user_by_username(db, username)
     if not user:
-        raise UserNotFoundException()
+        return PlainTextResponse("존재하지 않는 유저입니다.", status_code=400)
     
     # 새로운 access token 생성
     data = {"sub": user.username}
@@ -164,7 +165,7 @@ def reissue_access_token(request: RefreshTokenRequest, db: Session = Depends(get
 def delete_account(authorization: str = Header(), db: Session = Depends(get_db)):
     # Bearer 토큰에서 access token 추출
     if not authorization.startswith("Bearer "):
-        raise InvalidAuthHeaderException()
+        return PlainTextResponse("인증 토큰이 포함되지 않았습니다. 개발자 문의해주세요.", status_code=401)
     
     access_token = authorization[7:]
     
@@ -175,10 +176,10 @@ def delete_account(authorization: str = Header(), db: Session = Depends(get_db))
     # 사용자 조회
     user = get_user_by_username(db, username)
     if not user:
-        raise UserNotFoundException()
+        return PlainTextResponse("존재하지 않는 유저입니다.", status_code=400)
     
     # 계정 삭제
     if delete_user(db, username):
         return DeleteAccountResponse(message="Account deleted successfully")
     else:
-        raise AccountDeletionFailedException()
+        return PlainTextResponse("계정 삭제에 실패했습니다.", status_code=401)
