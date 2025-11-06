@@ -18,7 +18,7 @@ class TokensResponse(BaseModel):
 
 
 class SignupRequest(UserCredentials):
-    nickname: str 
+    nickname: str = Field(default="")
 
 class SignupResponse(TokensResponse):
     user: UserInfo
