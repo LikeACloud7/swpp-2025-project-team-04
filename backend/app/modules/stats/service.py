@@ -27,6 +27,10 @@ _DEFAULT_ACHIEVEMENTS: tuple[Dict[str, str], ...] = (
     },
 )
 
+_DEFAULT_ACHIEVEMENT_LOOKUP = {
+    item["code"]: item for item in _DEFAULT_ACHIEVEMENTS
+}
+
 
 class StatsService:
     def get_user_stats(
@@ -97,12 +101,19 @@ class StatsService:
 
         achievement_statuses: List[schemas.AchievementStatus] = []
         for definition in achievement_defs:
+            localized = _DEFAULT_ACHIEVEMENT_LOOKUP.get(definition.code)
+            localized_name = localized.get("name") if localized else None
+            localized_description = localized.get("description") if localized else None
             unlocked = user_lookup.get(definition.code)
             achievement_statuses.append(
                 schemas.AchievementStatus(
                     code=definition.code,
-                    name=definition.name,
-                    description=definition.description,
+                    name=localized_name or definition.name,
+                    description=(
+                        localized_description
+                        if localized_description is not None
+                        else definition.description
+                    ),
                     category=definition.category,
                     achieved=unlocked is not None,
                     achieved_at=getattr(unlocked, "achieved_at", None)
