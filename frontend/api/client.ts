@@ -17,7 +17,7 @@ export type ApiError = Error & {
 };
 
 type PendingRequest = {
-  resolve: (token: string) => void;
+  resolve: () => void; // string 인자 제거
   reject: (error: Error) => void;
 };
 
@@ -38,7 +38,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
     if (error) {
       reject(error);
     } else {
-      resolve(token!);
+      resolve();
     }
   });
   failedQueue = [];
@@ -172,7 +172,7 @@ export const customFetch = async <T>(
       setAccessToken(newAccessToken);
       headers.set('Authorization', `Bearer ${newAccessToken}`);
       processQueue(null, newAccessToken);
-      response = await fetch(`${baseUrl}${endpoint}`, {
+      response = await fetch(fullUrl, {
         ...requestInit,
         headers,
       });
@@ -197,7 +197,7 @@ export const customFetch = async <T>(
       processQueue(failureError, null);
       setAccessToken(null);
       deleteRefreshToken();
-      queryClient.setQueryData(USER_QUERY_KEY, null);
+      queryClient.setQueryData([USER_QUERY_KEY], null);
       throw failureError;
     } finally {
       isRefreshing = false;
