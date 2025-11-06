@@ -6,16 +6,7 @@ import React, {
   useImperativeHandle,
   useRef,
 } from 'react';
-import {
-  TextInput,
-  View,
-  Text,
-  TextInputProps,
-  Pressable,
-  NativeSyntheticEvent,
-  TextInputSubmitEditingEventData,
-  TextInputSubmitEditingEvent,
-} from 'react-native';
+import { TextInput, View, Text, TextInputProps, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export type AuthInputProps = Omit<
@@ -101,6 +92,7 @@ const AuthInput = forwardRef<AuthInputHandle, AuthInputProps>(
             onChangeText={onChangeText}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
+            autoCapitalize="none"
             secureTextEntry={isSecure}
             placeholderTextColor={placeholderTextColor}
             editable={editable}
