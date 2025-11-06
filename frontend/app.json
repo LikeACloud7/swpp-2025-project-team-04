@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "swpp-frontend",
-    "slug": "swpp-frontend",
+    "name": "LingoFit",
+    "slug": "lingofit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "swppfrontend",
+    "scheme": "lingofit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "androidNavigationBar": {
@@ -44,7 +44,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6FA4D7"
+      "backgroundColor": "#001F3B"
     },
     "icon": "./assets/icon.png"
   }
