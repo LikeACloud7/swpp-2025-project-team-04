@@ -5,8 +5,10 @@ import { QueryProvider } from '@/lib/QueryProvider';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import 'react-native-reanimated';
 export { ErrorBoundary } from 'expo-router';
+import * as NavigationBar from 'expo-navigation-bar';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { Capability } from 'react-native-track-player';
@@ -33,9 +35,16 @@ async function setupPlayerOnce() {
 
 export default function RootLayout() {
   useEffect(() => {
-    // 앱 시작 시 1회만 초기화 시도
+    // 1. 앱 시작 시 1회만 TrackPlayer 초기화
     setupPlayerOnce();
-  }, []);
+
+    // 2. [수정] Android 네비게이션 바 즉시 숨기기
+    // RootNavigation -> RootLayout으로 이동
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+    }
+  }, []); // [] : 앱이 처음 마운트될 때 한 번만 실행
 
   return (
     <SafeAreaProvider>
