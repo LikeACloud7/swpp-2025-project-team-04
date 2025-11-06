@@ -16,7 +16,7 @@ import TrackPlayer from 'react-native-track-player';
 import { GradientButton } from '@/components/home/GradientButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
-import { VOCAB_QUERY_KEY } from '@/constants/queryKeys';
+import { STATS_QUERY_KEY, VOCAB_QUERY_KEY } from '@/constants/queryKeys';
 import { getVocab } from '@/api/vocab';
 
 export default function HomeScreen() {
@@ -193,6 +193,7 @@ export default function HomeScreen() {
               retry: 30, // 최대 30회 재시도
               retryDelay: 1000, // 1초 간격
             });
+            qc.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
             // 플레이어 화면으로 라우팅 (id만 전달)
             router.push(`/audioPlayer/${data.generated_content_id}`);
