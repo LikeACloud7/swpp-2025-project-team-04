@@ -4,26 +4,8 @@ from ...core.exceptions import InvalidUsernameFormatException, InvalidPasswordFo
 
 
 class UserCredentials(BaseModel):
-    username: str  # min_length, max_length 제거
-    password: str  # min_length, max_length 제거
-
-    @field_validator("username")
-    @classmethod
-    def validate_username(cls, v):
-        if not (6 <= len(v) <= 16):
-            raise InvalidUsernameFormatException()
-        if not re.match(r"^[a-zA-Z0-9]+$", v):
-            raise InvalidUsernameFormatException()
-        return v
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v):
-        if not (8 <= len(v) <= 32):
-            raise InvalidPasswordFormatException()
-        if not re.search(r"[a-zA-Z]", v) or not re.search(r"[0-9]", v):
-            raise InvalidPasswordFormatException()
-        return v
+    username: str
+    password: str
 
 class UserInfo(BaseModel):
     id: int
@@ -36,7 +18,7 @@ class TokensResponse(BaseModel):
 
 
 class SignupRequest(UserCredentials):
-    nickname: str = Field("", max_length=50)
+    nickname: str 
 
 class SignupResponse(TokensResponse):
     user: UserInfo

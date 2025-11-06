@@ -30,9 +30,24 @@ from ...core.exceptions import (
     InvalidPasswordFormatException
 )
 from fastapi.responses import PlainTextResponse
+import re
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
+def validate_username(username: str):
+    if not (6 <= len(username) <= 16):
+        return PlainTextResponse("아이디는 영문자와 숫자로 이루어진 6~16자여야 합니다.", status_code=422)
+    if not re.match(r"^[a-zA-Z0-9]+$", username):
+        return PlainTextResponse("아이디는 영문자와 숫자로 이루어진 6~16자여야 합니다.", status_code=422)
+    return None
+
+def validate_password(password: str):
+    if not (8 <= len(password) <= 32):
+        return PlainTextResponse("비밀번호는 영문자와 숫자를 모두 포함한 8~32자여야 합니다.", status_code=422)
+    if not re.search(r"[a-zA-Z]", password) or not re.search(r"[0-9]", password):
+        return PlainTextResponse("비밀번호는 영문자와 숫자를 모두 포함한 8~32자여야 합니다.", status_code=422)
+    return None
 
 
 @router.post("/signup", response_model=SignupResponse, status_code=201, 
@@ -42,9 +57,20 @@ router = APIRouter(prefix="/auth", tags=["auth"])
                 InvalidPasswordFormatException
             ]))
 def signup(request: SignupRequest, db: Session = Depends(get_db)):
+
+    resp = validate_username(request.username)
+    if resp:
+        return resp
+
+    resp = validate_password(request.password)
+    if resp:
+        return resp
+    
+
+
     # username 중복 체크
     if get_user_by_username(db, request.username):
-        raise PlainTextResponse("이미 존재하는 아이디입니다.", status_code=400);
+        return PlainTextResponse("이미 존재하는 아이디입니다.", status_code=400);
     # 비밀번호 해싱
     hashed_pw = hash_password(request.password)
     # 유저 생성
@@ -69,6 +95,16 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
                 InvalidPasswordFormatException
             ]))
 def login(request: LoginRequest, db: Session = Depends(get_db)):
+
+
+    resp = validate_username(request.username)
+    if resp:
+        return resp
+
+    resp = validate_password(request.password)
+    if resp:
+        return resp
+
     # 사용자 조회
     user = get_user_by_username(db, request.username)
     if not user:
@@ -117,7 +153,7 @@ def change_password(
 
     user = get_user_by_username(db, username)
     if not user:
-        raise UserNotFoundException()
+        return PlainTextResponse("존재하지 않는 유저입니다.", status_code=400)
 
     if not verify_password(request.current_password, user.hashed_password):
         return PlainTextResponse("인증 정보가 올바르지 않습니다.", status_code=401)
@@ -125,7 +161,7 @@ def change_password(
     hashed_pw = hash_password(request.new_password)
     update_user_password(db, user, hashed_pw)
 
-    return ChangePasswordResponse(message="Password updated successfully")
+    return ChangePasswordResponse(message="성공적으로 패스워드가 변경되었습니다.")
 
 
 @router.post("/refresh/access", response_model=AccessTokenResponse, 

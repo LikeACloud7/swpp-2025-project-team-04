@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import ValidationError
 
 class ErrorResponse(BaseModel):
@@ -68,9 +68,16 @@ def register_exception_handlers(app):
     # Pydantic ValidationError 
     @app.exception_handler(ValidationError)
     async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+        # 1️⃣ Pydantic field_validator 내부에서 AppException을 던진 경우
         for error in exc.raw_errors:
             if isinstance(error.exc, AppException):
                 app_exc = error.exc
+
+                # ✅ /auth 경로면 plain text로 응답
+                if request.url.path.startswith("/auth"):
+                    return PlainTextResponse(app_exc.detail, status_code=app_exc.status_code)
+
+                # 나머지 라우트는 JSON 형식 유지
                 return JSONResponse(
                     status_code=app_exc.status_code,
                     content={
@@ -79,43 +86,52 @@ def register_exception_handlers(app):
                         "detail": app_exc.detail
                     }
                 )
+
+        # 2️⃣ 일반적인 ValidationError (AppException이 아닌 경우)
         first_error = exc.errors()[0]
+        detail = first_error.get("msg", "Invalid input")
+
+        # ✅ /auth 경로면 plain text로 응답
+        if request.url.path.startswith("/auth"):
+            return PlainTextResponse(detail, status_code=422)
+
+        # 나머지 라우트는 JSON 형식 유지
         return JSONResponse(
             status_code=422,
             content={
                 "status_code": 422,
                 "custom_code": "VALIDATION_ERROR",
-                "detail": first_error.get("msg", "Invalid input")
+                "detail": detail
             }
-        )
+    )
 
 # user
 
 class UserNotFoundException(AppException):
     def __init__(self):
-        super().__init__(404, "USER_NOT_FOUND", "The requested user does not exist.")
+        super().__init__(404, "USER_NOT_FOUND", "요청된 유저가 존재하지 않습니다.")
 
 class InvalidCredentialsException(AppException):
     def __init__(self):
-        super().__init__(401, "INVALID_CREDENTIALS", "Invalid username or password")
+        super().__init__(401, "INVALID_CREDENTIALS", "유저네임 또는 패스워드가 잘못되었습니다.")
 
 class InvalidUsernameFormatException(AppException):
     def __init__(self):
-        super().__init__(422, "INVALID_USERNAME_FORMAT", "Username must be 6~16 characters long and contain only letters and numbers")
+        super().__init__(422, "INVALID_USERNAME_FORMAT", "아이디는 영문자와 숫자로 이루어진 6~16자여야 합니다.")
 
 
 class InvalidPasswordFormatException(AppException):
     def __init__(self):
-        super().__init__(422, "INVALID_PASSWORD_FORMAT", "Password must be 8~32 characters long and include at least one letter and one number")
+        super().__init__(422, "INVALID_PASSWORD_FORMAT",  "비밀번호는 영문자와 숫자를 모두 포함한 8~32자여야 합니다.")
 
 
 class UsernameExistsException(AppException):
     def __init__(self):
-        super().__init__(400, "USERNAME_EXISTS", "Username already exists.")
+        super().__init__(400, "USERNAME_EXISTS", "유저네임이 이미 존재합니다.")
 
 class AccountDeletionFailedException(AppException):
     def __init__(self):
-        super().__init__(500, "ACCOUNT_DELETION_FAILED", "Failed to delete account")
+        super().__init__(500, "ACCOUNT_DELETION_FAILED", "계정 삭제에 실패했습니다.")
 
 
 # token
