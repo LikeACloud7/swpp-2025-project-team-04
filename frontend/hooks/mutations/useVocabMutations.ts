@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ApiError } from '@/api/client';
 import { addVocab } from '@/api/vocab';
-import { STATS_QUERY_KEY } from '@/constants/queryKeys';
+import {
+  MY_VOCAB_QUERY_KEY,
+  STATS_QUERY_KEY,
+  VOCAB_QUERY_KEY,
+} from '@/constants/queryKeys';
 
 // ✅ addVocab 함수에 맞게 word 필드 추가
 type AddVocabVariables = {
@@ -19,8 +23,9 @@ export const useAddVocab = () => {
       addVocab(generatedContentId, index, word),
 
     onSuccess: () => {
-      // ✅ 저장 성공 시 통계 데이터 갱신
-      queryClient.invalidateQueries({ queryKey: STATS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: [VOCAB_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MY_VOCAB_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
     },
 
     onError: (error) => {

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export const useStats = () => {
   return useQuery<StatsResponse, ApiError>({
-    queryKey: STATS_QUERY_KEY,
+    queryKey: [STATS_QUERY_KEY],
     queryFn: getStats,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
