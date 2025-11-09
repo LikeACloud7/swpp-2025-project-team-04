@@ -22,6 +22,7 @@ export type ScriptProps = {
   scripts: Sentence[];
 };
 
+// Word popup 위치, 크기 관리
 type WordPopupState = {
   word: string;
   x: number;
@@ -30,14 +31,14 @@ type WordPopupState = {
   height: number;
 } | null;
 
-// ========== Helpers ==========
+// 단어 정규화
 const norm = (w: string) =>
   (w || '')
     .toLowerCase()
     .trim()
     .replace(/[^\p{L}\p{N}'-]/gu, '');
 
-// ========== Constants ==========
+// Word popup 크기 조정 상수
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const SAFE_PAD = 12;
 const ARROW = 12;
@@ -82,32 +83,63 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     return null;
   };
 
-  // 오디오 진행/현재 라인
+  // 현재 재생 위치 탐색하는 로직
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
+  const currentLineIndexRef = useRef(-1); // 최신값 캐시
   const { position } = useProgress(100);
-  const flatListRef = useRef<FlatList<Sentence>>(null);
+  const startTimes = useMemo(
+    () => scripts.map((s) => parseFloat(s.start_time)),
+    [scripts],
+  );
 
   useEffect(() => {
-    if (scripts.length === 0) return;
-    let newIndex = -1;
-    for (let i = 0; i < scripts.length; i++) {
-      if (position >= parseFloat(scripts[i].start_time)) newIndex = i;
-      else break;
-    }
-    if (newIndex !== currentLineIndex) setCurrentLineIndex(newIndex);
-  }, [position, scripts, currentLineIndex]);
+    if (!startTimes.length) return;
+
+    setCurrentLineIndex((prevIndex) => {
+      let idx = currentLineIndexRef.current;
+
+      // 처음이거나 뒤로 가면 처음부터 탐색
+      if (idx === -1 || position < startTimes[idx]) {
+        idx = 0;
+      }
+
+      // 앞으로 탐색
+      while (idx + 1 < startTimes.length && position >= startTimes[idx + 1]) {
+        idx += 1;
+      }
+
+      currentLineIndexRef.current = idx;
+      return idx;
+    });
+  }, [position, startTimes]);
+
+  // 현재 재생 위치로 스크롤하는 로직
+  const flatListRef = useRef<FlatList<Sentence>>(null);
 
   useEffect(() => {
     if (flatListRef.current && currentLineIndex >= 0) {
       flatListRef.current.scrollToIndex({
         index: currentLineIndex,
         animated: true,
-        viewPosition: 0.5,
+        viewPosition: 0.5, // 가운데 정렬
       });
     }
   }, [currentLineIndex]);
 
-  const onLinePress = (time: number) => TrackPlayer.seekTo(time);
+  // 라인 누르면 해당 위치로 이동
+  const onLinePress = (time: number, lineIndex: number) => {
+    TrackPlayer.seekTo(time);
+
+    setCurrentLineIndex(lineIndex);
+    currentLineIndexRef.current = lineIndex;
+
+    flatListRef.current?.scrollToIndex({
+      // 속도 개선을 위해 바로 스크롤
+      index: lineIndex,
+      animated: true,
+      viewPosition: 0.5,
+    });
+  };
 
   // 팝업 상태
   const [wordPopup, setWordPopup] = useState<WordPopupState>(null);
@@ -137,8 +169,11 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
   const handleClosePopup = () => setWordPopup(null);
 
   // 각 아이템 렌더
-  const renderItem = ({ item, index }: ListRenderItemInfo<Sentence>) => {
-    const isHighlighted = index === currentLineIndex;
+  const renderItem = ({
+    item,
+    index: lineIndex,
+  }: ListRenderItemInfo<Sentence>) => {
+    const isHighlighted = lineIndex === currentLineIndex;
     const start = parseFloat(item.start_time);
     const time = Number.isFinite(start) ? start : 0;
     const text = item.text?.trim() ?? '';
@@ -147,7 +182,7 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     return (
       <Pressable
         onPress={() => {
-          onLinePress(time);
+          onLinePress(time, lineIndex);
           setWordPopup(null);
         }}
         className={`px-6 ${isHighlighted ? 'py-3' : 'py-1.5'}`}
@@ -164,7 +199,7 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
               appendSpace={i < words.length - 1}
               isHighlighted={isHighlighted}
               onPress={() => {
-                onLinePress(time);
+                onLinePress(time, lineIndex);
                 setWordPopup(null);
               }}
               onLongPress={(layout: WordLayout) =>
@@ -211,6 +246,16 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
       <View className="flex-1">
         <FlatList
           ref={flatListRef}
+          onScrollToIndexFailed={(info) => {
+            // 스크롤 실패 시 약간의 오프셋을 주고 재시도
+            setTimeout(() => {
+              flatListRef.current?.scrollToIndex({
+                index: info.index,
+                animated: true,
+                viewPosition: 0.5,
+              });
+            }, 100);
+          }}
           data={scripts}
           renderItem={renderItem}
           keyExtractor={(it) => it.id.toString()}
