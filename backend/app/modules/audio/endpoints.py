@@ -6,6 +6,7 @@ import boto3
 from ...core.config import settings
 import os
 import json
+from sqlalchemy.orm import Session
 from . import schemas
 from . import service as AudioService
 from ..users.models import User
@@ -101,6 +102,39 @@ async def generate_audio(
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
+
+
+@router.get(
+    "/history",
+    response_model=schemas.AudioHistoryListResponse,
+)
+def list_audio_history(
+    limit: int = 20,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return the authenticated user's previously generated audio files (paginated).
+    """
+    safe_limit = max(1, min(limit, 50))
+    safe_offset = max(0, offset)
+    items = AudioService.AudioService.list_user_audio_history(
+        db,
+        user_id=current_user.id,
+        limit=safe_limit,
+        offset=safe_offset,
+    )
+    total = AudioService.AudioService.count_user_audio_history(
+        db,
+        user_id=current_user.id,
+    )
+    return {
+        "items": items,
+        "total": total,
+        "limit": safe_limit,
+        "offset": safe_offset,
+    }
 
 @router.get("/files/{filename}")
 async def get_audio_file(filename: str):
