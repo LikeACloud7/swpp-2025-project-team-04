@@ -1,4 +1,90 @@
 from . import schemas
+from enum import Enum
+
+
+class CEFRLevel(Enum):
+    """CEFR 레벨 정의"""
+    A1 = "A1"
+    A2 = "A2"
+    B1 = "B1"
+    B2 = "B2"
+    C1 = "C1"
+    C2 = "C2"
+
+
+# TODO: 실제로 저장할 레벨 별 구간값들 정하기
+LEVEL_THRESHOLDS = {
+    CEFRLevel.A1: 0,
+    CEFRLevel.A2: 25,
+    CEFRLevel.B1: 50,
+    CEFRLevel.B2: 75,
+    CEFRLevel.C1: 100,
+    CEFRLevel.C2: 125,
+}
+MAX_SCORE = 150  # 최대 스코어
+
+
+
+def get_cefr_level_from_score(score: float) -> CEFRLevel:
+    """
+    스코어(0~150)로부터 CEFR 레벨(A1~C2)을 반환합니다.
+    
+    Args:
+        score: 0~150 범위의 레벨 스코어
+        
+    Returns:
+        CEFRLevel Enum 객체
+    """
+    # 스코어를 0~150 범위로 클램프
+    score = max(0, min(MAX_SCORE, score))
+    
+    # 레벨 결정 (내림차순으로 체크)
+    if score >= LEVEL_THRESHOLDS[CEFRLevel.C2]:
+        return CEFRLevel.C2
+    elif score >= LEVEL_THRESHOLDS[CEFRLevel.C1]:
+        return CEFRLevel.C1
+    elif score >= LEVEL_THRESHOLDS[CEFRLevel.B2]:
+        return CEFRLevel.B2
+    elif score >= LEVEL_THRESHOLDS[CEFRLevel.B1]:
+        return CEFRLevel.B1
+    elif score >= LEVEL_THRESHOLDS[CEFRLevel.A2]:
+        return CEFRLevel.A2
+    else:
+        return CEFRLevel.A1
+
+
+def get_average_score_and_level(
+    lexical_score: float,
+    syntactic_score: float,
+    speed_score: float
+) -> dict[str, float | CEFRLevel]:
+    """
+    3개의 레벨 스코어를 받아 평균 스코어와 평균 CEFR 레벨을 반환합니다.
+    
+    Args:
+        lexical_score: 어휘 레벨 스코어 (0~150)
+        syntactic_score: 구문 레벨 스코어 (0~150)
+        speed_score: 속도 레벨 스코어 (0~150)
+        
+    Returns:
+        {
+            "average_score": 평균 스코어 (float),
+            "average_level": CEFRLevel Enum 객체
+        }
+    """
+    # 평균 계산
+    average_score = round((lexical_score + syntactic_score + speed_score) / 3, 1)
+    
+    # 평균 스코어로부터 레벨 결정
+    average_level = get_cefr_level_from_score(average_score)
+    
+    return {
+        "average_score": average_score,
+        "average_level": average_level
+    }
+
+
+
 
 def _feedback_to_vector(feedback: schemas.SessionFeedbackRequest) -> list[int]:
     """SessionFeedbackRequest에서 generated_content_id를 제외한 6개의 정수 요소를
@@ -61,3 +147,4 @@ def _compute_levels_delta_from_weights(
         res[2] = max(speed_min, min(speed_max, res[2]))
 
     return res[0], res[1], res[2]
+

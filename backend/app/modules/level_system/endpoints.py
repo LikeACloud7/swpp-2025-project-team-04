@@ -20,16 +20,11 @@ def get_current_user(token=Depends(oauth2_scheme), db: Session = Depends(get_db)
     return user
 
 
-# 서비스 팩토리
-def get_level_system_service(db: Session = Depends(get_db)):
-    return LevelSystemService(db)
-
-
 @router.post("/session-feedback")
 def submit_session_feedback(
     feedback: schemas.SessionFeedbackRequest,
     current_user=Depends(get_current_user),
-    service: LevelSystemService = Depends(get_level_system_service),
+    db: Session = Depends(get_db),
 ):
     logger.info(
         "Session feedback - user: %d, gen_content_id: %d, data: %s",
@@ -38,10 +33,68 @@ def submit_session_feedback(
         feedback.model_dump(exclude_none=True)
     )
 
-    result = service.update_level(user=current_user, feedback_request_payload=feedback)
+    result = LevelSystemService.update_level_by_feedback(
+        db=db,
+        user=current_user,
+        feedback_request_payload=feedback
+    )
 
     logger.info(
         "Level update result - user: %d, result: %s",
+        current_user.id,
+        result,
+    )
+    return result
+
+
+@router.post("/initial-survey")
+def submit_initial_survey(
+    survey: schemas.InitialSurveyRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """결과를 제출하여 사용자의 초기 레벨을 설정합니다."""
+    logger.info(
+        "Initial survey - user: %d, tests_count: %d",
+        current_user.id,
+        len(survey.tests)
+    )
+
+    result = LevelSystemService.initialize_level(
+        db=db,
+        user=current_user,
+        initial_survey_payload=survey
+    )
+
+    logger.info(
+        "Level initialization result - user: %d, result: %s",
+        current_user.id,
+        result,
+    )
+    return result
+
+
+@router.post("/initial-survey-with-skip")
+def submit_initial_survey_with_skip(
+    manual_level: schemas.InitialSurveySkipRequest,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """초기 설문조사를 건너뛰고 수동으로 레벨을 설정합니다."""
+    logger.info(
+        "Manual level setting - user: %d, level=%.1f",
+        current_user.id,
+        manual_level.level,
+    )
+
+    result = LevelSystemService.set_manual_level(
+        db=db,
+        user=current_user,
+        manual_level_payload=manual_level
+    )
+
+    logger.info(
+        "Manual level set result - user: %d, result: %s",
         current_user.id,
         result,
     )
