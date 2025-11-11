@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 import re
-from ...core.exceptions import InvalidUsernameFormatException, InvalidPasswordFormatException
+from ...core.exceptions import InvalidPasswordFormatException
 
 
 class UserCredentials(BaseModel):
