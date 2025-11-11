@@ -84,6 +84,39 @@ STYLE_WEIGHT = 0.3   # Style is a secondary factor
 class AudioService:
 
     @staticmethod
+    def list_user_audio_history(
+        db: Session,
+        *,
+        user_id: int,
+        limit: int = 20,
+        offset: int = 0,
+    ):
+        """
+        Return paginated GeneratedContent rows for UI history views.
+        Limits are clamped to a small window to protect the DB.
+        """
+        limit = max(1, min(limit, 50))
+        offset = max(0, offset)
+        return crud.get_generated_contents_by_user(
+            db,
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+        )
+
+    @staticmethod
+    def count_user_audio_history(
+        db: Session,
+        *,
+        user_id: int,
+    ) -> int:
+        """Return how many GeneratedContent entries the user has ever created."""
+        return crud.count_generated_contents_by_user(
+            db,
+            user_id=user_id,
+        )
+
+    @staticmethod
     def _load_voices() -> list[dict]:
         """Loads the voice list from voices.json."""
         try:

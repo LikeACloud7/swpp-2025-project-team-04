@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import List
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, Field, ConfigDict
 
 class AudioGenerateRequest(BaseModel):
     """
@@ -34,3 +35,27 @@ class GeneratedScriptResponse(BaseModel):
     selected_voice_id: str
     selected_voice_name: str
     script: str
+
+
+class GeneratedContentListItem(BaseModel):
+    """
+    Summary of a GeneratedContent row for list views.
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    generated_content_id: int
+    title: str
+    audio_url: Optional[str] = None
+    script_data: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class AudioHistoryListResponse(BaseModel):
+    """
+    Paginated response containing a user's previously generated audios.
+    """
+    items: List[GeneratedContentListItem]
+    total: int
+    limit: int
+    offset: int
