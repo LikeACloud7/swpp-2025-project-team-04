@@ -18,7 +18,6 @@ from ...core.exceptions import (
     InvalidPasswordFormatException,
     InvalidTokenException,
     InvalidTokenTypeException,
-    InvalidUsernameFormatException,
     UserNotFoundException,
     UsernameExistsException,
 )
@@ -36,34 +35,20 @@ from .schemas import (
     SignupResponse,
 )
 
-import re
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def validate_username(username: str) -> None:
-    if not (6 <= len(username) <= 16):
-        raise InvalidUsernameFormatException()
-    if not re.match(r"^[a-zA-Z0-9]+$", username):
-        raise InvalidUsernameFormatException()
-
-def validate_password(password: str) -> None:
-    if not (8 <= len(password) <= 32):
-        raise InvalidPasswordFormatException()
-    if not re.search(r"[a-zA-Z]", password) or not re.search(r"[0-9]", password):
-        raise InvalidPasswordFormatException()
-
-
-@router.post("/signup", response_model=SignupResponse, status_code=201, 
-            responses=AppException.to_openapi_examples([
-                UsernameExistsException,
-                InvalidUsernameFormatException,
-                InvalidPasswordFormatException
-            ]))
+@router.post(
+    "/signup",
+    response_model=SignupResponse,
+    status_code=201,
+    responses=AppException.to_openapi_examples(
+        [
+            UsernameExistsException,
+        ]
+    ),
+)
 def signup(request: SignupRequest, db: Session = Depends(get_db)):
-    validate_username(request.username)
-    validate_password(request.password)
-
     if get_user_by_username(db, request.username):
         raise UsernameExistsException()
     # 비밀번호 해싱
@@ -82,17 +67,17 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/login", response_model=LoginResponse, 
-            responses=AppException.to_openapi_examples([
-                UserNotFoundException,
-                InvalidCredentialsException,
-                InvalidUsernameFormatException,
-                InvalidPasswordFormatException
-            ]))
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    responses=AppException.to_openapi_examples(
+        [
+            UserNotFoundException,
+            InvalidCredentialsException,
+        ]
+    ),
+)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    validate_username(request.username)
-    validate_password(request.password)
-
     user = get_user_by_username(db, request.username)
     if not user:
         raise InvalidCredentialsException()
