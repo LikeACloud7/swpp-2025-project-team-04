@@ -114,3 +114,18 @@ def count_generated_contents_by_user(
         .filter(GeneratedContent.user_id == user_id)
         .scalar()
     )
+
+
+def get_generated_content_by_id(
+    db: Session,
+    *,
+    content_id: int,
+) -> Optional[GeneratedContent]:
+    """
+    Fetch a single GeneratedContent by its ID.
+    """
+    return (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id == content_id)
+        .first()
+    )

@@ -136,6 +136,31 @@ def list_audio_history(
         "offset": safe_offset,
     }
 
+@router.get(
+    "/content/{generated_content_id}",
+    response_model=schemas.FinalAudioResponse,
+)
+def get_audio_content_by_id(
+    generated_content_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve the response_json field for a given generated_content_id.
+    Returns the full response payload including audio_url and sentences.
+    """
+    from . import crud
+    
+    content = crud.get_generated_content_by_id(db, content_id=generated_content_id)
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    
+    # Return the response_json field directly
+    if not content.response_json:
+        raise HTTPException(status_code=404, detail="Response data not available")
+    
+    return content.response_json
+
 @router.get("/files/{filename}")
 async def get_audio_file(filename: str):
     """
