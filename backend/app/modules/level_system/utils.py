@@ -1,5 +1,7 @@
 from . import schemas
 from enum import Enum
+from sqlalchemy.orm import Session
+from ..audio.model import GeneratedContent
 
 
 class CEFRLevel(Enum):
@@ -24,7 +26,13 @@ LEVEL_THRESHOLDS = {
 MIN_SCORE = 0 # 최소 스코어
 MAX_SCORE = 300  # 최대 스코어
 
+# 단어 조회(Lookup) 기준 비율
+LOOKUP_THRESHOLD_RATIO = 0.1  # 10% (이하: 긍정적, 초과: 부정적)
+LOOKUP_HIGH_THRESHOLD_RATIO = 0.15 # 15% (이 이상 초과 시 더 큰 패널티)
 
+# 단어 저장(Save) 기준 비율
+SAVE_THRESHOLD_RATIO = 0.05   # 5% (이하: 긍정적, 초과: 부정적)
+SAVE_HIGH_THRESHOLD_RATIO = 0.1 # 10% (이 이상 초과 시 더 큰 패널티)
 
 def get_cefr_level_from_score(score: float) -> CEFRLevel:
     """
@@ -151,10 +159,70 @@ def _compute_levels_delta_from_weights(
 
 
 def normalize_vocab_factor(
+    db: Session,
     generated_content_id: int,
     vocab_lookup_cnt: int,
     vocab_save_cnt: int,
 ) -> tuple[float, float]:
-   
-    pass
+   # --- 0. script_wc 조회 ---
+    # generated_content_id를 사용해 DB에서 스크립트의 총 단어 수(script_wc)를 가져옵니다.
+    content = db.query(GeneratedContent).filter(GeneratedContent.generated_content_id == generated_content_id).first()
+    if not content:
+        raise ValueError(f"Generated content with id {generated_content_id} not found")
+    if not content.script_data:
+        raise ValueError(f"Script data is missing for generated content id {generated_content_id}")
+    
+    # script_data에서 단어 수 계산
+    script_wc = len(content.script_data.split())
 
+    # --- 1. 초기 설정 ---
+    lexical_level_update_lookup = 0.0
+    lexical_level_update_save = 0.0
+
+    # 기준선 계산
+    lookup_threshold = script_wc * LOOKUP_THRESHOLD_RATIO
+    lookup_high_threshold = script_wc * LOOKUP_HIGH_THRESHOLD_RATIO
+
+    save_threshold = script_wc * SAVE_THRESHOLD_RATIO
+    save_high_threshold = script_wc * SAVE_HIGH_THRESHOLD_RATIO
+
+
+    # --- 2. '단어 조회(vocab_lookup)' 점수 계산 ---
+    if vocab_lookup_cnt == 0:
+        lexical_level_update_lookup = +1.0
+
+    elif vocab_lookup_cnt < lookup_threshold:  # (예: 1% ~ 9.9%)
+        # "정상"보다 적게 조회함 -> 스크립트가 쉬웠음.
+        lexical_level_update_lookup = +0.5
+
+    else:  # (10% 이상 조회)
+        # "정상"보다 많이 조회함 -> 스크립트가 어려웠음.
+        
+        # 15% 이상 조회 시 더 큰 패널티(-1)를 부여
+        if vocab_lookup_cnt > lookup_high_threshold:
+            lexical_level_update_lookup = -1.0
+        else:  # (10% ~ 15% 조회)
+            lexical_level_update_lookup = -0.5
+
+
+    # --- 3. '단어 저장(vocab_save)' 점수 계산 ---
+    # (참고: 이 로직은 저장을 '부정적 신호'로 간주합니다)
+
+    if vocab_save_cnt == 0:
+        lexical_level_update_save = +1.0
+
+    elif vocab_save_cnt < save_threshold:  # (예: 1% ~ 4.9%)
+        # "정상"보다 적게 저장함.
+        lexical_level_update_save = +0.5
+
+    else:  # (5% 이상 저장)
+        # "정상"보다 많이 저장함.
+        
+        # 10% 이상 저장 시 더 큰 패널티(-1)를 부여
+        if vocab_save_cnt > save_high_threshold:
+            lexical_level_update_save = -1.0
+        else:  # (5% ~ 10% 저장)
+            lexical_level_update_save = -0.5
+
+    # 두 개의 숫자 값을 튜플로 반환
+    return lexical_level_update_lookup, lexical_level_update_save

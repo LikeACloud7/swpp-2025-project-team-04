@@ -55,7 +55,8 @@ class LevelSystemService:
 
 
 
-        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(feedback_request_payload.generated_content_id, 
+        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(db,
+                                                                      feedback_request_payload.generated_content_id, 
                                                                       feedback_request_payload.vocab_lookup_cnt,
                                                                       feedback_request_payload.vocab_save_cnt)
 
