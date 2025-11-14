@@ -1,11 +1,8 @@
 from . import schemas
 from enum import Enum
-<<<<<<< HEAD
 from sqlalchemy.orm import Session
 from ..audio.model import GeneratedContent
-=======
 from dataclasses import dataclass
->>>>>>> backend/feat/level-system/param-setting
 
 
 class CEFRLevel(Enum):
