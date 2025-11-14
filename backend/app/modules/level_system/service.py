@@ -66,10 +66,7 @@ class LevelSystemService:
             vocab_save_cnt=feedback_request_payload.vocab_save_cnt
         )
 
-        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(db,
-                                                                      feedback_request_payload.generated_content_id, 
-                                                                      feedback_request_payload.vocab_lookup_cnt,
-                                                                      feedback_request_payload.vocab_save_cnt)
+        normalized_pause_cnt, normalized_rewind_cnt = normalize_interaction_factor(pause_cnt=feedback_request_payload.pause_cnt, rewind_cnt=feedback_request_payload.rewind_cnt)
 
         normalized_understanding = normalize_understanding_factor(
             understanding_difficulty=feedback_request_payload.understanding_difficulty
