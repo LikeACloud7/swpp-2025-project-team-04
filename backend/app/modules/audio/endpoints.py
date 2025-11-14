@@ -114,10 +114,10 @@ async def generate_mock_audio(
     current_user: User = Depends(get_current_user),
 ):
     """Mock endpoint: /generate 와 동일한 요청/응답 스키마를 가지지만
-    실제 생성 대신 고정된 예시 응답을 5초 지연 후 반환합니다.
+    실제 생성 대신 고정된 예시 응답을 2초 지연 후 반환합니다.
     """
     # 인풋은 검증만 하고 사용하지 않음
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)
 
     return {
         "generated_content_id": 292,
