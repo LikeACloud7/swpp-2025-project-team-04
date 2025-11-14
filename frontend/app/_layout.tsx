@@ -2,33 +2,36 @@
 import '@/global.css';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { QueryProvider } from '@/lib/QueryProvider';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 export { ErrorBoundary } from 'expo-router';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import TrackPlayer, { Capability } from 'react-native-track-player';
+import TrackPlayer, { AppKilledPlaybackBehavior } from 'react-native-track-player';
+import * as Linking from 'expo-linking';
 
 SplashScreen.preventAutoHideAsync();
 
 async function setupPlayerOnce() {
-  console.log('[TP] setupPlayerOnce');
-  await TrackPlayer.setupPlayer();
-  await TrackPlayer.updateOptions({
-    // Service에서 처리하는 모든 기능 명시
-    capabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.Stop,
-      Capability.SeekTo,
-      Capability.SkipToNext,
-      Capability.SkipToPrevious,
-    ],
-    // 알림 센터(Compact)에 표시할 버튼 (iOS/Android 공통)
-    compactCapabilities: [Capability.Play, Capability.Pause],
-  });
+  const isInitialized = await TrackPlayer.isServiceRunning();
+  try {
+    if (!isInitialized) {
+      await TrackPlayer.setupPlayer();
+      await TrackPlayer.updateOptions({
+        capabilities: [],
+        compactCapabilities: [],
+        android: {
+          appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification,
+        },
+        notificationCapabilities: [],
+      });
+      console.log('TP: 설정 완료');
+    }
+  } catch (err) {
+    console.error('TP: setup 실패', err);
+  }
 }
 
 export default function RootLayout() {
@@ -48,6 +51,38 @@ export default function RootLayout() {
 
 function RootNavigation() {
   const { data: user, isLoading: isAuthLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+      console.log('[Deep Link] Received URL:', url);
+
+      // 탭하면 오디오페이지로 navigate
+      if (url.includes('notification.click')) {
+        try {
+          const activeTrack = await TrackPlayer.getActiveTrack();
+          if (activeTrack?.id) {
+            router.push(`/audioPlayer/${activeTrack.id}`);
+          }
+        } catch (error) {
+          console.error('Error getting active track:', error);
+        }
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     let didHide = false;
