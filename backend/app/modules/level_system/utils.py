@@ -1,7 +1,11 @@
 from . import schemas
 from enum import Enum
+<<<<<<< HEAD
 from sqlalchemy.orm import Session
 from ..audio.model import GeneratedContent
+=======
+from dataclasses import dataclass
+>>>>>>> backend/feat/level-system/param-setting
 
 
 class CEFRLevel(Enum):
@@ -93,27 +97,30 @@ def get_average_score_and_level(
     }
 
 
+@dataclass
+class NormalizedFeedback:
+    """정규화된 피드백 데이터를 담는 데이터 클래스"""
+    pause: float
+    rewind: float
+    vocab_lookup: float
+    vocab_save: float
+    understanding: float
+    speed: float
 
 
-def _feedback_to_vector(feedback: schemas.SessionFeedbackRequest) -> list[int]:
-    """SessionFeedbackRequest에서 generated_content_id를 제외한 6개의 정수 요소를
-    순서대로 추출하여 벡터로 반환합니다.
-
-    순서: pause_cnt, rewind_cnt, vocab_lookup_cnt, vocab_save_cnt, understanding_difficulty, speed_difficulty
-    None은 0으로 취급합니다.
-    """
+def _feedback_to_vector(normalized_feedback: NormalizedFeedback) -> list[float]:
     return [
-        int(feedback.pause_cnt or 0),
-        int(feedback.rewind_cnt or 0),
-        int(feedback.vocab_lookup_cnt or 0),
-        int(feedback.vocab_save_cnt or 0),
-        int(feedback.understanding_difficulty or 0),
-        int(feedback.speed_difficulty or 0),
+        normalized_feedback.pause,
+        normalized_feedback.rewind,
+        normalized_feedback.vocab_lookup,
+        normalized_feedback.vocab_save,
+        normalized_feedback.understanding,
+        normalized_feedback.speed,
     ]
 
 
 def _compute_levels_delta_from_weights(
-    vector: list[int],
+    vector: list[float],
     W: list[list[float]],
     clip_ranges: dict[str, tuple[float, float]] | None = None,
 ) -> tuple[float, float, float]:
@@ -226,3 +233,20 @@ def normalize_vocab_factor(
 
     # 두 개의 숫자 값을 튜플로 반환
     return lexical_level_update_lookup, lexical_level_update_save
+
+
+
+def normalize_interaction_factor(
+        pause_cnt: int,
+        rewind_cnt: int,
+        )-> tuple[float, float]:
+    
+    pass
+
+def normalize_understanding_factor(understanding_difficulty: int) -> float: 
+    # unterstanding은 0 1 2(적당) 3 4(매우 쉬움)로 온다고 가정
+    return understanding_difficulty-1.5
+
+def normalize_speed_factor(speed_difficulty: int) -> float: 
+    # speed_difficulty는 0 1 2(적당) 3 4(매우 느림)으로 온다고 가정
+    return speed_difficulty-1.5
