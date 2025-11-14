@@ -3,18 +3,25 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from ..users.models import User
 from . import schemas
-from .utils import _feedback_to_vector, _compute_levels_delta_from_weights
+from .utils import (
+    _feedback_to_vector,
+    _compute_levels_delta_from_weights,
+    NormalizedFeedback,
+    normalize_vocab_factor,
+    normalize_interaction_factor,
+    normalize_speed_factor,
+    normalize_understanding_factor,
+)
 from typing import Optional, List, Dict
-from .utils import normalize_vocab_factor
 
 # 기본 설정값 (모듈 레벨)
 DEFAULT_WEIGHT_MATRIX: List[List[float]] = [
-    [1.0, 0, 0.2],  # pause_cnt가 lexical_level,syntactic_level,speed_level에 주는 weight
-    [0.2, 0, 0.3],  # rewind_cnt가 주는 weight
-    [0.1, 0, 1.0],  # vocab_lookup_cnt가 주는 weight
-    [0.5, 0, 0.2],  # vocab_save_cnt가 주는 weight
-    [0.3, 0, 0.4],  # understanding_difficulty가 주는 weight
-    [0.2, 0, 0.2],  # speed_difficulty가 주는 weight
+    [-0.4, -1.2, 0],  # pause_cnt가 lexical_level,syntactic_level,speed_level에 주는 weight
+    [-0.4, -0.8, -1.2],  # rewind_cnt가 주는 weight
+    [2.4, 0, 0],  # vocab_lookup_cnt가 주는 weight
+    [3.2, 0, 0],  # vocab_save_cnt가 주는 weight
+    [0.32, 1.6, 0.64],  # understanding_difficulty(쉬움이 더 큰 값)가 주는 weight
+    [0, 0, 1.6],  # speed_difficulty가 주는 weight
 ]
 
 DEFAULT_CLIP_RANGES = {
@@ -31,8 +38,6 @@ class LevelSystemService:
         db: Session,
         user: User,
         feedback_request_payload: schemas.SessionFeedbackRequest,
-        weight_matrix: Optional[List[List[float]]] = None,
-        clip_ranges: Optional[dict] = None,
     ) -> dict:
         """
         사용자의 세션 피드백을 기반으로 레벨을 업데이트합니다.
@@ -54,32 +59,46 @@ class LevelSystemService:
         """
 
 
+        # [1] 입력 normalize
+        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(
+            generated_content_id=feedback_request_payload.generated_content_id, 
+            vocab_lookup_cnt=feedback_request_payload.vocab_lookup_cnt,
+            vocab_save_cnt=feedback_request_payload.vocab_save_cnt
+        )
 
-        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(feedback_request_payload.generated_content_id, 
-                                                                      feedback_request_payload.vocab_lookup_cnt,
-                                                                      feedback_request_payload.vocab_save_cnt)
+        normalized_pause_cnt, normalized_rewind_cnt = normalize_interaction_factor(
+            pause_cnt=feedback_request_payload.pause_cnt,
+            rewind_cnt=feedback_request_payload.rewind_cnt
+        )
 
-        # [1] feedback_request_payload에서 6차원 입력 벡터 추출
+        normalized_understanding = normalize_understanding_factor(
+            understanding_difficulty=feedback_request_payload.understanding_difficulty
+        )
+        normalized_speed = normalize_speed_factor(
+            speed_difficulty=feedback_request_payload.speed_difficulty
+        )
 
+        # [2] 정규화된 값들을 NormalizedFeedback 객체로 생성
+        normalized_feedback = NormalizedFeedback(
+            pause=normalized_pause_cnt,
+            rewind=normalized_rewind_cnt,
+            vocab_lookup=normalized_vl_cnt,
+            vocab_save=normalized_vs_cnt,
+            understanding=normalized_understanding,
+            speed=normalized_speed,
+        )
 
+        # [3] NormalizedFeedback을 벡터로 변환
+        vector = _feedback_to_vector(normalized_feedback)
 
-
-
-        # [2]
-        vector = _feedback_to_vector(feedback_request_payload)
-
-
-
-
-
-        # [2] weight matrix를 이용하여 각 level 별 변화량 계산
-        W = weight_matrix or DEFAULT_WEIGHT_MATRIX
-        CLIP_RANGE = clip_ranges or DEFAULT_CLIP_RANGES
+        # [4] weight matrix를 이용하여 각 level 별 변화량 계산
+        W = DEFAULT_WEIGHT_MATRIX
+        CLIP_RANGE = DEFAULT_CLIP_RANGES
         lexical_delta, syntactic_delta, speed_delta = _compute_levels_delta_from_weights(
             vector, W, CLIP_RANGE
         )
 
-        # [3] DB의 유저 level에 delta를 반영 (업데이트)
+        # [5] DB의 유저 level에 delta를 반영 (업데이트)
         user.lexical_level = float(user.lexical_level) + lexical_delta
         user.syntactic_level = float(user.syntactic_level) + syntactic_delta
         user.speed_level = float(user.speed_level) + speed_delta
@@ -88,7 +107,7 @@ class LevelSystemService:
         db.commit()
         db.refresh(user)
 
-        # [4] return response
+        # [6] return response
         return {
             "lexical_level_delta": lexical_delta,
             "syntactic_level_delta": syntactic_delta,
