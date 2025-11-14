@@ -97,8 +97,13 @@ class AudioService:
     @staticmethod
     def _select_voice_algorithmically(
         all_voices: list[dict], 
-        user_level: CEFRLevel
+        user: User
     ) -> dict:
+        
+        # TODO user_level 수정
+        user_level = None
+
+
         try:
             min_score, max_score = LEVEL_CHALLENGE_MAP[user_level]
         except KeyError:
@@ -151,7 +156,7 @@ class AudioService:
     async def _generate_script(
         mood: str, 
         theme: str, 
-        user_level: CEFRLevel,
+        user: User,
         selected_voice: dict,
         level_score: int | None = None ,
     ) -> tuple[str, str]:
@@ -161,6 +166,9 @@ class AudioService:
         each sentence on a new line.
         )
         """
+        # TODO user_level 수정
+        user_level = None
+
 
         start_total = time.time()  # ⏱ 전체 시작
 
@@ -331,18 +339,18 @@ class AudioService:
         
         all_voices = cls._load_voices()
         
-        user_level = user.level 
+        
         level_score = user.level_score
 
         selected_voice = cls._select_voice_algorithmically(
             all_voices=all_voices,
-            user_level=user_level
+            user=user
         )
         
         title, script = await cls._generate_script(
             mood=request.mood,
             theme=request.theme,
-            user_level=user_level,
+            user=user
             level_score=level_score,
             selected_voice=selected_voice
         )
