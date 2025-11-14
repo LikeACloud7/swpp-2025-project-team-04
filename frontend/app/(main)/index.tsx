@@ -9,19 +9,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
-import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import TrackPlayer from 'react-native-track-player';
 import { GradientButton } from '@/components/home/GradientButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
-import { VOCAB_QUERY_KEY } from '@/constants/queryKeys';
-import { getVocab } from '@/api/vocab';
+import { useQueryClient } from '@tanstack/react-query';
+import { AudioGenerationResponse } from '@/api/audio';
+import { Asset } from 'expo-asset';
 
 export default function HomeScreen() {
-  const qc = useQueryClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: user, isLoading: isUserLoading } = useUser();
 
@@ -105,9 +104,6 @@ export default function HomeScreen() {
     }, [generateDisplayedThemes, generateDisplayedMoods]),
   );
 
-  // 오디오 API 훅
-  const { mutate: audioMutate, isPending: isAudioLoading } = useGenerateAudio();
-
   // 하단 안내 문구
   const focusMessage = useMemo(() => {
     const moodLabel = selectedMood ? MOOD_OPTIONS[selectedMood].label : null;
@@ -161,51 +157,53 @@ export default function HomeScreen() {
   );
 
   // 오디오 생성 핸들러
-  const handleGenerateAudio = () => {
+  const handleGenerateAudio = async () => {
     if (!selectedTheme || !selectedMood) {
       console.warn('테마와 분위기를 모두 선택하세요.');
       return;
     }
 
-    audioMutate(
-      { mood: selectedMood, theme: selectedTheme },
-      {
-        onSuccess: async (data) => {
-          try {
-            // RNTP 트랙 세팅
-            await TrackPlayer.reset();
-            await TrackPlayer.add({
-              id: data.generated_content_id,
-              url: data.audio_url,
-              // url: require('@/assets/audio/1_audio.mp3'),
-              title: data.title,
-              artist: 'LingoFit',
-            });
+    try {
+      // Mock
+      const mockAudioData: AudioGenerationResponse = {
+        generated_content_id: 999,
+        title: `${THEME_OPTIONS[selectedTheme].label} - ${MOOD_OPTIONS[selectedMood].label}`,
+        audio_url: Asset.fromModule(require('@/assets/audio/test.mp3')).uri,
+        sentences: [
+          {
+            id: '1',
+            start_time: '0.0',
+            text: 'This is a test audio sentence one.',
+          },
+          {
+            id: '2',
+            start_time: '3.0',
+            text: 'This is a test audio sentence two.',
+          },
+          {
+            id: '3',
+            start_time: '6.0',
+            text: 'This is a test audio sentence three.',
+          },
+        ],
+      };
 
-            // 세션 ID 생성 후 캐시에 원본 응답 저장
-            qc.setQueryData(['audio', String(data.generated_content_id)], data);
+      const audioId = 'test-audio';
+      queryClient.setQueryData(['audio', audioId], mockAudioData);
 
-            // navigation과 동시에 백그라운드에서 실행 (await 불필요)
-            qc.prefetchQuery({
-              queryKey: [VOCAB_QUERY_KEY, data.generated_content_id],
-              queryFn: () => getVocab(data.generated_content_id),
-              staleTime: 5 * 60 * 1000, // useVocab의 staleTime과 일치
-              retry: 30, // 최대 30회 재시도
-              retryDelay: 1000, // 1초 간격
-            });
+      // TrackPlayer
+      await TrackPlayer.reset();
+      await TrackPlayer.add({
+        id: audioId,
+        url: require('@/assets/audio/test.mp3'),
+        title: mockAudioData.title,
+        artist: 'LingoFit',
+      });
 
-            // 플레이어 화면으로 라우팅 (id만 전달)
-            router.push(`/audioPlayer/${data.generated_content_id}`);
-          } catch (e) {
-            4;
-            console.error('TrackPlayer 처리 중 오류:', e);
-          }
-        },
-        onError: (error) => {
-          console.error('오디오 생성 실패:', error);
-        },
-      },
-    );
+      router.push(`/audioPlayer/${audioId}`);
+    } catch (e) {
+      console.error('TrackPlayer 처리 중 오류:', e);
+    }
   };
 
   // 사용자 이름 표시 로직
@@ -320,7 +318,7 @@ export default function HomeScreen() {
         <GradientButton
           title="나만의 오디오 만들기"
           icon="musical-notes"
-          loading={isAudioLoading}
+          loading={false}
           disabled={!selectedTheme || !selectedMood}
           onPress={handleGenerateAudio}
         />
