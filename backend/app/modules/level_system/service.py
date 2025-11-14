@@ -5,7 +5,7 @@ from ..users.models import User
 from . import schemas
 from .utils import _feedback_to_vector, _compute_levels_delta_from_weights
 from typing import Optional, List, Dict
-
+from .utils import normalize_vocab_factor
 
 # 기본 설정값 (모듈 레벨)
 DEFAULT_WEIGHT_MATRIX: List[List[float]] = [
@@ -18,9 +18,9 @@ DEFAULT_WEIGHT_MATRIX: List[List[float]] = [
 ]
 
 DEFAULT_CLIP_RANGES = {
-    "lexical": (-2.0, 2.0),
-    "syntactic": (-2.0, 2.0),
-    "speed": (-2.0, 2.0),
+    "lexical": (-8.0, 8.0),
+    "syntactic": (-8.0, 8.0),
+    "speed": (-8.0, 8.0),
 }
 
 class LevelSystemService:
@@ -52,8 +52,25 @@ class LevelSystemService:
                 "speed_level_delta": float
             }
         """
+
+
+
+        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(feedback_request_payload.generated_content_id, 
+                                                                      feedback_request_payload.vocab_lookup_cnt,
+                                                                      feedback_request_payload.vocab_save_cnt)
+
         # [1] feedback_request_payload에서 6차원 입력 벡터 추출
+
+
+
+
+
+        # [2]
         vector = _feedback_to_vector(feedback_request_payload)
+
+
+
+
 
         # [2] weight matrix를 이용하여 각 level 별 변화량 계산
         W = weight_matrix or DEFAULT_WEIGHT_MATRIX

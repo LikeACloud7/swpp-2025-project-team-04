@@ -17,26 +17,27 @@ LEVEL_THRESHOLDS = {
     CEFRLevel.A1: 0,
     CEFRLevel.A2: 25,
     CEFRLevel.B1: 50,
-    CEFRLevel.B2: 75,
+    CEFRLevel.B2: 100,
     CEFRLevel.C1: 100,
-    CEFRLevel.C2: 125,
+    CEFRLevel.C2: 250,
 }
-MAX_SCORE = 150  # 최대 스코어
+MIN_SCORE = 0 # 최소 스코어
+MAX_SCORE = 300  # 최대 스코어
 
 
 
 def get_cefr_level_from_score(score: float) -> CEFRLevel:
     """
-    스코어(0~150)로부터 CEFR 레벨(A1~C2)을 반환합니다.
+    스코어(0~300)로부터 CEFR 레벨(A1~C2)을 반환합니다.
     
     Args:
-        score: 0~150 범위의 레벨 스코어
+        score: 0~300 범위의 레벨 스코어
         
     Returns:
         CEFRLevel Enum 객체
     """
-    # 스코어를 0~150 범위로 클램프
-    score = max(0, min(MAX_SCORE, score))
+    # 스코어를 클램프
+    score = max(MIN_SCORE, min(MAX_SCORE, score))
     
     # 레벨 결정 (내림차순으로 체크)
     if score >= LEVEL_THRESHOLDS[CEFRLevel.C2]:
@@ -62,10 +63,10 @@ def get_average_score_and_level(
     3개의 레벨 스코어를 받아 평균 스코어와 평균 CEFR 레벨을 반환합니다.
     
     Args:
-        lexical_score: 어휘 레벨 스코어 (0~150)
-        syntactic_score: 구문 레벨 스코어 (0~150)
-        speed_score: 속도 레벨 스코어 (0~150)
-        
+        lexical_score: 어휘 레벨 스코어 
+        syntactic_score: 구문 레벨 스코어 
+        speed_score: 속도 레벨 스코어 
+    
     Returns:
         {
             "average_score": 평균 스코어 (float),
@@ -147,4 +148,13 @@ def _compute_levels_delta_from_weights(
         res[2] = max(speed_min, min(speed_max, res[2]))
 
     return res[0], res[1], res[2]
+
+
+def normalize_vocab_factor(
+    generated_content_id: int,
+    vocab_lookup_cnt: int,
+    vocab_save_cnt: int,
+) -> tuple[float, float]:
+   
+    pass
 
