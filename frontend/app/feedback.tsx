@@ -1,7 +1,7 @@
 import { GradientButton } from '@/components/home/GradientButton';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
 
 const COMPREHENSION_LEVELS = [
   { value: 1, label: '매우 낮음', emoji: '😰' },
@@ -28,6 +28,17 @@ export default function FeedbackScreen() {
     number | null
   >(null);
   const [submitting, setSubmitting] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (selectedComprehension !== null) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [selectedComprehension]);
 
   const handleSubmit = async () => {
     if (!selectedComprehension || !selectedSpeechSpeed || submitting) return;
@@ -62,14 +73,30 @@ export default function FeedbackScreen() {
         <View className="flex-1 pt-8">
           {/* 이해도 평가 */}
           <View className="mb-8">
-            <Text className="mb-4 text-lg font-bold text-neutral-900">
-              이해도
-            </Text>
-            <View className="flex-row justify-between">
+            <View className="mb-4 flex-row items-center justify-between">
+              <View>
+                <Text className="text-lg font-bold text-neutral-900">
+                  이해도
+                </Text>
+                <Text className="mt-1 text-sm text-neutral-500">
+                  내용중 얼마를 이해하셨나요?
+                </Text>
+              </View>
+              {selectedComprehension !== null && (
+                <Text className="text-4xl">
+                  {
+                    COMPREHENSION_LEVELS.find(
+                      (l) => l.value === selectedComprehension
+                    )?.emoji
+                  }
+                </Text>
+              )}
+            </View>
+            <View className="flex-row gap-2">
               {COMPREHENSION_LEVELS.map((level) => {
                 const isSelected = selectedComprehension === level.value;
                 return (
-                  <View style={{ width: '18%' }}>
+                  <View key={level.value} style={{ flex: 1 }}>
                     <Pressable
                       onPress={() => setSelectedComprehension(level.value)}
                       android_ripple={{
@@ -77,19 +104,16 @@ export default function FeedbackScreen() {
                         borderless: false,
                       }}
                       style={({ pressed }) => ({
-                        height: 80,
-                        borderRadius: 12,
-                        transform: [{ scale: pressed ? 0.97 : 1 }],
+                        transform: [{ scale: pressed ? 0.98 : 1 }],
                       })}
-                      className={`items-center justify-center rounded-xl border-2 transition-all duration-150 ${
+                      className={`items-center justify-center rounded-xl border-2 py-6 transition-all duration-150 ${
                         isSelected
                           ? 'border-sky-500 bg-sky-50'
                           : 'border-gray-300 bg-white'
                       }`}
                     >
-                      <Text className="mb-1 text-2xl">{level.emoji}</Text>
                       <Text
-                        className={`text-center text-[11px] font-semibold ${
+                        className={`text-center text-sm font-semibold ${
                           isSelected ? 'text-sky-700' : 'text-gray-700'
                         }`}
                         numberOfLines={2}
@@ -104,47 +128,75 @@ export default function FeedbackScreen() {
           </View>
 
           {/* 발화속도 평가 */}
-          <View className="mb-8">
-            <Text className="mb-4 text-lg font-bold text-neutral-900">
-              발화속도
-            </Text>
-            <View className="flex-row justify-between">
-              {SPEECH_SPEED_LEVELS.map((level) => {
-                const isSelected = selectedSpeechSpeed === level.value;
-                return (
-                  <View key={level.value} style={{ width: '18%' }}>
-                    <Pressable
-                      onPress={() => setSelectedSpeechSpeed(level.value)}
-                      android_ripple={{
-                        color: 'rgba(0,0,0,0.08)',
-                        borderless: false,
-                      }}
-                      style={({ pressed }) => ({
-                        height: 80,
-                        borderRadius: 12,
-                        transform: [{ scale: pressed ? 0.97 : 1 }],
-                      })}
-                      className={`items-center justify-center rounded-xl border-2 transition-all duration-150 ${
-                        isSelected
-                          ? 'border-sky-500 bg-sky-50'
-                          : 'border-gray-300 bg-white'
-                      }`}
-                    >
-                      <Text className="mb-1 text-2xl">{level.emoji}</Text>
-                      <Text
-                        className={`text-center text-[11px] font-semibold ${
-                          isSelected ? 'text-sky-700' : 'text-gray-700'
+          {selectedComprehension !== null && (
+            <Animated.View
+              className="mb-8"
+              style={{
+                opacity: fadeAnim,
+                transform: [
+                  {
+                    translateY: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <View className="mb-4 flex-row items-center justify-between">
+                <View>
+                  <Text className="text-lg font-bold text-neutral-900">
+                    발화속도
+                  </Text>
+                  <Text className="mt-1 text-sm text-neutral-500">
+                    말하기 속도는 어땠나요?
+                  </Text>
+                </View>
+                {selectedSpeechSpeed !== null && (
+                  <Text className="text-4xl">
+                    {
+                      SPEECH_SPEED_LEVELS.find(
+                        (l) => l.value === selectedSpeechSpeed
+                      )?.emoji
+                    }
+                  </Text>
+                )}
+              </View>
+              <View className="flex-row gap-2">
+                {SPEECH_SPEED_LEVELS.map((level) => {
+                  const isSelected = selectedSpeechSpeed === level.value;
+                  return (
+                    <View key={level.value} style={{ flex: 1 }}>
+                      <Pressable
+                        onPress={() => setSelectedSpeechSpeed(level.value)}
+                        android_ripple={{
+                          color: 'rgba(0,0,0,0.08)',
+                          borderless: false,
+                        }}
+                        style={({ pressed }) => ({
+                          transform: [{ scale: pressed ? 0.98 : 1 }],
+                        })}
+                        className={`items-center justify-center rounded-xl border-2 py-6 transition-all duration-150 ${
+                          isSelected
+                            ? 'border-sky-500 bg-sky-50'
+                            : 'border-gray-300 bg-white'
                         }`}
-                        numberOfLines={2}
                       >
-                        {level.label}
-                      </Text>
-                    </Pressable>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
+                        <Text
+                          className={`text-center text-sm font-semibold ${
+                            isSelected ? 'text-sky-700' : 'text-gray-700'
+                          }`}
+                          numberOfLines={2}
+                        >
+                          {level.label}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  );
+                })}
+              </View>
+            </Animated.View>
+          )}
         </View>
 
         {/* 제출 버튼 */}
