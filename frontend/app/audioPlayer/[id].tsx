@@ -69,8 +69,18 @@ export default function AudioPlayer() {
 
   const goFeedback = useCallback(async () => {
     await stopAndCleanup();
-    router.push('/feedback');
-  }, [router, stopAndCleanup]);
+
+    // 행동 로그와 generated_content_id를 피드백 페이지로 전달
+    const params = {
+      generated_content_id: data?.generated_content_id?.toString() ?? '0',
+      pause_cnt: behaviorLogs.pauseCount.toString(),
+      rewind_cnt: behaviorLogs.rewindCount.toString(),
+      vocab_lookup_cnt: behaviorLogs.vocabLookupCount.toString(),
+      vocab_save_cnt: behaviorLogs.vocabSaveCount.toString(),
+    };
+
+    router.push({ pathname: '/feedback', params });
+  }, [router, stopAndCleanup, data, behaviorLogs]);
 
   // ✅ 마운트 시 자동 재생
   useEffect(() => {

@@ -1,7 +1,18 @@
 import { GradientButton } from '@/components/home/GradientButton';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
+
+// ========== 행동 로그 + 피드백 데이터 타입 ==========
+type FeedbackPayload = {
+  generated_content_id: number;
+  pause_cnt: number;
+  rewind_cnt: number;
+  vocab_lookup_cnt: number;
+  vocab_save_cnt: number;
+  understanding_difficulty: number;
+  speed_difficulty: number; // TODO: UI 변경 후 명시적 입력 받기
+};
 
 const DIFFICULTY_LEVELS = [
   { value: 1, label: '매우 쉬움', emoji: '😊', color: '#10b981' },
@@ -13,18 +24,68 @@ const DIFFICULTY_LEVELS = [
 
 export default function FeedbackScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+
+  // 오디오 플레이어에서 전달받은 행동 로그 데이터
+  const generatedContentId = parseInt(
+    Array.isArray(params.generated_content_id)
+      ? params.generated_content_id[0]
+      : params.generated_content_id ?? '0',
+  );
+  const pauseCount = parseInt(
+    Array.isArray(params.pause_cnt) ? params.pause_cnt[0] : params.pause_cnt ?? '0',
+  );
+  const rewindCount = parseInt(
+    Array.isArray(params.rewind_cnt) ? params.rewind_cnt[0] : params.rewind_cnt ?? '0',
+  );
+  const vocabLookupCount = parseInt(
+    Array.isArray(params.vocab_lookup_cnt)
+      ? params.vocab_lookup_cnt[0]
+      : params.vocab_lookup_cnt ?? '0',
+  );
+  const vocabSaveCount = parseInt(
+    Array.isArray(params.vocab_save_cnt)
+      ? params.vocab_save_cnt[0]
+      : params.vocab_save_cnt ?? '0',
+  );
+
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(
     null,
   );
   const [submitting, setSubmitting] = useState(false);
+
+  // 페이지 마운트 시 넘어온 파라미터 로깅
+  useEffect(() => {
+    console.log('📥 [피드백 페이지] 받은 파라미터:', {
+      generated_content_id: generatedContentId,
+      pause_cnt: pauseCount,
+      rewind_cnt: rewindCount,
+      vocab_lookup_cnt: vocabLookupCount,
+      vocab_save_cnt: vocabSaveCount,
+    });
+  }, [generatedContentId, pauseCount, rewindCount, vocabLookupCount, vocabSaveCount]);
 
   const handleSubmit = async () => {
     if (!selectedDifficulty || submitting) return;
 
     setSubmitting(true);
     try {
-      // TODO: 오디오페이지 연결 & 백엔드 연동
-      // await api.submitDifficulty(selectedDifficulty);
+      // 완전한 피드백 데이터 페이로드 (7가지 필드)
+      const payload: FeedbackPayload = {
+        generated_content_id: generatedContentId,
+        pause_cnt: pauseCount,
+        rewind_cnt: rewindCount,
+        vocab_lookup_cnt: vocabLookupCount,
+        vocab_save_cnt: vocabSaveCount,
+        understanding_difficulty: selectedDifficulty,
+        speed_difficulty: 0, // TODO: UI 변경 후 명시적 입력 받기
+      };
+
+      console.log('📤 [피드백 제출]', payload);
+
+      // TODO: 백엔드 API 연동
+      // await api.submitFeedback(payload);
+
       router.replace('/');
     } finally {
       setSubmitting(false);
