@@ -350,7 +350,7 @@ class AudioService:
         title, script = await cls._generate_script(
             mood=request.mood,
             theme=request.theme,
-            user=user
+            user=user,
             level_score=level_score,
             selected_voice=selected_voice
         )

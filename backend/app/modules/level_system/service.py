@@ -115,7 +115,7 @@ class LevelSystemService:
     def initialize_level(
         db: Session,
         user: User,
-        initial_survey_payload: schemas.InitialSurveyRequest,
+        initial_survey_payload ,
     ) -> dict:
         """
         초기 설문조사 결과(5개의 콘텐츠에 대한 understanding 데이터)를 기반으로 사용자의 레벨을 초기화합니다.
@@ -156,7 +156,7 @@ class LevelSystemService:
     def set_manual_level(
         db: Session,
         user: User,
-        manual_level_payload: schemas.InitialSurveySkipRequest,
+        manual_level_payload: schemas.ManualLevelRequest,
     ) -> dict:
         """
         사용자의 레벨을 수동으로 설정합니다 (초기 설문조사 건너뛰기).
@@ -174,10 +174,36 @@ class LevelSystemService:
                 "speed_level": float
             }
         """
-        # 사용자가 지정한 단일 레벨로 3개 레벨을 모두 동일하게 설정하기.
-        user.lexical_level = manual_level_payload.level
-        user.syntactic_level = manual_level_payload.level
-        user.speed_level = manual_level_payload.level
+
+        from .utils import CEFRLevel, LEVEL_THRESHOLDS
+
+        # 안전을 위해 소문자로 매칭
+        level_str = manual_level_payload.level.lower()
+
+        level_map = {
+            "a1": CEFRLevel.A1,
+            "a2": CEFRLevel.A2,
+            "b1": CEFRLevel.B1,
+            "b2": CEFRLevel.B2,
+            "c1": CEFRLevel.C1,
+            "c2": CEFRLevel.C2,
+        }
+
+        if level_str not in level_map:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid CEFR level. Must be one of A1, A2, B1, B2, C1, C2.",
+            )
+
+        cefr_level = level_map[level_str]
+        score = LEVEL_THRESHOLDS[cefr_level]
+
+        user.lexical_level = float(score)
+        user.syntactic_level = float(score)
+        user.speed_level = float(score)
+
+
+
 
         db.add(user)
         db.commit()
@@ -188,3 +214,94 @@ class LevelSystemService:
             "syntactic_level": float(user.syntactic_level),
             "speed_level": float(user.speed_level),
         }
+
+    @staticmethod
+    def evaluate_level_test(
+        db: Session,
+        user: User,
+        level_test_payload: schemas.LevelTestRequest,
+    ) -> dict:
+        """초기 레벨 테스트 결과를 기반으로 이해도 평균을 계산합니다.
+
+        Args:
+            db: DB 세션 (현재는 사용하지 않지만 시그니처 유지)
+            user: 현재 사용자 (향후 로깅/저장용)
+            level_test_payload: 테스트 결과 목록
+
+        Returns:
+            dict: 현재는 성공 여부만 반환 (추후 확장 가능)
+        """
+
+        from .utils import LEVEL_THRESHOLDS, CEFRLevel, MIN_SCORE, MAX_SCORE
+
+        tests = level_test_payload.tests or []
+        if not tests:
+            return {"success": True}
+
+        total = sum(item.understanding for item in tests)
+        avg_understanding = total / len(tests)  # 0~100
+
+        # 1) 이해도 평균에서 80을 빼서 -80 ~ +20 범위의 diff 계산
+        diff = avg_understanding - 80.0
+        diff = max(-80.0, min(20.0, diff))
+
+        # 2) 현재 유저 레벨 스코어 (3개는 항상 동일하다고 가정)
+        current_score = float(user.lexical_level)
+
+        # 3) 현재 스코어의 기준 레벨과 인접 레벨 찾기
+        thresholds = LEVEL_THRESHOLDS
+        ordered_levels = [
+            CEFRLevel.A1,
+            CEFRLevel.A2,
+            CEFRLevel.B1,
+            CEFRLevel.B2,
+            CEFRLevel.C1,
+            CEFRLevel.C2,
+        ]
+
+        # 현재 레벨 인덱스 찾기 (current_score는 기준값과 정확히 일치한다고 가정)
+        current_index = next(
+            i
+            for i, level in enumerate(ordered_levels)
+            if float(thresholds[level]) == float(current_score)
+        )
+
+        current_level = ordered_levels[current_index]
+        base_score = thresholds[current_level]
+
+        # 4) diff >= 0: 상향 보간 (현재 레벨 ~ 다음 레벨의 중간까지)
+        if diff >= 0:
+            if current_level == CEFRLevel.C2:
+                next_score = MAX_SCORE  # C2 이후는 300으로 간주
+            else:
+                next_level = ordered_levels[current_index + 1]
+                next_score = thresholds[next_level]
+
+            # 100% 이해도(diff=20)일 때 현재-다음 레벨의 정확한 중간으로 이동
+            # diff 0~20 → factor 0~1
+            factor = diff / 20.0
+            target_score = base_score + (next_score - base_score) * 0.5 * factor
+        else:
+            # 5) diff < 0: 하향 보간 (이전 레벨까지)
+            if current_level == CEFRLevel.A1:
+                prev_score = MIN_SCORE  # A1 이전은 0으로 고정
+            else:
+                prev_level = ordered_levels[current_index - 1]
+                prev_score = thresholds[prev_level]
+
+            # diff -80~0 → factor 0~1
+            factor = -diff / 80.0
+            target_score = base_score + (prev_score - base_score) * factor
+
+        # 6) 스코어 클램프 및 3개 레벨에 동일 적용
+        target_score = max(MIN_SCORE, min(MAX_SCORE, target_score))
+
+        user.lexical_level = float(target_score)
+        user.syntactic_level = float(target_score)
+        user.speed_level = float(target_score)
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        return {"success": True}

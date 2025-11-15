@@ -8,6 +8,7 @@ from ...core.logger import logger
 from .service import LevelSystemService
 from ...core.auth import oauth2_scheme, verify_token, TokenType
 
+
 router = APIRouter(prefix="/level-system", tags=["level-system"])
 
 
@@ -47,55 +48,39 @@ def submit_session_feedback(
     return result
 
 
-@router.post("/initial-survey")
-def submit_initial_survey(
-    survey: schemas.InitialSurveyRequest,
+@router.post("/level-test", response_model=schemas.LevelTestResponse)
+def evaluate_level_test(
+        payload: schemas.LevelTestRequest,
+        current_user=Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+        """초기 레벨 테스트 결과를 처리하는 엔드포인트.
+
+        요청 예시:
+        {
+            "tests": [
+                {"script_id": "string", "generated_content_id": 0, "understanding": 0}
+            ]
+        }
+        """
+        return LevelSystemService.evaluate_level_test(
+                db=db,
+                user=current_user,
+                level_test_payload=payload,
+        )
+
+
+@router.post("/manual-level", response_model=schemas.ManualLevelResponse)
+def set_manual_level(
+    payload: schemas.ManualLevelRequest,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """결과를 제출하여 사용자의 초기 레벨을 설정합니다."""
-    logger.info(
-        "Initial survey - user: %d, tests_count: %d",
-        current_user.id,
-        len(survey.tests)
-    )
-
-    result = LevelSystemService.initialize_level(
-        db=db,
-        user=current_user,
-        initial_survey_payload=survey
-    )
-
-    logger.info(
-        "Level initialization result - user: %d, result: %s",
-        current_user.id,
-        result,
-    )
-    return result
+    """수동으로 CEFR 레벨을 설정하는 엔드포인트.
+    """
+    LevelSystemService.set_manual_level(db=db, user=current_user, manual_level_payload=payload)
+    return schemas.ManualLevelResponse(success=True)
 
 
-@router.post("/initial-survey-with-skip")
-def submit_initial_survey_with_skip(
-    manual_level: schemas.InitialSurveySkipRequest,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """초기 설문조사를 건너뛰고 수동으로 레벨을 설정합니다."""
-    logger.info(
-        "Manual level setting - user: %d, level=%.1f",
-        current_user.id,
-        manual_level.level,
-    )
 
-    result = LevelSystemService.set_manual_level(
-        db=db,
-        user=current_user,
-        manual_level_payload=manual_level
-    )
 
-    logger.info(
-        "Manual level set result - user: %d, result: %s",
-        current_user.id,
-        result,
-    )
-    return result
