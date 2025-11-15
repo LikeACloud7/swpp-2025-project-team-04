@@ -15,6 +15,7 @@ from ..users.crud import get_user_by_username
 from ...core.auth import verify_token, TokenType
 from ...core.config import get_db
 from ...core.logger import logger
+import asyncio
 
 router = APIRouter()
 
@@ -102,6 +103,51 @@ async def generate_audio(
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
+
+
+@router.post(
+    "/generate-mock",
+    response_model=schemas.FinalAudioResponse,
+)
+async def generate_mock_audio(
+    request: schemas.AudioGenerateRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Mock endpoint: /generate 와 동일한 요청/응답 스키마를 가지지만
+    실제 생성 대신 고정된 예시 응답을 2초 지연 후 반환합니다.
+    """
+    # 인풋은 검증만 하고 사용하지 않음
+    await asyncio.sleep(2)
+
+    return {
+        "generated_content_id": 292,
+        "title": "Easy Tips to Save Your Money",
+        "audio_url": "https://swpp-audio-bucket.s3.ap-northeast-2.amazonaws.com/audio/8d562e0f-13a9-4874-805b-0d4429060810.mp3",
+        "sentences": [
+            {"id": 0, "start_time": 0, "text": "Hello there, my friend."},
+            {"id": 1, "start_time": 1.695, "text": "I want to tell you about money."},
+            {"id": 2, "start_time": 4.226, "text": "Money helps us buy food, clothes, and toys."},
+            {"id": 3, "start_time": 7.814, "text": "It is important to use money wisely."},
+            {"id": 4, "start_time": 11.192, "text": "First, try to save a little money each week."},
+            {"id": 5, "start_time": 14.547, "text": "You can put coins in a jar or a small box."},
+            {"id": 6, "start_time": 18.042, "text": "When the jar is full, you have saved a nice amount."},
+            {"id": 7, "start_time": 22.964, "text": "Next, think before you buy something."},
+            {"id": 8, "start_time": 25.809, "text": "Ask yourself, \"Do I really need this?\""},
+            {"id": 9, "start_time": 29.396, "text": "If the answer is no, it’s better to wait."},
+            {"id": 10, "start_time": 33.146, "text": "Waiting helps you not spend too much money."},
+            {"id": 11, "start_time": 35.747, "text": "Also, it is good to make a simple plan."},
+            {"id": 12, "start_time": 38.289, "text": "Write down what you earn and what you spend."},
+            {"id": 13, "start_time": 40.565, "text": "This way, you know where your money goes."},
+            {"id": 14, "start_time": 42.829, "text": "Remember, saving is like planting seeds."},
+            {"id": 15, "start_time": 45.58, "text": "Small savings grow bigger over time."},
+            {"id": 16, "start_time": 47.577, "text": "Soon you will have money for something special."},
+            {"id": 17, "start_time": 50.584, "text": "Money can feel tricky, but it’s easy if you try."},
+            {"id": 18, "start_time": 53.011, "text": "Save a little, buy less, and plan well."},
+            {"id": 19, "start_time": 55.844, "text": "You will feel happy and safe with your money."},
+            {"id": 20, "start_time": 59.211, "text": "That’s all for now, my friend."},
+            {"id": 21, "start_time": 61.405, "text": "Take care and good luck with your money journey!"},
+        ],
+    }
 
 
 @router.get(
