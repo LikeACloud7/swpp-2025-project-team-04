@@ -21,8 +21,8 @@ LEVEL_THRESHOLDS = {
     CEFRLevel.A2: 25,
     CEFRLevel.B1: 50,
     CEFRLevel.B2: 100,
-    CEFRLevel.C1: 100,
-    CEFRLevel.C2: 250,
+    CEFRLevel.C1: 150,
+    CEFRLevel.C2: 200,
 }
 MIN_SCORE = 0 # 최소 스코어
 MAX_SCORE = 300  # 최대 스코어
