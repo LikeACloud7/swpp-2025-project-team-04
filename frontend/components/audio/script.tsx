@@ -20,6 +20,9 @@ import { useAddVocab } from '@/hooks/mutations/useVocabMutations';
 export type ScriptProps = {
   generatedContentId: number;
   scripts: Sentence[];
+  onVocabLookup?: () => void; // 단어 검색 콜백
+  onVocabSave?: () => void; // 단어 저장 콜백
+  onRewind?: () => void; // 되감기 콜백
 };
 
 type WordPopupState = {
@@ -46,9 +49,18 @@ const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(v, max));
 
 // ========== Component ==========
-export default function Script({ scripts, generatedContentId }: ScriptProps) {
+export default function Script({
+  scripts,
+  generatedContentId,
+  onVocabLookup,
+  onVocabSave,
+  onRewind,
+}: ScriptProps) {
   const { data: vocabData } = useVocab(generatedContentId);
   const addVocabMutation = useAddVocab();
+
+  // 되감기 감지를 위한 이전 position 추적
+  const prevPositionRef = useRef<number>(0);
 
   // vocab map (빠른 뜻/품사 조회용)
   const vocabMap = useMemo(() => {
@@ -86,6 +98,15 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
   const { position } = useProgress(100);
   const flatListRef = useRef<FlatList<Sentence>>(null);
+
+  // 되감기 감지: position이 이전보다 2초 이상 뒤로 가면 rewind로 간주
+  useEffect(() => {
+    const REWIND_THRESHOLD = 2.0; // 초 단위
+    if (prevPositionRef.current - position > REWIND_THRESHOLD) {
+      onRewind?.();
+    }
+    prevPositionRef.current = position;
+  }, [position, onRewind]);
 
   useEffect(() => {
     if (scripts.length === 0) return;
@@ -133,6 +154,9 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
       width: Number.isFinite(layout.width) ? layout.width : 0,
       height: Number.isFinite(layout.height) ? layout.height : 0,
     });
+
+    // 단어 검색 카운트
+    onVocabLookup?.();
   };
   const handleClosePopup = () => setWordPopup(null);
 
@@ -198,6 +222,7 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
       {
         onSuccess: () => {
           setLastSavedKey(key); // 마지막 저장된 키(정규화) 보관
+          onVocabSave?.(); // 단어 저장 카운트
         },
         onError: (e) => {
           console.error('📕 단어 저장 실패:', wordToSave, e);
