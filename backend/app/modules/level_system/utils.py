@@ -247,3 +247,34 @@ def normalize_understanding_factor(understanding_difficulty: int) -> float:
 def normalize_speed_factor(speed_difficulty: int) -> float: 
     # speed_difficulty는 0 1 2(적당) 3 4(매우 느림)으로 온다고 가정
     return speed_difficulty-1.5
+
+
+
+def get_speed_from_level_score(level_score: float) -> float:
+
+    if level_score <= MIN_SCORE:
+        return 0.75
+    
+    if level_score >= 250:
+        return 1.13
+    elif level_score >= 200:
+        return 1.12
+
+    # (start_score, end_score, start_speed, end_speed)
+    LEVEL_RANGES = [
+        (0,   25,  0.75, 0.80),  # A1
+        (25,  50,  0.80, 0.90),  # A2
+        (50,  100, 0.90, 1.00),  # B1
+        (100, 150, 1.00, 1.08),  # B2
+        (150, 200, 1.08, 1.12),  # C1
+    ]
+
+
+    # Linear interpolation in the correct range
+    for start_s, end_s, start_v, end_v in LEVEL_RANGES:
+        if start_s <= level_score <= end_s:
+            ratio = (level_score - start_s) / (end_s - start_s)
+            value = start_v + (end_v - start_v) * ratio
+            return round(value, 2)
+
+    return 1.00
