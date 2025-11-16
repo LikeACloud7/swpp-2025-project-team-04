@@ -20,7 +20,7 @@ export type CurrentLevel = {
   lexical: SkillLevel;
   syntactic: SkillLevel;
   auditory: SkillLevel;
-  overall_cefr_level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  overall_cefr_level: SkillLevel;
   updated_at: string;
 };
 
