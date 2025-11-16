@@ -22,6 +22,7 @@ class LevelTestItem(BaseModel):
 
 
 class LevelTestRequest(BaseModel):
+    level: str  # CEFR 레벨 (예: "A1", "B2" 등)
     tests: List[LevelTestItem]
 
 

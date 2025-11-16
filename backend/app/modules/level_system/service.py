@@ -260,7 +260,7 @@ class LevelSystemService:
         Args:
             db: DB 세션 (현재는 사용하지 않지만 시그니처 유지)
             user: 현재 사용자 (향후 로깅/저장용)
-            level_test_payload: 테스트 결과 목록
+            level_test_payload: 테스트 결과 목록 및 레벨
 
         Returns:
             dict: 현재는 성공 여부만 반환 (추후 확장 가능)
@@ -279,10 +279,26 @@ class LevelSystemService:
         diff = avg_understanding - 80.0
         diff = max(-80.0, min(20.0, diff))
 
-        # 2) 현재 유저 레벨 스코어 (3개는 항상 동일하다고 가정)
-        current_score = float(user.lexical_level)
+        # 2) REQUEST로 받은 level을 기준으로 base_score 설정
+        level_str = level_test_payload.level.lower()
+        level_map = {
+            "a1": CEFRLevel.A1,
+            "a2": CEFRLevel.A2,
+            "b1": CEFRLevel.B1,
+            "b2": CEFRLevel.B2,
+            "c1": CEFRLevel.C1,
+            "c2": CEFRLevel.C2,
+        }
 
-        # 3) 현재 스코어의 기준 레벨과 인접 레벨 찾기
+        if level_str not in level_map:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid CEFR level. Must be one of A1, A2, B1, B2, C1, C2.",
+            )
+
+        current_level = level_map[level_str]
+
+        # 3) 현재 레벨과 인접 레벨 찾기
         thresholds = LEVEL_THRESHOLDS
         ordered_levels = [
             CEFRLevel.A1,
@@ -293,14 +309,7 @@ class LevelSystemService:
             CEFRLevel.C2,
         ]
 
-        # 현재 레벨 인덱스 찾기 (current_score는 기준값과 정확히 일치한다고 가정)
-        current_index = next(
-            i
-            for i, level in enumerate(ordered_levels)
-            if float(thresholds[level]) == float(current_score)
-        )
-
-        current_level = ordered_levels[current_index]
+        current_index = ordered_levels.index(current_level)
         base_score = thresholds[current_level]
 
         # 4) diff >= 0: 상향 보간 (현재 레벨 ~ 다음 레벨의 중간까지)
