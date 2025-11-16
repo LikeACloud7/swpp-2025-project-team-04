@@ -8,12 +8,12 @@ import base64
 import asyncio
 from openai import AsyncOpenAI
 from fastapi import HTTPException, WebSocket
-from elevenlabs import ElevenLabs
+from elevenlabs import ElevenLabs, VoiceSettings
 from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
-from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences
+from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences, get_cefr_level_from_score, get_speed_from_level_score
 from . import crud
 from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
@@ -36,6 +36,15 @@ VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 MIN_SCRIPT_WORDS = 100
 TARGET_SCRIPT_WORDS = 240
 MAX_GENERATION_TRIES = 3
+
+REFERENCE_ASL_AVG = {
+    "A1": 7.7,
+    "A2": 10.9,
+    "B1": 15.2,
+    "B2": 18.0,
+    "C1": 19.0,
+    "C2": 19.2,
+}
 
 # 1. Map CEFR Level to a challenge score range (0-100)
 LEVEL_CHALLENGE_MAP = {
@@ -101,11 +110,17 @@ class AudioService:
     ) -> dict:
 
         #임의로 웨이트 voice 선택 기준 지정
-        #나누기 3이 아니라 9를 하는 이유는 현재 유저 레벨 측정은 100이 아닌 300으로 되어 있음.
-        user_level = round((user.lexical_level*0.3 + user.syntactic_level*0.2 + user.speed_level*0.5)/9, 1)
+        weighted_score = round(
+            (user.lexical_level * 0.3) + 
+            (user.syntactic_level * 0.2) + 
+            (user.speed_level * 0.5), 
+            1
+        )
+
+        user_cefr_level = get_cefr_level_from_score(weighted_score)
 
         try:
-            min_score, max_score = LEVEL_CHALLENGE_MAP[user_level]
+            min_score, max_score = LEVEL_CHALLENGE_MAP[user_cefr_level]
         except KeyError:
             min_score, max_score = (0, 30)
             
@@ -158,11 +173,12 @@ class AudioService:
         theme: str, 
         user: User,
         selected_voice: dict,
-        level_score: int | None = None ,
     ) -> tuple[str, str]:
-        # TODO user_level 수정
-        user_level = None
+        lexical_score = user.lexical_level
+        syntactic_score = user.syntactic_level
 
+        lexical_cefr_str = get_cefr_level_from_score(lexical_score).value
+        syntactic_cefr_str = get_cefr_level_from_score(syntactic_score).value
 
         start_total = time.time()  # ⏱ 전체 시작
 
@@ -171,6 +187,8 @@ class AudioService:
             f"Accent: {selected_voice['tags']['accent']}, Style: {selected_voice['tags']['style']})"
         )
         
+        target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_level.value, 15.0) # Default to B1-ish if key missing
+
         prompt = f"""
         You are a scriptwriter. Generate a script for an audio narration.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
@@ -179,15 +197,17 @@ class AudioService:
         Theme: {theme}
         Mood: {mood}
 
-        User Information:
-        - CEFR Level: {user_level.value}
-        - Level Score: {level_score if level_score is not None else "N/A"} (0 = early stage of this level, 100 = right before advancing to the next level)
+        User's Current English Profile:
+        - Lexical Level: {lexical_cefr_str} (for vocabulary)
+        - Syntactic Level: {syntactic_cefr_str} (for sentence structure)
 
         *** MASTER GENERATION PRINCIPLES (GROUND TRUTH) ***
-        You MUST generate the script based on the following data-driven principles to ensure the text difficulty is quantitatively accurate.
+        You MUST generate the script based on the following data-driven principles.
+        The user has two *different* target levels. Apply each target to its specific principle.
 
         **1. Lexical Difficulty: "Closest Profile Match"**
-        Your primary goal is to match the vocabulary distribution of the target CEFR level. Use the "level_score" to interpolate between profiles. A score of 0 matches the target level perfectly. A score of 100 leans slightly toward the profile of the *next* level.
+        Your primary goal is to match the vocabulary distribution of the **Target Lexical Level ({lexical_cefr_str})**.
+        You MUST strictly follow the lexical profile for **{lexical_cefr_str}** from the table below. Do not interpolate; match this row precisely.
 
         **Ground Truth (Lexical Profile for Content Words)**
         | CEFR Level | A1 Word % | A2 Word % | B1 Word % | B2 Word % |
@@ -200,7 +220,8 @@ class AudioService:
         | **C2** | 16.5% | 15.2% | 16.3% | 6.8% |
 
         **2. Syntactic Complexity: "ASL Target"**
-        Your second goal is to control the Average Sentence Length (ASL). Use the "level_score" to aim within the target range. A score of 0 targets the *lower* end of the range; 100 targets the *higher* end.
+        Your second goal is to control the Average Sentence Length (ASL).
+        You MUST target the ASL "Success Range" for the **Target Syntactic Level ({syntactic_cefr_str})**.
 
         **Ground Truth (ASL Range)**
         | CEFR Level | ASL "Success Range" | (Reference Avg.) |
@@ -214,7 +235,9 @@ class AudioService:
         (Note: For B2-C2 levels, complexity is defined more by the **Lexical Profile** (Metric 1) than by ASL, as their ASL values naturally converge.)
 
         **3. Qualitative CEFR Descriptors**
-        For C1 and C2 levels, relying *only* on the quantitative tables is insufficient. You MUST *also* incorporate the following qualitative features into the script, as these levels are defined by nuance and advanced constructs.
+        For C1 and C2 levels, relying *only* on the quantitative tables is insufficient. 
+        You MUST *also* incorporate the qualitative features corresponding to **both** of the user's target levels ({lexical_cefr_str} and {syntactic_cefr_str}).
+        For example, if the lexical level is C1, you MUST include idiomatic expressions. If the syntactic level is B2, you MUST ensure arguments are complex but on a familiar topic.
 
         * **A1:** Follow language which is very slow and carefully articulated, with long pauses. Recognize concrete information (e.g., places, times) delivered slowly and clearly.
         * **A2:** Understand enough to meet needs of a concrete type. Understand phrases and expressions related to areas of most immediate priority (e.g., personal information, shopping, local geography).
@@ -321,7 +344,8 @@ class AudioService:
     @staticmethod
     async def _generate_audio_with_timestamps(
         script: str,
-        voice_id: str
+        voice_id: str,
+        speed: float
     ) -> dict:
         """
         Generate audio asynchronously using ElevenLabs API (non-blocking).
@@ -340,6 +364,7 @@ class AudioService:
                     text=script,
                     model_id="eleven_turbo_v2",
                     enable_logging=False,
+                    voice_settings=VoiceSettings(speed=speed)
                 ),
             )
 
@@ -458,9 +483,13 @@ class AudioService:
         logger.info("=== Step 2: Generate audio with ElevenLabs ===")
         start_audio = time.time()
     
+        target_speed = get_speed_from_level_score(user.speed_level)
+        logger.info(f"Targeting audio speed: {target_speed}x for score {user.speed_level}")
+
         audio_result = await cls._generate_audio_with_timestamps(
             script=script,
-            voice_id=selected_voice["voice_id"]
+            voice_id=selected_voice["voice_id"],
+            speed=target_speed
         )
         
         logger.info(f"Audio generation took {time.time() - start_audio:.2f}s")
@@ -592,9 +621,14 @@ class AudioService:
             })
             
             start_audio = time.time()
+
+            target_speed = get_speed_from_level_score(user.speed_level)
+            logger.info(f"[WS] Targeting audio speed: {target_speed}x for score {user.speed_level}")
+
             audio_result = await cls._generate_audio_with_timestamps(
                 script=script,
-                voice_id=selected_voice["voice_id"]
+                voice_id=selected_voice["voice_id"],
+                speed=target_speed
             )
             logger.info(f"[WS] Audio generation took {time.time() - start_audio:.2f}s")
 
