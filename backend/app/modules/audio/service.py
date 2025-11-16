@@ -175,36 +175,75 @@ class AudioService:
         You are a scriptwriter. Generate a script for an audio narration.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
-        
+
         Theme: {theme}
         Mood: {mood}
-        
+
         User Information:
         - CEFR Level: {user_level.value}
         - Level Score: {level_score if level_score is not None else "N/A"} (0 = early stage of this level, 100 = right before advancing to the next level)
-        
-        Use both the CEFR level and the level score to determine the vocabulary, grammar complexity, and sentence length.
-        For example:
-        CEFR Guidance:
-        - **A1** →  simple vocabulary and grammar, short and direct sentences. Avoid complex tenses or subordinate clauses.
-        - **A2** → still simple, but can include basic descriptions and connectors like “and,” “but,” or “because.” Slightly longer sentences are acceptable.
-        - **B1** → moderate vocabulary, clear explanations, and occasional use of relative or conditional clauses. Sentences can be 10–15 words on average.
-        - **B2** → upper-intermediate range, using more abstract vocabulary and natural discourse markers. Sentences can combine ideas logically and vary in structure.
-        - **C1** → advanced vocabulary, idiomatic expressions, and flexible sentence structures. Grammar may include participial phrases or inversion for emphasis.
-        - **C2** → near-native proficiency, sophisticated and nuanced vocabulary, and complex, natural rhythm. Sentences can be long and varied in tone and style.
-        Within each level, a higher level_score means slightly more advanced expressions and richer sentence variety.
+
+        *** MASTER GENERATION PRINCIPLES (GROUND TRUTH) ***
+        You MUST generate the script based on the following data-driven principles to ensure the text difficulty is quantitatively accurate.
+
+        **1. Lexical Difficulty: "Closest Profile Match"**
+        Your primary goal is to match the vocabulary distribution of the target CEFR level. Use the "level_score" to interpolate between profiles. A score of 0 matches the target level perfectly. A score of 100 leans slightly toward the profile of the *next* level.
+
+        **Ground Truth (Lexical Profile for Content Words)**
+        | CEFR Level | A1 Word % | A2 Word % | B1 Word % | B2 Word % |
+        | :--- | :--- | :--- | :--- | :--- |
+        | **A1** | 66.3% | 15.2% | 4.8% | 1.3% |
+        | **A2** | 54.6% | 18.2% | 10.1% | 3.2% |
+        | **B1** | 41.7% | 20.1% | 15.5% | 5.9% |
+        | **B2** | 31.9% | 19.1% | 17.8% | 7.9% |
+        | **C1** | 23.7% | 16.9% | 17.3% | 8.5% |
+        | **C2** | 16.5% | 15.2% | 16.3% | 6.8% |
+
+        **2. Syntactic Complexity: "ASL Target"**
+        Your second goal is to control the Average Sentence Length (ASL). Use the "level_score" to aim within the target range. A score of 0 targets the *lower* end of the range; 100 targets the *higher* end.
+
+        **Ground Truth (ASL Range)**
+        | CEFR Level | ASL "Success Range" | (Reference Avg.) |
+        | :--- | :--- | :--- |
+        | **A1** | 6.7 ~ 8.7 words | (7.7) |
+        | **A2** | 9.9 ~ 11.9 words | (10.9) |
+        | **B1** | 13.7 ~ 16.7 words | (15.2) |
+        | **B2** | 16.5 ~ 19.5 words | (18.0) |
+        | **C1** | 17.5 ~ 20.5 words | (19.0) |
+        | **C2** | 17.7 ~ 20.7 words | (19.2) |
+        (Note: For B2-C2 levels, complexity is defined more by the **Lexical Profile** (Metric 1) than by ASL, as their ASL values naturally converge.)
+
+        **3. Qualitative CEFR Descriptors**
+        For C1 and C2 levels, relying *only* on the quantitative tables is insufficient. You MUST *also* incorporate the following qualitative features into the script, as these levels are defined by nuance and advanced constructs.
+
+        * **A1:** Follow language which is very slow and carefully articulated, with long pauses. Recognize concrete information (e.g., places, times) delivered slowly and clearly.
+        * **A2:** Understand enough to meet needs of a concrete type. Understand phrases and expressions related to areas of most immediate priority (e.g., personal information, shopping, local geography).
+        * **B1:** Understand straightforward factual information about common or job-related topics. Understand the main points in clear standard language, including short narratives.
+        * **B2:** Understand standard language, live or broadcast. Understand the main ideas of complex abstract topics, including technical discussions. Follow extended discourse and complex arguments if the topic is reasonably familiar.
+        * **C1:** Understand enough to follow extended discourse on abstract and complex topics. **Recognize a wide range of idiomatic expressions and colloquialisms.** Follow extended discourse even when it is not clearly structured and **when relationships are only implied and not signalled explicitly.**
+        * **C2:** Understand with ease virtually any kind of language, whether live or broadcast, **delivered at fast natural speed.**
+
+        *** LEXICAL CALIBRATION (FEW-SHOT EXAMPLES) ***
+        To help you calibrate your internal knowledge to our specific wordlist, here are representative examples of content words at each level.
+
+        * **A1 Examples:** play, bicycle, poor, news, pizza, cream, shopping, around, five, cover, reporter, card, picture, excited, judge, science, snow, more, street, button, buy, well, case, mouth, no, glass, late, black, happy, Wednesday, hotel, all right, grass, outside, umbrella, history, spot, Thursday, cold, taxi
+        * **A2 Examples:** difficulty, pal, trust, car park, mosque, frightening, competition, appearance, scale, angel, claim, cross, ruin, search, fantastic, ourselves, normal, fence, talent, high, exhibition, north, fault, appreciate, superlative, mysterious, shampoo, possible, few, hey, entertainment, view, pride, spaceship, around, journey, IT, grandson, clerk, aged
+        * **B1 Examples:** timely, laughter, interact, weakness, forehead, refusal, nutritious, dump, historian, strain, board, sunrise, compose, stream, tragic, net, through, incredible, complete, currently, unexpected, toothpaste, nervousness, anyhow, facility, monitor, substitute, direct, twist, southeast, analysis, tremendous, publisher, adviser/advisor, jug, continuous, remainder, transport, roadside, experience
+        * **B2 Examples:** faint, reinforce, fatal, fine, upgrade, elemental, flash, mother-in-law, inch, gently, tolerant, royalty, weakly, grim, sufficiently, observer, conductor, innovation, remaining, cherry, martial art, imperative, flash, lest, transitive, editorial, exclusion, nervously, soliloquy, win, disappearance, trivial, retard, bumper, hyphen, cuff, cubism, cascade, disrupt, inspector
+        * **C1 Examples:** rudimentary, facilitation, vegetation, preacher, detriment, blankness, reenact, sacrifice, inexplicable, prolific, contextual, aimlessly, dither, conditionally, revere, render, bribery, premise, fanatic, provocative, prophet, exuberant, insensitively, carrier, isolated, formulate, overdraft, pertinent, somersault, quirky, jersey, rustle, anthropology, dismay, violet, absolute, commercially, stoke, commission, maneuver/manoeuvre
+        * **C2 Examples:** kinetically, philanthropic, angsty, facsimile, colloquium, flit, agility, infernally, extant, wistful, posterity, ferocity, ingrate, circuit, thicket, consternation, all-encompassing, enabler, maelstrom, testimonial, daunt, stringently, avian, adversely, blurb, diffuse, annex, drudgery, formidably, solitariness, tetchy, reverb, salivary, tactic, incipient, hazard, incumbent, bona fide, lassitude, extracurricular
 
         *** IMPORTANT FORMATTING RULES ***
         1. Start with a title on the first line formatted as: TITLE: [Your Title Here]
         2. Add one blank line after the title.
         3. (Special Point 3) Every single sentence MUST be a new line.
-           A sentence ends with a period, question mark, or exclamation mark.
+        A sentence ends with a period, question mark, or exclamation mark.
         4. Do NOT include speaker names (e.g., "Narrator:"), scene directions, 
-           or any text other than the dialogue itself.
-        
+        or any text other than the dialogue itself.
+
         Example format:
         TITLE: Amazing Adventures in Technology
-        
+
         Welcome to our exciting journey into the world of technology.
         Today we will explore fascinating innovations.
         """
