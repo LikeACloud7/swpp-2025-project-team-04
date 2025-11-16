@@ -123,9 +123,9 @@ class LevelSystemService:
             prev_speed,
         )
 
-        user.lexical_level = prev_lexical + lexical_delta
-        user.syntactic_level = prev_syntactic + syntactic_delta
-        user.speed_level = prev_speed + speed_delta
+        user.lexical_level = max(0.0, min(300.0, prev_lexical + lexical_delta))
+        user.syntactic_level = max(0.0, min(300.0, prev_syntactic + syntactic_delta))
+        user.speed_level = max(0.0, min(300.0, prev_speed + speed_delta))
 
         db.add(user)
         db.commit()
