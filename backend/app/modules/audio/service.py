@@ -99,10 +99,10 @@ class AudioService:
         all_voices: list[dict], 
         user: User
     ) -> dict:
-        
-        # TODO user_level 수정
-        user_level = None
 
+        #임의로 웨이트 voice 선택 기준 지정
+        #나누기 3이 아니라 9를 하는 이유는 현재 유저 레벨 측정은 100이 아닌 300으로 되어 있음.
+        user_level = round((user.lexical_level*0.3 + user.syntactic_level*0.2 + user.speed_level*0.5)/9, 1)
 
         try:
             min_score, max_score = LEVEL_CHALLENGE_MAP[user_level]
@@ -160,12 +160,6 @@ class AudioService:
         selected_voice: dict,
         level_score: int | None = None ,
     ) -> tuple[str, str]:
-        """
-        (Special Points 1 & 3)
-        Generates a script, ensures it's long enough, and formats
-        each sentence on a new line.
-        )
-        """
         # TODO user_level 수정
         user_level = None
 
