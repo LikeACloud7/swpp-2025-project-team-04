@@ -4,10 +4,12 @@ export type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 export type LevelTestItem = {
   script_id: string;
+  generated_content_id: number;
   understanding: number; // 0-100
 };
 
 export type LevelTestPayload = {
+  level: CEFRLevel;
   tests: LevelTestItem[];
 };
 
@@ -81,12 +83,16 @@ export const submitLevelTest = async (
 
   const tests: LevelTestItem[] = percentages.map((understanding, index) => ({
     script_id: generateScriptId(cefrLevel, index + 1),
+    generated_content_id: 0,
     understanding,
   }));
 
-  const payload: LevelTestPayload = { tests };
+  const payload: LevelTestPayload = {
+    level: cefrLevel,
+    tests,
+  };
 
-  return customFetch<LevelTestResponse>('/level-management/level-test', {
+  return customFetch<LevelTestResponse>('/level-system/level-test', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -99,7 +105,7 @@ export const submitManualLevel = async (
 
   const payload: ManualLevelPayload = { level: cefrLevel };
 
-  return customFetch<ManualLevelResponse>('/level-management/manual-level', {
+  return customFetch<ManualLevelResponse>('/level-system/manual-level', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
