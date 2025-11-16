@@ -108,8 +108,7 @@ class StatsService:
         week_start = self._start_of_day(week_start_date)
         week_end = self._start_of_day(today + timedelta(days=1))
 
-        crud.ensure_achievements(db, definitions=_DEFAULT_ACHIEVEMENTS)
-        achievement_defs = crud.list_achievements(db)
+        achievement_defs = self._load_achievement_definitions(db)
         definition_codes = {definition.code for definition in achievement_defs}
 
         daily_minutes_map = crud.get_daily_study_minutes(
@@ -224,6 +223,11 @@ class StatsService:
             total_time_spent_minutes=total_time_spent,
             achievements=achievement_statuses,
         )
+
+    def _load_achievement_definitions(self, db: Session) -> Sequence:
+        if _DEFAULT_ACHIEVEMENTS:
+            crud.ensure_achievements(db, definitions=_DEFAULT_ACHIEVEMENTS)
+        return crud.list_achievements(db)
 
     @staticmethod
     def _start_of_day(target: date) -> datetime:
