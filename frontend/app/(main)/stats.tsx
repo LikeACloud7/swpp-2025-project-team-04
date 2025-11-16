@@ -192,7 +192,7 @@ export default function StatsScreen() {
             <View className="items-center py-4">
               <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-sm">
                 <Text className="text-4xl font-black text-white">
-                  {stats.current_level.lexical.cefr_level}
+                  {stats.current_level.overall_cefr_level}
                 </Text>
               </View>
               <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
