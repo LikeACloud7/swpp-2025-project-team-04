@@ -28,28 +28,31 @@ export default function FeedbackScreen() {
   const generatedContentId = parseInt(
     Array.isArray(params.generated_content_id)
       ? params.generated_content_id[0]
-      : params.generated_content_id ?? '0',
+      : (params.generated_content_id ?? '0'),
   );
   const pauseCount = parseInt(
-    Array.isArray(params.pause_cnt) ? params.pause_cnt[0] : params.pause_cnt ?? '0',
+    Array.isArray(params.pause_cnt)
+      ? params.pause_cnt[0]
+      : (params.pause_cnt ?? '0'),
   );
   const rewindCount = parseInt(
-    Array.isArray(params.rewind_cnt) ? params.rewind_cnt[0] : params.rewind_cnt ?? '0',
+    Array.isArray(params.rewind_cnt)
+      ? params.rewind_cnt[0]
+      : (params.rewind_cnt ?? '0'),
   );
   const vocabLookupCount = parseInt(
     Array.isArray(params.vocab_lookup_cnt)
       ? params.vocab_lookup_cnt[0]
-      : params.vocab_lookup_cnt ?? '0',
+      : (params.vocab_lookup_cnt ?? '0'),
   );
   const vocabSaveCount = parseInt(
     Array.isArray(params.vocab_save_cnt)
       ? params.vocab_save_cnt[0]
-      : params.vocab_save_cnt ?? '0',
+      : (params.vocab_save_cnt ?? '0'),
   );
 
-  const [selectedUnderstandingDifficulty, setSelectedUnderstandingDifficulty] = useState<
-    number | null
-  >(null);
+  const [selectedUnderstandingDifficulty, setSelectedUnderstandingDifficulty] =
+    useState<number | null>(null);
   const [selectedSpeedDifficulty, setSelectedSpeedDifficulty] = useState<
     number | null
   >(null);
@@ -75,21 +78,33 @@ export default function FeedbackScreen() {
       vocab_lookup_cnt: vocabLookupCount,
       vocab_save_cnt: vocabSaveCount,
     });
-  }, [generatedContentId, pauseCount, rewindCount, vocabLookupCount, vocabSaveCount]);
+  }, [
+    generatedContentId,
+    pauseCount,
+    rewindCount,
+    vocabLookupCount,
+    vocabSaveCount,
+  ]);
 
   const handleSubmit = async () => {
-    if (!selectedUnderstandingDifficulty || !selectedSpeedDifficulty || submitting) return;
+    if (
+      !selectedUnderstandingDifficulty ||
+      !selectedSpeedDifficulty ||
+      submitting
+    )
+      return;
 
     setSubmitting(true);
     try {
       // UI 값을 백엔드 값으로 변환
-      const understandingBackendValue = UNDERSTANDING_DIFFICULTY_LEVELS.find(
-        (l) => l.value === selectedUnderstandingDifficulty
-      )?.backendValue ?? 0;
+      const understandingBackendValue =
+        UNDERSTANDING_DIFFICULTY_LEVELS.find(
+          (l) => l.value === selectedUnderstandingDifficulty,
+        )?.backendValue ?? 0;
 
-      const speedBackendValue = SPEED_DIFFICULTY_LEVELS.find(
-        (l) => l.value === selectedSpeedDifficulty
-      )?.backendValue ?? 0;
+      const speedBackendValue =
+        SPEED_DIFFICULTY_LEVELS.find((l) => l.value === selectedSpeedDifficulty)
+          ?.backendValue ?? 0;
 
       // 완전한 피드백 데이터 페이로드 (7가지 필드)
       const payload = {
@@ -115,7 +130,7 @@ export default function FeedbackScreen() {
       Alert.alert(
         '피드백 제출 실패',
         '피드백을 제출하는 중 문제가 발생했습니다. 다시 시도해주세요.',
-        [{ text: '확인' }]
+        [{ text: '확인' }],
       );
     } finally {
       setSubmitting(false);
@@ -123,7 +138,8 @@ export default function FeedbackScreen() {
   };
 
   const canSubmit =
-    selectedUnderstandingDifficulty !== null && selectedSpeedDifficulty !== null;
+    selectedUnderstandingDifficulty !== null &&
+    selectedSpeedDifficulty !== null;
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
@@ -155,7 +171,7 @@ export default function FeedbackScreen() {
                 <Text className="text-4xl">
                   {
                     UNDERSTANDING_DIFFICULTY_LEVELS.find(
-                      (l) => l.value === selectedUnderstandingDifficulty
+                      (l) => l.value === selectedUnderstandingDifficulty,
                     )?.emoji
                   }
                 </Text>
@@ -163,11 +179,14 @@ export default function FeedbackScreen() {
             </View>
             <View className="flex-row gap-2">
               {UNDERSTANDING_DIFFICULTY_LEVELS.map((level) => {
-                const isSelected = selectedUnderstandingDifficulty === level.value;
+                const isSelected =
+                  selectedUnderstandingDifficulty === level.value;
                 return (
                   <View key={level.value} style={{ flex: 1 }}>
                     <Pressable
-                      onPress={() => setSelectedUnderstandingDifficulty(level.value)}
+                      onPress={() =>
+                        setSelectedUnderstandingDifficulty(level.value)
+                      }
                       android_ripple={{
                         color: 'rgba(0,0,0,0.08)',
                         borderless: false,
@@ -225,7 +244,7 @@ export default function FeedbackScreen() {
                   <Text className="text-4xl">
                     {
                       SPEED_DIFFICULTY_LEVELS.find(
-                        (l) => l.value === selectedSpeedDifficulty
+                        (l) => l.value === selectedSpeedDifficulty,
                       )?.emoji
                     }
                   </Text>
@@ -270,7 +289,7 @@ export default function FeedbackScreen() {
 
         {/* 제출 버튼 */}
         <View className="pb-8">
-          <View className="px-2">
+          <View className="px-2 gap-3">
             <GradientButton
               title="제출하기"
               icon="send"
@@ -278,6 +297,15 @@ export default function FeedbackScreen() {
               disabled={!canSubmit}
               onPress={handleSubmit}
             />
+            <Pressable
+              onPress={() => router.replace('/')}
+              className="py-4 rounded-xl bg-gray-200"
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+            >
+              <Text className="text-gray-700 text-center text-base font-semibold">
+                피드백 건너뛰기
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>
