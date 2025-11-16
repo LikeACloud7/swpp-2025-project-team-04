@@ -8,12 +8,13 @@ import base64
 import asyncio
 from openai import AsyncOpenAI
 from fastapi import HTTPException, WebSocket
-from elevenlabs import ElevenLabs
+from elevenlabs import ElevenLabs, VoiceSettings
 from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
 from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences
+from ..level_system.utils import get_cefr_level_from_score, get_speed_from_level_score
 from . import crud
 from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
@@ -36,6 +37,15 @@ VOICES_FILE_PATH = os.path.join(BASE_DIR, "voices.json")
 MIN_SCRIPT_WORDS = 100
 TARGET_SCRIPT_WORDS = 240
 MAX_GENERATION_TRIES = 3
+
+REFERENCE_ASL_AVG = {
+    "A1": 7.7,
+    "A2": 10.9,
+    "B1": 15.2,
+    "B2": 18.0,
+    "C1": 19.0,
+    "C2": 19.2,
+}
 
 # 1. Map CEFR Level to a challenge score range (0-100)
 LEVEL_CHALLENGE_MAP = {
@@ -130,10 +140,27 @@ class AudioService:
     @staticmethod
     def _select_voice_algorithmically(
         all_voices: list[dict], 
-        user_level: CEFRLevel
+        user: User
     ) -> dict:
+
+        # Handle legacy users with None values - use fallback levels
+        # Convert Decimal to float for calculations
+        lexical_level = float(user.lexical_level) if user.lexical_level is not None else 50.0  # B1 default
+        syntactic_level = float(user.syntactic_level) if user.syntactic_level is not None else 50.0  # B1 default  
+        speed_level = float(user.speed_level) if user.speed_level is not None else 50.0  # B1 default
+        
+        #임의로 웨이트 voice 선택 기준 지정
+        weighted_score = round(
+            (lexical_level * 0.3) + 
+            (syntactic_level * 0.2) + 
+            (speed_level * 0.5), 
+            1
+        )
+
+        user_cefr_level = get_cefr_level_from_score(weighted_score)
+
         try:
-            min_score, max_score = LEVEL_CHALLENGE_MAP[user_level]
+            min_score, max_score = LEVEL_CHALLENGE_MAP[user_cefr_level]
         except KeyError:
             min_score, max_score = (0, 30)
             
@@ -159,7 +186,7 @@ class AudioService:
             # Fallback: If no voices match the criteria (e.g., C2 user and no
             # high-score voices), just pick a random one from the B1/B2 pool
             # to ensure we always return something.
-            print(f"Warning: No voices found for level {user_level.value}. Falling back to B1/B2 range.")
+            print(f"Warning: No voices found for level {user_cefr_level.value}. Falling back to B1/B2 range.")
             min_score, max_score = LEVEL_CHALLENGE_MAP[CEFRLevel.B1]
             for voice in all_voices:
                 tags = voice.get("tags", {})
@@ -184,16 +211,16 @@ class AudioService:
     async def _generate_script(
         mood: str, 
         theme: str, 
-        user_level: CEFRLevel,
+        user: User,
         selected_voice: dict,
-        level_score: int | None = None ,
     ) -> tuple[str, str]:
-        """
-        (Special Points 1 & 3)
-        Generates a script, ensures it's long enough, and formats
-        each sentence on a new line.
-        )
-        """
+        # Handle legacy users with None values - use fallback levels
+        # Convert Decimal to float for calculations
+        lexical_score = float(user.lexical_level) if user.lexical_level is not None else 50.0  # B1 default
+        syntactic_score = float(user.syntactic_level) if user.syntactic_level is not None else 50.0  # B1 default
+
+        lexical_cefr_str = get_cefr_level_from_score(lexical_score).value
+        syntactic_cefr_str = get_cefr_level_from_score(syntactic_score).value
 
         start_total = time.time()  # ⏱ 전체 시작
 
@@ -202,40 +229,86 @@ class AudioService:
             f"Accent: {selected_voice['tags']['accent']}, Style: {selected_voice['tags']['style']})"
         )
         
+        target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_cefr_str, 15.0) # Default to B1-ish if key missing
+
         prompt = f"""
         You are a scriptwriter. Generate a script for an audio narration.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
-        
+
         Theme: {theme}
         Mood: {mood}
-        
-        User Information:
-        - CEFR Level: {user_level.value}
-        - Level Score: {level_score if level_score is not None else "N/A"} (0 = early stage of this level, 100 = right before advancing to the next level)
-        
-        Use both the CEFR level and the level score to determine the vocabulary, grammar complexity, and sentence length.
-        For example:
-        CEFR Guidance:
-        - **A1** →  simple vocabulary and grammar, short and direct sentences. Avoid complex tenses or subordinate clauses.
-        - **A2** → still simple, but can include basic descriptions and connectors like “and,” “but,” or “because.” Slightly longer sentences are acceptable.
-        - **B1** → moderate vocabulary, clear explanations, and occasional use of relative or conditional clauses. Sentences can be 10–15 words on average.
-        - **B2** → upper-intermediate range, using more abstract vocabulary and natural discourse markers. Sentences can combine ideas logically and vary in structure.
-        - **C1** → advanced vocabulary, idiomatic expressions, and flexible sentence structures. Grammar may include participial phrases or inversion for emphasis.
-        - **C2** → near-native proficiency, sophisticated and nuanced vocabulary, and complex, natural rhythm. Sentences can be long and varied in tone and style.
-        Within each level, a higher level_score means slightly more advanced expressions and richer sentence variety.
+
+        User's Current English Profile:
+        - Lexical Level: {lexical_cefr_str} (for vocabulary)
+        - Syntactic Level: {syntactic_cefr_str} (for sentence structure)
+
+        *** MASTER GENERATION PRINCIPLES (GROUND TRUTH) ***
+        You MUST generate the script based on the following data-driven principles.
+        The user has two *different* target levels. Apply each target to its specific principle.
+
+        **1. Lexical Difficulty: "Closest Profile Match"**
+        Your primary goal is to match the vocabulary distribution of the **Target Lexical Level ({lexical_cefr_str})**.
+        You MUST strictly follow the lexical profile for **{lexical_cefr_str}** from the table below. Do not interpolate; match this row precisely.
+
+        **Ground Truth (Lexical Profile for Content Words)**
+        | CEFR Level | A1 Word % | A2 Word % | B1 Word % | B2 Word % |
+        | :--- | :--- | :--- | :--- | :--- |
+        | **A1** | 66.3% | 15.2% | 4.8% | 1.3% |
+        | **A2** | 54.6% | 18.2% | 10.1% | 3.2% |
+        | **B1** | 41.7% | 20.1% | 15.5% | 5.9% |
+        | **B2** | 31.9% | 19.1% | 17.8% | 7.9% |
+        | **C1** | 23.7% | 16.9% | 17.3% | 8.5% |
+        | **C2** | 16.5% | 15.2% | 16.3% | 6.8% |
+
+        **2. Syntactic Complexity: "ASL Target"**
+        Your second goal is to control the Average Sentence Length (ASL).
+        You MUST target the ASL "Success Range" for the **Target Syntactic Level ({syntactic_cefr_str})**.
+
+        **Ground Truth (ASL Range)**
+        | CEFR Level | ASL "Success Range" | (Reference Avg.) |
+        | :--- | :--- | :--- |
+        | **A1** | 6.7 ~ 8.7 words | (7.7) |
+        | **A2** | 9.9 ~ 11.9 words | (10.9) |
+        | **B1** | 13.7 ~ 16.7 words | (15.2) |
+        | **B2** | 16.5 ~ 19.5 words | (18.0) |
+        | **C1** | 17.5 ~ 20.5 words | (19.0) |
+        | **C2** | 17.7 ~ 20.7 words | (19.2) |
+        (Note: For B2-C2 levels, complexity is defined more by the **Lexical Profile** (Metric 1) than by ASL, as their ASL values naturally converge.)
+
+        **3. Qualitative CEFR Descriptors**
+        For C1 and C2 levels, relying *only* on the quantitative tables is insufficient. 
+        You MUST *also* incorporate the qualitative features corresponding to **both** of the user's target levels ({lexical_cefr_str} and {syntactic_cefr_str}).
+        For example, if the lexical level is C1, you MUST include idiomatic expressions. If the syntactic level is B2, you MUST ensure arguments are complex but on a familiar topic.
+
+        * **A1:** Follow language which is very slow and carefully articulated, with long pauses. Recognize concrete information (e.g., places, times) delivered slowly and clearly.
+        * **A2:** Understand enough to meet needs of a concrete type. Understand phrases and expressions related to areas of most immediate priority (e.g., personal information, shopping, local geography).
+        * **B1:** Understand straightforward factual information about common or job-related topics. Understand the main points in clear standard language, including short narratives.
+        * **B2:** Understand standard language, live or broadcast. Understand the main ideas of complex abstract topics, including technical discussions. Follow extended discourse and complex arguments if the topic is reasonably familiar.
+        * **C1:** Understand enough to follow extended discourse on abstract and complex topics. **Recognize a wide range of idiomatic expressions and colloquialisms.** Follow extended discourse even when it is not clearly structured and **when relationships are only implied and not signalled explicitly.**
+        * **C2:** Understand with ease virtually any kind of language, whether live or broadcast, **delivered at fast natural speed.**
+
+        *** LEXICAL CALIBRATION (FEW-SHOT EXAMPLES) ***
+        To help you calibrate your internal knowledge to our specific wordlist, here are representative examples of content words at each level.
+
+        * **A1 Examples:** play, bicycle, poor, news, pizza, cream, shopping, around, five, cover, reporter, card, picture, excited, judge, science, snow, more, street, button, buy, well, case, mouth, no, glass, late, black, happy, Wednesday, hotel, all right, grass, outside, umbrella, history, spot, Thursday, cold, taxi
+        * **A2 Examples:** difficulty, pal, trust, car park, mosque, frightening, competition, appearance, scale, angel, claim, cross, ruin, search, fantastic, ourselves, normal, fence, talent, high, exhibition, north, fault, appreciate, superlative, mysterious, shampoo, possible, few, hey, entertainment, view, pride, spaceship, around, journey, IT, grandson, clerk, aged
+        * **B1 Examples:** timely, laughter, interact, weakness, forehead, refusal, nutritious, dump, historian, strain, board, sunrise, compose, stream, tragic, net, through, incredible, complete, currently, unexpected, toothpaste, nervousness, anyhow, facility, monitor, substitute, direct, twist, southeast, analysis, tremendous, publisher, adviser/advisor, jug, continuous, remainder, transport, roadside, experience
+        * **B2 Examples:** faint, reinforce, fatal, fine, upgrade, elemental, flash, mother-in-law, inch, gently, tolerant, royalty, weakly, grim, sufficiently, observer, conductor, innovation, remaining, cherry, martial art, imperative, flash, lest, transitive, editorial, exclusion, nervously, soliloquy, win, disappearance, trivial, retard, bumper, hyphen, cuff, cubism, cascade, disrupt, inspector
+        * **C1 Examples:** rudimentary, facilitation, vegetation, preacher, detriment, blankness, reenact, sacrifice, inexplicable, prolific, contextual, aimlessly, dither, conditionally, revere, render, bribery, premise, fanatic, provocative, prophet, exuberant, insensitively, carrier, isolated, formulate, overdraft, pertinent, somersault, quirky, jersey, rustle, anthropology, dismay, violet, absolute, commercially, stoke, commission, maneuver/manoeuvre
+        * **C2 Examples:** kinetically, philanthropic, angsty, facsimile, colloquium, flit, agility, infernally, extant, wistful, posterity, ferocity, ingrate, circuit, thicket, consternation, all-encompassing, enabler, maelstrom, testimonial, daunt, stringently, avian, adversely, blurb, diffuse, annex, drudgery, formidably, solitariness, tetchy, reverb, salivary, tactic, incipient, hazard, incumbent, bona fide, lassitude, extracurricular
 
         *** IMPORTANT FORMATTING RULES ***
         1. Start with a title on the first line formatted as: TITLE: [Your Title Here]
         2. Add one blank line after the title.
         3. (Special Point 3) Every single sentence MUST be a new line.
-           A sentence ends with a period, question mark, or exclamation mark.
+        A sentence ends with a period, question mark, or exclamation mark.
         4. Do NOT include speaker names (e.g., "Narrator:"), scene directions, 
-           or any text other than the dialogue itself.
-        
+        or any text other than the dialogue itself.
+
         Example format:
         TITLE: Amazing Adventures in Technology
-        
+
         Welcome to our exciting journey into the world of technology.
         Today we will explore fascinating innovations.
         """
@@ -313,7 +386,8 @@ class AudioService:
     @staticmethod
     async def _generate_audio_with_timestamps(
         script: str,
-        voice_id: str
+        voice_id: str,
+        speed: float
     ) -> dict:
         """
         Generate audio asynchronously using ElevenLabs API (non-blocking).
@@ -332,6 +406,7 @@ class AudioService:
                     text=script,
                     model_id="eleven_turbo_v2",
                     enable_logging=False,
+                    voice_settings=VoiceSettings(speed=speed)
                 ),
             )
 
@@ -363,20 +438,16 @@ class AudioService:
     ) -> tuple[str, str, dict]:
         
         all_voices = cls._load_voices()
-        
-        user_level = user.level 
-        level_score = user.level_score
 
         selected_voice = cls._select_voice_algorithmically(
             all_voices=all_voices,
-            user_level=user_level
+            user=user
         )
         
         title, script = await cls._generate_script(
             mood=request.mood,
             theme=request.theme,
-            user_level=user_level,
-            level_score=level_score,
+            user=user,
             selected_voice=selected_voice
         )
         
@@ -398,7 +469,7 @@ class AudioService:
 
         # === Step 1: Generate script and select voice ===
         logger.info("=== Step 1: Generate script and select voice ===")
-        logger.info(f"User Info | id={user.id}, username={user.username}, level={user.level}")
+        logger.info(f"User Info | id={user.id}, username={user.username}, lexical={user.lexical_level or 'N/A'}, syntactic={user.syntactic_level or 'N/A'}, speed={user.speed_level or 'N/A'}")
         start_script = time.time()
 
         title, script, selected_voice = await cls.generate_audio_script(request, user)
@@ -450,9 +521,16 @@ class AudioService:
         logger.info("=== Step 2: Generate audio with ElevenLabs ===")
         start_audio = time.time()
     
+        # Handle legacy users with None values - use fallback speed level
+        # Convert Decimal to float for calculations  
+        speed_level = float(user.speed_level) if user.speed_level is not None else 50.0  # B1 default
+        target_speed = get_speed_from_level_score(speed_level)
+        logger.info(f"Targeting audio speed: {target_speed}x for score {speed_level}")
+
         audio_result = await cls._generate_audio_with_timestamps(
             script=script,
-            voice_id=selected_voice["voice_id"]
+            voice_id=selected_voice["voice_id"],
+            speed=target_speed
         )
         
         logger.info(f"Audio generation took {time.time() - start_audio:.2f}s")
@@ -584,9 +662,16 @@ class AudioService:
             })
             
             start_audio = time.time()
+
+            # Handle legacy users with None values - use fallback speed level  
+            speed_level = user.speed_level if user.speed_level is not None else 50.0  # B1 default
+            target_speed = get_speed_from_level_score(speed_level)
+            logger.info(f"[WS] Targeting audio speed: {target_speed}x for score {speed_level}")
+
             audio_result = await cls._generate_audio_with_timestamps(
                 script=script,
-                voice_id=selected_voice["voice_id"]
+                voice_id=selected_voice["voice_id"],
+                speed=target_speed
             )
             logger.info(f"[WS] Audio generation took {time.time() - start_audio:.2f}s")
 

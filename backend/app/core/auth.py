@@ -5,6 +5,11 @@ from fastapi import HTTPException
 from enum import Enum
 from .config import settings
 from .exceptions import AuthTokenExpiredException, InvalidTokenException, InvalidTokenTypeException
+from fastapi.security import HTTPBearer
+
+
+# Swagger에서 Bearer Token 인증 버튼 활성화
+oauth2_scheme = HTTPBearer()
 
 # 패스워드 해싱용 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

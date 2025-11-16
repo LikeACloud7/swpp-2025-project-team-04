@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from backend.app.modules.stats import crud
-from backend.app.modules.stats.service import StatsService
+from backend.app.modules.stats.service import StatsService, _DEFAULT_ACHIEVEMENTS
 from backend.app.modules.level_management.models import CEFRLevel
 from backend.app.modules.stats.models import StudySession
 from backend.app.modules.users.models import User as AppUser, CEFRLevel as UserCEFRLevel
@@ -33,6 +33,9 @@ def test_get_user_stats_aggregates_data(monkeypatch):
         level_score=82,
         llm_confidence=78,
         level_updated_at=real_datetime(2024, 5, 2, tzinfo=timezone.utc),
+        lexical_level=80,
+        syntactic_level=35,
+        speed_level=10,
     )
 
     daily_minutes = {
@@ -77,23 +80,12 @@ def test_get_user_stats_aggregates_data(monkeypatch):
 
     achievements = [
         SimpleNamespace(
-            code="FIRST_SESSION",
-            name="첫 학습 달성",
-            description="첫 학습 세션을 완료했습니다.",
-            category="milestone",
-        ),
-        SimpleNamespace(
-            code="STREAK_3",
-            name="3일 연속 학습",
-            description="",
-            category="streak",
-        ),
-        SimpleNamespace(
-            code="TOTAL_300",
-            name="누적 5시간 학습",
-            description="",
-            category="time",
-        ),
+            code=item["code"],
+            name=item["name"],
+            description=item.get("description"),
+            category=item.get("category"),
+        )
+        for item in _DEFAULT_ACHIEVEMENTS
     ]
 
     def fake_list_achievements(db_arg):
@@ -136,10 +128,17 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     stats = service.get_user_stats(db=db, user=user)
 
     assert ensured  # ensure definitions were seeded
-    assert set(awarded.keys()) == {"FIRST_SESSION", "STREAK_3", "TOTAL_300"}
+    assert set(awarded.keys()) == {
+        "FIRST_SESSION",
+        "STREAK_3",
+        "TOTAL_300",
+        "TOTAL_600",
+    }
     assert stats.total_time_spent_minutes == 600
-    assert stats.current_level.level == CEFRLevel.B2
-    assert stats.current_level.level_score == 82
+    assert stats.current_level.lexical.cefr_level == CEFRLevel.B1
+    assert stats.current_level.lexical.score == 80
+    assert stats.current_level.syntactic.cefr_level == CEFRLevel.A2
+    assert stats.current_level.auditory.cefr_level == CEFRLevel.A1
 
     assert stats.streak.weekly_total_minutes == 135
     assert stats.streak.consecutive_days == 3
@@ -147,11 +146,13 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     assert stats.streak.daily_minutes[-1].minutes == 60
 
     achieved = {item.code: item.achieved for item in stats.achievements}
-    assert achieved == {
-        "FIRST_SESSION": True,
-        "STREAK_3": True,
-        "TOTAL_300": True,
-    }
+    assert achieved["FIRST_SESSION"] is True
+    assert achieved["STREAK_3"] is True
+    assert achieved["TOTAL_300"] is True
+    assert achieved["TOTAL_600"] is True
+    assert achieved["TOTAL_1200"] is False
+    assert achieved["POLYGLOT_MASTERY"] is False
+
     first_achievement = next(item for item in stats.achievements if item.code == "FIRST_SESSION")
     assert first_achievement.achieved_at is not None
 

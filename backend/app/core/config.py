@@ -53,6 +53,14 @@ def apply_startup_migrations():
         inspector = inspect(conn)
 
         user_columns = {column["name"] for column in inspector.get_columns("users")}
+        # --- Advanced level system fields ---
+        if "lexical_level" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN lexical_level DECIMAL(4, 1) NOT NULL DEFAULT 0.0"))
+        if "syntactic_level" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN syntactic_level DECIMAL(4, 1) NOT NULL DEFAULT 0.0"))
+        if "speed_level" not in user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN speed_level DECIMAL(4, 1) NOT NULL DEFAULT 0.0"))
+
         if "initial_level_completed" not in user_columns:
             conn.execute(
                 text(
