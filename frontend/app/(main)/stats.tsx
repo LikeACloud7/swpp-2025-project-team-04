@@ -232,8 +232,11 @@ export default function StatsScreen() {
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
-                      className="h-full rounded-full bg-blue-500"
-                      style={{ width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%` }}
+                      className="h-full rounded-full"
+                      style={{ 
+                        width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
+                        backgroundColor: '#3b82f6'
+                      }}
                     />
                   </View>
                 </View>
@@ -249,8 +252,11 @@ export default function StatsScreen() {
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
-                      className="h-full rounded-full bg-green-500"
-                      style={{ width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%` }}
+                      className="h-full rounded-full"
+                      style={{ 
+                        width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
+                        backgroundColor: '#7c3aed'
+                      }}
                     />
                   </View>
                 </View>
@@ -266,8 +272,11 @@ export default function StatsScreen() {
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
-                      className="h-full rounded-full bg-purple-500"
-                      style={{ width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%` }}
+                      className="h-full rounded-full"
+                      style={{ 
+                        width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
+                        backgroundColor: '#10b981'
+                      }}
                     />
                   </View>
                 </View>
