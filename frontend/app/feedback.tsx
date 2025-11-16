@@ -121,10 +121,20 @@ export default function FeedbackScreen() {
 
       const response = await submitFeedback(payload);
 
-      console.log('[피드백 제출 성공]');
-      console.log(JSON.stringify(payload, null, 2));
+      console.log('✅ [피드백 응답]', response);
 
-      router.replace('/');
+      // 레벨 결과 페이지로 이동
+      router.replace({
+        pathname: '/level-result',
+        params: {
+          lexical_level: response.lexical_level.toString(),
+          syntactic_level: response.syntactic_level.toString(),
+          speed_level: response.speed_level.toString(),
+          lexical_delta: response.lexical_level_delta.toString(),
+          syntactic_delta: response.syntactic_level_delta.toString(),
+          speed_delta: response.speed_level_delta.toString(),
+        },
+      });
     } catch (error) {
       console.error('[피드백 제출 실패]', error);
       Alert.alert(

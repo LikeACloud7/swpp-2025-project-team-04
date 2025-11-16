@@ -13,6 +13,12 @@ export type FeedbackPayload = {
 };
 
 export type FeedbackResponse = {
+  // 현재 레벨
+  lexical_level: number;
+  syntactic_level: number;
+  speed_level: number;
+  
+  // 변화량
   lexical_level_delta: number;
   syntactic_level_delta: number;
   speed_level_delta: number;
