@@ -26,6 +26,7 @@ class LevelProgress(BaseModel):
     lexical: SkillLevel
     syntactic: SkillLevel
     auditory: SkillLevel
+    overall_cefr_level: Optional[SkillLevel] = None
     updated_at: Optional[datetime] = None
 
 
