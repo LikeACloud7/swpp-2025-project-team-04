@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import os
-from importlib import import_module, util as importlib_util
 import sys
 import types
+from importlib import import_module, util as importlib_util
 from pathlib import Path
 from typing import Iterator
 
@@ -12,9 +12,13 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import Base
-
 BASE_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = BASE_DIR.parent
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.core.config import Base
 
 
 def _ensure_level_management_models_loaded():
