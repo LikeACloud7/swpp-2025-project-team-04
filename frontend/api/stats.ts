@@ -11,12 +11,17 @@ export type Streak = {
   daily_minutes: DailyMinutes[];
 };
 
+export type SkillLevel = {
+  cefr_level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  score: number;
+};
+
 export type CurrentLevel = {
-  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
-  level_score: number; // 0-100
-  llm_confidence: number; // 0-100
+  lexical: SkillLevel;
+  syntactic: SkillLevel;
+  auditory: SkillLevel;
+  overall_cefr_level: SkillLevel;
   updated_at: string;
-  level_description: string;
 };
 
 export type Achievement = {

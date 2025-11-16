@@ -172,7 +172,7 @@ export const customFetch = async <T>(
       setAccessToken(newAccessToken);
       headers.set('Authorization', `Bearer ${newAccessToken}`);
       processQueue(null, newAccessToken);
-      response = await fetch(`${baseUrl}${endpoint}`, {
+      response = await fetch(`${baseUrl}/api/v1${endpoint}`, {
         ...requestInit,
         headers,
       });
