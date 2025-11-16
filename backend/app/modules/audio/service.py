@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 from ...core.config import SessionLocal
 from ..users.models import User, CEFRLevel
 from .schemas import AudioGenerateRequest
-from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences, get_cefr_level_from_score, get_speed_from_level_score
+from .utils import parse_tts_by_newlines, get_elevenlabs_client, insert_study_session_from_sentences
+from ..level_system.utils import get_cefr_level_from_score, get_speed_from_level_score
 from . import crud
 from ..vocab.service import VocabService
 from ...core.s3setting import generate_s3_object_key
@@ -109,11 +110,17 @@ class AudioService:
         user: User
     ) -> dict:
 
+        # Handle legacy users with None values - use fallback levels
+        # Convert Decimal to float for calculations
+        lexical_level = float(user.lexical_level) if user.lexical_level is not None else 50.0  # B1 default
+        syntactic_level = float(user.syntactic_level) if user.syntactic_level is not None else 50.0  # B1 default  
+        speed_level = float(user.speed_level) if user.speed_level is not None else 50.0  # B1 default
+        
         #임의로 웨이트 voice 선택 기준 지정
         weighted_score = round(
-            (user.lexical_level * 0.3) + 
-            (user.syntactic_level * 0.2) + 
-            (user.speed_level * 0.5), 
+            (lexical_level * 0.3) + 
+            (syntactic_level * 0.2) + 
+            (speed_level * 0.5), 
             1
         )
 
@@ -146,7 +153,7 @@ class AudioService:
             # Fallback: If no voices match the criteria (e.g., C2 user and no
             # high-score voices), just pick a random one from the B1/B2 pool
             # to ensure we always return something.
-            print(f"Warning: No voices found for level {user_level.value}. Falling back to B1/B2 range.")
+            print(f"Warning: No voices found for level {user_cefr_level.value}. Falling back to B1/B2 range.")
             min_score, max_score = LEVEL_CHALLENGE_MAP[CEFRLevel.B1]
             for voice in all_voices:
                 tags = voice.get("tags", {})
@@ -174,8 +181,10 @@ class AudioService:
         user: User,
         selected_voice: dict,
     ) -> tuple[str, str]:
-        lexical_score = user.lexical_level
-        syntactic_score = user.syntactic_level
+        # Handle legacy users with None values - use fallback levels
+        # Convert Decimal to float for calculations
+        lexical_score = float(user.lexical_level) if user.lexical_level is not None else 50.0  # B1 default
+        syntactic_score = float(user.syntactic_level) if user.syntactic_level is not None else 50.0  # B1 default
 
         lexical_cefr_str = get_cefr_level_from_score(lexical_score).value
         syntactic_cefr_str = get_cefr_level_from_score(syntactic_score).value
@@ -187,7 +196,7 @@ class AudioService:
             f"Accent: {selected_voice['tags']['accent']}, Style: {selected_voice['tags']['style']})"
         )
         
-        target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_level.value, 15.0) # Default to B1-ish if key missing
+        target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_cefr_str, 15.0) # Default to B1-ish if key missing
 
         prompt = f"""
         You are a scriptwriter. Generate a script for an audio narration.
@@ -396,9 +405,6 @@ class AudioService:
     ) -> tuple[str, str, dict]:
         
         all_voices = cls._load_voices()
-        
-        
-        level_score = user.level_score
 
         selected_voice = cls._select_voice_algorithmically(
             all_voices=all_voices,
@@ -409,7 +415,6 @@ class AudioService:
             mood=request.mood,
             theme=request.theme,
             user=user,
-            level_score=level_score,
             selected_voice=selected_voice
         )
         
@@ -431,7 +436,7 @@ class AudioService:
 
         # === Step 1: Generate script and select voice ===
         logger.info("=== Step 1: Generate script and select voice ===")
-        logger.info(f"User Info | id={user.id}, username={user.username}, level={user.level}")
+        logger.info(f"User Info | id={user.id}, username={user.username}, lexical={user.lexical_level or 'N/A'}, syntactic={user.syntactic_level or 'N/A'}, speed={user.speed_level or 'N/A'}")
         start_script = time.time()
 
         title, script, selected_voice = await cls.generate_audio_script(request, user)
@@ -483,8 +488,11 @@ class AudioService:
         logger.info("=== Step 2: Generate audio with ElevenLabs ===")
         start_audio = time.time()
     
-        target_speed = get_speed_from_level_score(user.speed_level)
-        logger.info(f"Targeting audio speed: {target_speed}x for score {user.speed_level}")
+        # Handle legacy users with None values - use fallback speed level
+        # Convert Decimal to float for calculations  
+        speed_level = float(user.speed_level) if user.speed_level is not None else 50.0  # B1 default
+        target_speed = get_speed_from_level_score(speed_level)
+        logger.info(f"Targeting audio speed: {target_speed}x for score {speed_level}")
 
         audio_result = await cls._generate_audio_with_timestamps(
             script=script,
@@ -622,8 +630,10 @@ class AudioService:
             
             start_audio = time.time()
 
-            target_speed = get_speed_from_level_score(user.speed_level)
-            logger.info(f"[WS] Targeting audio speed: {target_speed}x for score {user.speed_level}")
+            # Handle legacy users with None values - use fallback speed level  
+            speed_level = user.speed_level if user.speed_level is not None else 50.0  # B1 default
+            target_speed = get_speed_from_level_score(speed_level)
+            logger.info(f"[WS] Targeting audio speed: {target_speed}x for score {speed_level}")
 
             audio_result = await cls._generate_audio_with_timestamps(
                 script=script,
