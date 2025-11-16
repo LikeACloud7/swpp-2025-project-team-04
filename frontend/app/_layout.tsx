@@ -11,6 +11,26 @@ export { ErrorBoundary } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TrackPlayer, { AppKilledPlaybackBehavior } from 'react-native-track-player';
 import * as Linking from 'expo-linking';
+import { LogBox } from 'react-native';
+
+// Reanimated warnings 무시
+LogBox.ignoreLogs([
+  '[Reanimated]',
+]);
+
+// Disable Reanimated strict mode
+if (__DEV__) {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('[Reanimated]')
+    ) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
 
 SplashScreen.preventAutoHideAsync();
 

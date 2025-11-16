@@ -1,33 +1,23 @@
 import { GradientButton } from '@/components/home/GradientButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
-
-// ========== 행동 로그 + 피드백 데이터 타입 ==========
-type FeedbackPayload = {
-  generated_content_id: number;
-  pause_cnt: number;
-  rewind_cnt: number;
-  vocab_lookup_cnt: number;
-  vocab_save_cnt: number;
-  understanding_difficulty: number;
-  speed_difficulty: number;
-};
+import { Animated, Pressable, Text, View, Alert } from 'react-native';
+import { submitFeedback } from '@/api/feedback';
 
 const UNDERSTANDING_DIFFICULTY_LEVELS = [
-  { value: 1, label: '매우 낮음', emoji: '😰' },
-  { value: 2, label: '낮음', emoji: '😟' },
-  { value: 3, label: '보통', emoji: '😐' },
-  { value: 4, label: '높음', emoji: '🙂' },
-  { value: 5, label: '매우 높음', emoji: '😊' },
+  { value: 1, label: '매우 낮음', emoji: '😰', backendValue: 4 },
+  { value: 2, label: '낮음', emoji: '😟', backendValue: 3 },
+  { value: 3, label: '보통', emoji: '😐', backendValue: 2 },
+  { value: 4, label: '높음', emoji: '🙂', backendValue: 1 },
+  { value: 5, label: '매우 높음', emoji: '😊', backendValue: 0 },
 ];
 
 const SPEED_DIFFICULTY_LEVELS = [
-  { value: 1, label: '매우 느림', emoji: '😪' },
-  { value: 2, label: '느림', emoji: '🥱' },
-  { value: 3, label: '적당함', emoji: '🙂' },
-  { value: 4, label: '빠름', emoji: '😦' },
-  { value: 5, label: '매우 빠름', emoji: '😰' },
+  { value: 1, label: '매우 느림', emoji: '😪', backendValue: 4 },
+  { value: 2, label: '느림', emoji: '🥱', backendValue: 3 },
+  { value: 3, label: '적당함', emoji: '🙂', backendValue: 2 },
+  { value: 4, label: '빠름', emoji: '😦', backendValue: 1 },
+  { value: 5, label: '매우 빠름', emoji: '😰', backendValue: 0 },
 ];
 
 export default function FeedbackScreen() {
@@ -92,23 +82,41 @@ export default function FeedbackScreen() {
 
     setSubmitting(true);
     try {
+      // UI 값을 백엔드 값으로 변환
+      const understandingBackendValue = UNDERSTANDING_DIFFICULTY_LEVELS.find(
+        (l) => l.value === selectedUnderstandingDifficulty
+      )?.backendValue ?? 0;
+
+      const speedBackendValue = SPEED_DIFFICULTY_LEVELS.find(
+        (l) => l.value === selectedSpeedDifficulty
+      )?.backendValue ?? 0;
+
       // 완전한 피드백 데이터 페이로드 (7가지 필드)
-      const payload: FeedbackPayload = {
+      const payload = {
         generated_content_id: generatedContentId,
         pause_cnt: pauseCount,
         rewind_cnt: rewindCount,
         vocab_lookup_cnt: vocabLookupCount,
         vocab_save_cnt: vocabSaveCount,
-        understanding_difficulty: selectedUnderstandingDifficulty,
-        speed_difficulty: selectedSpeedDifficulty,
+        understanding_difficulty: understandingBackendValue,
+        speed_difficulty: speedBackendValue,
       };
 
       console.log('📤 [피드백 제출]', payload);
 
-      // TODO: 백엔드 API 연동
-      // await api.submitFeedback(payload);
+      const response = await submitFeedback(payload);
+
+      console.log('[피드백 제출 성공]');
+      console.log(JSON.stringify(payload, null, 2));
 
       router.replace('/');
+    } catch (error) {
+      console.error('[피드백 제출 실패]', error);
+      Alert.alert(
+        '피드백 제출 실패',
+        '피드백을 제출하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+        [{ text: '확인' }]
+      );
     } finally {
       setSubmitting(false);
     }
