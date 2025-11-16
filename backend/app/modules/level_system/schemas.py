@@ -14,6 +14,16 @@ class SessionFeedbackRequest(BaseModel):
     speed_difficulty: Optional[int] = None  # 오디오 빠르기 (0,1,2,3,4. 4가 가장 느리다)
 
 
+# feedback response
+class SessionFeedbackResponse(BaseModel):
+    lexical_level: float  # 현재 어휘 레벨
+    syntactic_level: float  # 현재 문법 레벨
+    speed_level: float  # 현재 청취 레벨
+    lexical_level_delta: float  # 어휘 레벨 변화량
+    syntactic_level_delta: float  # 문법 레벨 변화량
+    speed_level_delta: float  # 청취 레벨 변화량
+
+
 # level-test request
 class LevelTestItem(BaseModel):
     script_id: str

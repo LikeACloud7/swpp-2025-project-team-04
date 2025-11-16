@@ -140,6 +140,9 @@ class LevelSystemService:
 
         # [6] return response
         return {
+            "lexical_level": float(user.lexical_level),
+            "syntactic_level": float(user.syntactic_level),
+            "speed_level": float(user.speed_level),
             "lexical_level_delta": lexical_delta,
             "syntactic_level_delta": syntactic_delta,
             "speed_level_delta": speed_delta,
