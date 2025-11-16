@@ -17,10 +17,15 @@ class StudyStreakSummary(BaseModel):
     daily_minutes: List[DailyStudyMinutes]
 
 
+class SkillLevel(BaseModel):
+    cefr_level: CEFRLevel
+    score: float = Field(ge=0, le=300)
+
+
 class LevelProgress(BaseModel):
-    level: Optional[CEFRLevel] = None
-    level_score: Optional[int] = Field(default=None, ge=0, le=100)
-    llm_confidence: Optional[int] = Field(default=None, ge=0, le=100)
+    lexical: SkillLevel
+    syntactic: SkillLevel
+    auditory: SkillLevel
     updated_at: Optional[datetime] = None
 
 
