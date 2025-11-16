@@ -108,7 +108,7 @@ class StatsService:
         week_start = self._start_of_day(week_start_date)
         week_end = self._start_of_day(today + timedelta(days=1))
 
-        crud.ensure_achievements(db, definitions=_DEFAULT_ACHIEVEMENTS)
+        # crud.ensure_achievements(db, definitions=_DEFAULT_ACHIEVEMENTS)
         achievement_defs = crud.list_achievements(db)
         definition_codes = {definition.code for definition in achievement_defs}
 
