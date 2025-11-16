@@ -116,13 +116,22 @@ def test_get_user_stats_aggregates_data(monkeypatch):
             for code, achieved_at in awarded.items()
         ]
 
-    monkeypatch.setattr(crud, "get_daily_study_minutes", fake_get_daily_study_minutes)
-    monkeypatch.setattr(crud, "get_study_dates_descending", fake_get_study_dates_descending)
-    monkeypatch.setattr(crud, "get_total_study_minutes", fake_get_total_study_minutes)
-    monkeypatch.setattr(crud, "ensure_achievements", fake_ensure_achievements)
-    monkeypatch.setattr(crud, "list_achievements", fake_list_achievements)
-    monkeypatch.setattr(crud, "ensure_user_achievement", fake_ensure_user_achievement)
-    monkeypatch.setattr(crud, "list_user_achievements", fake_list_user_achievements)
+    crud_modules = [crud]
+    try:
+        from app.modules.stats import crud as app_crud  # type: ignore
+
+        crud_modules.append(app_crud)
+    except Exception:
+        pass
+
+    for module in {id(mod): mod for mod in crud_modules}.values():
+        monkeypatch.setattr(module, "get_daily_study_minutes", fake_get_daily_study_minutes)
+        monkeypatch.setattr(module, "get_study_dates_descending", fake_get_study_dates_descending)
+        monkeypatch.setattr(module, "get_total_study_minutes", fake_get_total_study_minutes)
+        monkeypatch.setattr(module, "ensure_achievements", fake_ensure_achievements)
+        monkeypatch.setattr(module, "list_achievements", fake_list_achievements)
+        monkeypatch.setattr(module, "ensure_user_achievement", fake_ensure_user_achievement)
+        monkeypatch.setattr(module, "list_user_achievements", fake_list_user_achievements)
 
     service = StatsService()
     stats = service.get_user_stats(db=db, user=user)
