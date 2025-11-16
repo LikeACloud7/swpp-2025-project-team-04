@@ -5,7 +5,7 @@ from typing import Dict, List, Sequence, Set
 from sqlalchemy.orm import Session
 
 from ..level_management.models import CEFRLevel
-from ..level_system.utils import MAX_SCORE, MIN_SCORE, get_cefr_level_from_score
+from ..level_system.utils import MAX_SCORE, MIN_SCORE, get_cefr_level_from_score, get_average_score_and_level
 from ..users.models import User
 from . import crud, schemas
 
@@ -142,6 +142,17 @@ class StatsService:
         total_time_spent = crud.get_total_study_minutes(db, user_id=user.id)
 
         skill_levels = self._build_skill_levels(user)
+        
+        # Calculate overall CEFR level using get_average_score_and_level
+        overall_result = get_average_score_and_level(
+            skill_levels["lexical"].score,
+            skill_levels["syntactic"].score,
+            skill_levels["auditory"].score
+        )
+        overall_skill_level = schemas.SkillLevel(
+            cefr_level=CEFRLevel(overall_result["average_level"].value),
+            score=overall_result["average_score"]
+        )
 
         unlock_candidates: Set[str] = set()
         if total_time_spent > 0:
@@ -209,6 +220,7 @@ class StatsService:
             lexical=skill_levels["lexical"],
             syntactic=skill_levels["syntactic"],
             auditory=skill_levels["auditory"],
+            overall_cefr_level=overall_skill_level,
             updated_at=getattr(user, "level_updated_at", None),
         )
 
