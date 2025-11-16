@@ -21,7 +21,7 @@ def get_current_user(token=Depends(oauth2_scheme), db: Session = Depends(get_db)
     return user
 
 
-@router.post("/session-feedback")
+@router.post("/session-feedback", response_model=schemas.SessionFeedbackResponse)
 def submit_session_feedback(
     feedback: schemas.SessionFeedbackRequest,
     current_user=Depends(get_current_user),
