@@ -238,7 +238,7 @@ def normalize_interaction_factor(
         rewind_cnt: int,
         )-> tuple[float, float]:
     
-    return pause_cnt, rewind_cnt
+    return pause_cnt-2, rewind_cnt-2
 
 def normalize_understanding_factor(understanding_difficulty: int) -> float: 
     # unterstanding은 0 1 2(적당) 3 4(매우 쉬움)로 온다고 가정

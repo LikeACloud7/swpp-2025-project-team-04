@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from ..users.models import User
 from . import schemas
+from ...core.logger import logger
 from .utils import (
     _feedback_to_vector,
     _compute_levels_delta_from_weights,
@@ -61,6 +62,7 @@ class LevelSystemService:
 
         # [1] 입력 normalize
         normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(
+            db=db,
             generated_content_id=feedback_request_payload.generated_content_id, 
             vocab_lookup_cnt=feedback_request_payload.vocab_lookup_cnt,
             vocab_save_cnt=feedback_request_payload.vocab_save_cnt
@@ -85,8 +87,22 @@ class LevelSystemService:
             speed=normalized_speed,
         )
 
+        # 로그: 정규화된 피드백 필드들
+        logger.info(
+            "NormalizedFeedback - pause=%.2f, rewind=%.2f, vocab_lookup=%.2f, vocab_save=%.2f, understanding=%.2f, speed=%.2f",
+            normalized_feedback.pause,
+            normalized_feedback.rewind,
+            normalized_feedback.vocab_lookup,
+            normalized_feedback.vocab_save,
+            normalized_feedback.understanding,
+            normalized_feedback.speed,
+        )
+
         # [3] NormalizedFeedback을 벡터로 변환
         vector = _feedback_to_vector(normalized_feedback)
+
+        # 로그: 변환된 벡터
+        logger.info("Feedback vector: %s", vector)
 
         # [4] weight matrix를 이용하여 각 level 별 변화량 계산
         W = DEFAULT_WEIGHT_MATRIX
@@ -96,13 +112,31 @@ class LevelSystemService:
         )
 
         # [5] DB의 유저 level에 delta를 반영 (업데이트)
-        user.lexical_level = float(user.lexical_level) + lexical_delta
-        user.syntactic_level = float(user.syntactic_level) + syntactic_delta
-        user.speed_level = float(user.speed_level) + speed_delta
+        prev_lexical = float(user.lexical_level)
+        prev_syntactic = float(user.syntactic_level)
+        prev_speed = float(user.speed_level)
+
+        logger.info(
+            "이전 레벨 - lexical=%.2f, syntactic=%.2f, speed=%.2f",
+            prev_lexical,
+            prev_syntactic,
+            prev_speed,
+        )
+
+        user.lexical_level = prev_lexical + lexical_delta
+        user.syntactic_level = prev_syntactic + syntactic_delta
+        user.speed_level = prev_speed + speed_delta
 
         db.add(user)
         db.commit()
         db.refresh(user)
+
+        logger.info(
+            "업데이트 후 레벨 - lexical=%.2f, syntactic=%.2f, speed=%.2f",
+            float(user.lexical_level),
+            float(user.syntactic_level),
+            float(user.speed_level),
+        )
 
         # [6] return response
         return {

@@ -10,8 +10,8 @@ class SessionFeedbackRequest(BaseModel):
     rewind_cnt: Optional[int] = None  # 되감기 카운트
     vocab_lookup_cnt: Optional[int] = None  # 단어 검색 카운트
     vocab_save_cnt: Optional[int] = None  # 단어를 저장한 카운트
-    understanding_difficulty: Optional[int] = None  # 이해도 값(0~100. 선택 방식인 경우 정수값으로 정규화하여 전달)
-    speed_difficulty: Optional[int] = None  # 오디오 빠르기
+    understanding_difficulty: Optional[int] = None  # 이해도 값(0,1,2,3,4. 4가 가장 이해가 높다)
+    speed_difficulty: Optional[int] = None  # 오디오 빠르기 (0,1,2,3,4. 4가 가장 느리다)
 
 
 # level-test request
