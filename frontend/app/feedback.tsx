@@ -1,9 +1,20 @@
 import { GradientButton } from '@/components/home/GradientButton';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
-const COMPREHENSION_LEVELS = [
+// ========== 행동 로그 + 피드백 데이터 타입 ==========
+type FeedbackPayload = {
+  generated_content_id: number;
+  pause_cnt: number;
+  rewind_cnt: number;
+  vocab_lookup_cnt: number;
+  vocab_save_cnt: number;
+  understanding_difficulty: number;
+  speed_difficulty: number;
+};
+
+const UNDERSTANDING_DIFFICULTY_LEVELS = [
   { value: 1, label: '매우 낮음', emoji: '😰' },
   { value: 2, label: '낮음', emoji: '😟' },
   { value: 3, label: '보통', emoji: '😐' },
@@ -11,7 +22,7 @@ const COMPREHENSION_LEVELS = [
   { value: 5, label: '매우 높음', emoji: '😊' },
 ];
 
-const SPEECH_SPEED_LEVELS = [
+const SPEED_DIFFICULTY_LEVELS = [
   { value: 1, label: '매우 느림', emoji: '😪' },
   { value: 2, label: '느림', emoji: '🥱' },
   { value: 3, label: '적당함', emoji: '🙂' },
@@ -21,32 +32,82 @@ const SPEECH_SPEED_LEVELS = [
 
 export default function FeedbackScreen() {
   const router = useRouter();
-  const [selectedComprehension, setSelectedComprehension] = useState<
+  const params = useLocalSearchParams();
+
+  // 오디오 플레이어에서 전달받은 행동 로그 데이터
+  const generatedContentId = parseInt(
+    Array.isArray(params.generated_content_id)
+      ? params.generated_content_id[0]
+      : params.generated_content_id ?? '0',
+  );
+  const pauseCount = parseInt(
+    Array.isArray(params.pause_cnt) ? params.pause_cnt[0] : params.pause_cnt ?? '0',
+  );
+  const rewindCount = parseInt(
+    Array.isArray(params.rewind_cnt) ? params.rewind_cnt[0] : params.rewind_cnt ?? '0',
+  );
+  const vocabLookupCount = parseInt(
+    Array.isArray(params.vocab_lookup_cnt)
+      ? params.vocab_lookup_cnt[0]
+      : params.vocab_lookup_cnt ?? '0',
+  );
+  const vocabSaveCount = parseInt(
+    Array.isArray(params.vocab_save_cnt)
+      ? params.vocab_save_cnt[0]
+      : params.vocab_save_cnt ?? '0',
+  );
+
+  const [selectedUnderstandingDifficulty, setSelectedUnderstandingDifficulty] = useState<
     number | null
   >(null);
-  const [selectedSpeechSpeed, setSelectedSpeechSpeed] = useState<
+  const [selectedSpeedDifficulty, setSelectedSpeedDifficulty] = useState<
     number | null
   >(null);
   const [submitting, setSubmitting] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (selectedComprehension !== null) {
+    if (selectedUnderstandingDifficulty !== null) {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
         useNativeDriver: true,
       }).start();
     }
-  }, [selectedComprehension]);
+  }, [selectedUnderstandingDifficulty]);
+
+  // 페이지 마운트 시 넘어온 파라미터 로깅
+  useEffect(() => {
+    console.log('📥 [피드백 페이지] 받은 파라미터:', {
+      generated_content_id: generatedContentId,
+      pause_cnt: pauseCount,
+      rewind_cnt: rewindCount,
+      vocab_lookup_cnt: vocabLookupCount,
+      vocab_save_cnt: vocabSaveCount,
+    });
+  }, [generatedContentId, pauseCount, rewindCount, vocabLookupCount, vocabSaveCount]);
 
   const handleSubmit = async () => {
-    if (!selectedComprehension || !selectedSpeechSpeed || submitting) return;
+    if (!selectedUnderstandingDifficulty || !selectedSpeedDifficulty || submitting) return;
 
     setSubmitting(true);
     try {
-      // TODO: 백엔드 연동
-      // await api.submitFeedback({ comprehension: selectedComprehension, speechSpeed: selectedSpeechSpeed });
+      // 완전한 피드백 데이터 페이로드 (7가지 필드)
+      const payload: FeedbackPayload = {
+        generated_content_id: generatedContentId,
+        pause_cnt: pauseCount,
+        rewind_cnt: rewindCount,
+        vocab_lookup_cnt: vocabLookupCount,
+        vocab_save_cnt: vocabSaveCount,
+        understanding_difficulty: selectedUnderstandingDifficulty,
+        speed_difficulty: selectedSpeedDifficulty,
+      };
+
+      console.log('📤 [피드백 제출]', payload);
+
+      // TODO: 백엔드 API 연동
+      // await api.submitFeedback(payload);
+
       router.replace('/');
     } finally {
       setSubmitting(false);
@@ -54,7 +115,7 @@ export default function FeedbackScreen() {
   };
 
   const canSubmit =
-    selectedComprehension !== null && selectedSpeechSpeed !== null;
+    selectedUnderstandingDifficulty !== null && selectedSpeedDifficulty !== null;
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
@@ -82,23 +143,23 @@ export default function FeedbackScreen() {
                   내용중 얼마를 이해하셨나요?
                 </Text>
               </View>
-              {selectedComprehension !== null && (
+              {selectedUnderstandingDifficulty !== null && (
                 <Text className="text-4xl">
                   {
-                    COMPREHENSION_LEVELS.find(
-                      (l) => l.value === selectedComprehension
+                    UNDERSTANDING_DIFFICULTY_LEVELS.find(
+                      (l) => l.value === selectedUnderstandingDifficulty
                     )?.emoji
                   }
                 </Text>
               )}
             </View>
             <View className="flex-row gap-2">
-              {COMPREHENSION_LEVELS.map((level) => {
-                const isSelected = selectedComprehension === level.value;
+              {UNDERSTANDING_DIFFICULTY_LEVELS.map((level) => {
+                const isSelected = selectedUnderstandingDifficulty === level.value;
                 return (
                   <View key={level.value} style={{ flex: 1 }}>
                     <Pressable
-                      onPress={() => setSelectedComprehension(level.value)}
+                      onPress={() => setSelectedUnderstandingDifficulty(level.value)}
                       android_ripple={{
                         color: 'rgba(0,0,0,0.08)',
                         borderless: false,
@@ -128,7 +189,7 @@ export default function FeedbackScreen() {
           </View>
 
           {/* 발화속도 평가 */}
-          {selectedComprehension !== null && (
+          {selectedUnderstandingDifficulty !== null && (
             <Animated.View
               className="mb-8"
               style={{
@@ -152,23 +213,23 @@ export default function FeedbackScreen() {
                     말하기 속도는 어땠나요?
                   </Text>
                 </View>
-                {selectedSpeechSpeed !== null && (
+                {selectedSpeedDifficulty !== null && (
                   <Text className="text-4xl">
                     {
-                      SPEECH_SPEED_LEVELS.find(
-                        (l) => l.value === selectedSpeechSpeed
+                      SPEED_DIFFICULTY_LEVELS.find(
+                        (l) => l.value === selectedSpeedDifficulty
                       )?.emoji
                     }
                   </Text>
                 )}
               </View>
               <View className="flex-row gap-2">
-                {SPEECH_SPEED_LEVELS.map((level) => {
-                  const isSelected = selectedSpeechSpeed === level.value;
+                {SPEED_DIFFICULTY_LEVELS.map((level) => {
+                  const isSelected = selectedSpeedDifficulty === level.value;
                   return (
                     <View key={level.value} style={{ flex: 1 }}>
                       <Pressable
-                        onPress={() => setSelectedSpeechSpeed(level.value)}
+                        onPress={() => setSelectedSpeedDifficulty(level.value)}
                         android_ripple={{
                           color: 'rgba(0,0,0,0.08)',
                           borderless: false,
