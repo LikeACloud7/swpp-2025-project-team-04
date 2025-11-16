@@ -6,9 +6,9 @@ import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AudioGenerationResponse } from '@/api/audio';
 import PlayerControls from '@/components/audio/PlayerControls';
-import Script from '@/components/audio/Script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
+import Script from '@/components/audio/script';
 
 export default function AudioPlayer() {
   const { id: idParam } = useLocalSearchParams();

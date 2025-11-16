@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,13 +16,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Sentence } from '@/api/audio';
 import Word, { WordLayout } from './Word';
 import { useVocab } from '@/hooks/queries/useVocabQueries';
 import { useAddVocab } from '@/hooks/mutations/useVocabMutations';
+import { useFocusEffect } from 'expo-router';
 
-// ========== Props & Local Types ==========
+// =================== Props & Local Types ===================
 export type ScriptProps = {
   generatedContentId: number;
   scripts: Sentence[];
@@ -25,12 +31,20 @@ export type ScriptProps = {
 // Word popup 위치, 크기 관리
 type WordPopupState = {
   word: string;
+  sentenceIndex: number;
   x: number;
   y: number;
   width: number;
   height: number;
 } | null;
 
+// 단어장에 추가 대기중인 단어 정보
+type PendingVocab = {
+  sentenceIndex: number;
+  word: string;
+};
+
+// =================== Helper functions ==========
 // 단어 정규화
 const norm = (w: string) =>
   (w || '')
@@ -38,6 +52,11 @@ const norm = (w: string) =>
     .trim()
     .replace(/[^\p{L}\p{N}'-]/gu, '');
 
+// vocab map (빠른 뜻/품사 조회용)
+const makeVocabKey = (sentenceIndex: number, word: string) =>
+  `${sentenceIndex}:${norm(word)}`;
+
+// =================== Constants ===================
 // Word popup 크기 조정 상수
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const SAFE_PAD = 12;
@@ -46,44 +65,33 @@ const CARD_MAX_W = Math.min(220, SCREEN_W - SAFE_PAD * 2);
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(v, max));
 
-// ========== Component ==========
+// =================== Component ===================
 export default function Script({ scripts, generatedContentId }: ScriptProps) {
   const { data: vocabData } = useVocab(generatedContentId);
+  const [wordPopup, setWordPopup] = useState<WordPopupState>(null);
+  const [isUserTouching, setIsUserTouching] = useState(false); // 사용자 터치 상태 관리
   const addVocabMutation = useAddVocab();
 
-  // vocab map (빠른 뜻/품사 조회용)
+  // 1. 단어장 데이터 가져오기 및 캐싱
   const vocabMap = useMemo(() => {
     const map = new Map<
       string,
       { pos: string; word: string; meaning: string }
     >();
+
     if (vocabData?.sentences?.length) {
       for (const s of vocabData.sentences) {
         for (const wd of s.words) {
-          const k = norm(wd.word);
-          if (k && !map.has(k)) map.set(k, wd);
+          const k = makeVocabKey(s.index, wd.word);
+          map.set(k, wd);
         }
       }
     }
+
     return map;
   }, [vocabData]);
 
-  // 👉 단어 → 서버에 보낼 index 찾기
-  // 현재 스키마상 VocabSentence.index(문장 인덱스)만 있어 확실치 않으므로,
-  // "해당 단어가 처음 등장하는 문장의 index"를 사용.
-  // 백엔드가 "단어 인덱스"를 요구한다면 여기 로직을 맞춰 조정하면 됨.
-  const resolveVocabIndex = (rawWord: string): number | null => {
-    if (!vocabData?.sentences?.length) return null;
-    const key = norm(rawWord);
-    for (const s of vocabData.sentences) {
-      if (s.words.some((wd) => norm(wd.word) === key)) {
-        return s.index; // 문장 인덱스 사용
-      }
-    }
-    return null;
-  };
-
-  // 현재 재생 위치 탐색하는 로직
+  // 2-1. 현재 재생 위치 탐색하는 로직
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
   const currentLineIndexRef = useRef(-1); // 최신값 캐시
   const { position } = useProgress(100);
@@ -95,38 +103,36 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
   useEffect(() => {
     if (!startTimes.length) return;
 
-    setCurrentLineIndex((prevIndex) => {
-      let idx = currentLineIndexRef.current;
+    let idx = currentLineIndexRef.current;
 
-      // 처음이거나 뒤로 가면 처음부터 탐색
-      if (idx === -1 || position < startTimes[idx]) {
-        idx = 0;
-      }
+    if (idx === -1 || position < startTimes[idx]) {
+      idx = 0;
+    }
+    while (idx + 1 < startTimes.length && position >= startTimes[idx + 1]) {
+      idx += 1;
+    }
 
-      // 앞으로 탐색
-      while (idx + 1 < startTimes.length && position >= startTimes[idx + 1]) {
-        idx += 1;
-      }
-
-      currentLineIndexRef.current = idx;
-      return idx;
-    });
+    currentLineIndexRef.current = idx;
+    setCurrentLineIndex(idx);
   }, [position, startTimes]);
 
-  // 현재 재생 위치로 스크롤하는 로직
+  // 2-2. 현재 재생 위치로 자동 스크롤하는 로직
   const flatListRef = useRef<FlatList<Sentence>>(null);
 
   useEffect(() => {
-    if (flatListRef.current && currentLineIndex >= 0) {
-      flatListRef.current.scrollToIndex({
-        index: currentLineIndex,
-        animated: true,
-        viewPosition: 0.5, // 가운데 정렬
-      });
-    }
-  }, [currentLineIndex]);
+    if (!flatListRef.current) return;
+    if (currentLineIndex < 0) return;
+    if (wordPopup) return; // 팝업 열려 있으면 스크롤 막기
+    if (isUserTouching) return; // 유저가 직접 터치 중이면 스크롤 막기
 
-  // 라인 누르면 해당 위치로 이동
+    flatListRef.current.scrollToIndex({
+      index: currentLineIndex,
+      animated: true,
+      viewPosition: 0.5,
+    });
+  }, [currentLineIndex, wordPopup, isUserTouching]);
+
+  // 2-3. 라인 누르면 해당 위치로 이동
   const onLinePress = (time: number, lineIndex: number) => {
     TrackPlayer.seekTo(time);
 
@@ -141,18 +147,19 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     });
   };
 
-  // 팝업 상태
-  const [wordPopup, setWordPopup] = useState<WordPopupState>(null);
+  // 3. 팝업 위치, 크기 관리
 
-  // 깜빡임 방지: 카드 폭 캐시 + 초기 숨김
+  // 3-1. 깜빡임 방지: 카드 폭 캐시 + 초기 숨김
   const [cardW, setCardW] = useState<number>(Math.min(160, CARD_MAX_W));
   const [popupReady, setPopupReady] = useState<boolean>(false);
   const widthCacheRef = useRef<Map<string, number>>(new Map());
 
-  // 저장 피드백용(해당 단어 저장되면 아이콘 바꿈)
-  const [lastSavedKey, setLastSavedKey] = useState<string | null>(null);
-
-  const handleWordLongPress = (word: string, layout: WordLayout) => {
+  // 3-2. 팝업 열기
+  const handleWordLongPress = (
+    word: string,
+    layout: WordLayout,
+    sentenceIndex: number,
+  ) => {
     setPopupReady(false);
     const key = norm(word);
     const cachedW = widthCacheRef.current.get(key);
@@ -160,31 +167,78 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
 
     setWordPopup({
       word,
+      sentenceIndex,
       x: Number.isFinite(layout.x) ? layout.x : 0,
       y: Number.isFinite(layout.y) ? layout.y : 0,
       width: Number.isFinite(layout.width) ? layout.width : 0,
       height: Number.isFinite(layout.height) ? layout.height : 0,
     });
   };
-  const handleClosePopup = () => setWordPopup(null);
 
-  // 각 아이템 렌더
-  const renderItem = ({
+  // 4. 단어장에 추가할 단어 관리
+  const [pendingVocabs, setPendingVocabs] = useState<Map<string, PendingVocab>>(
+    () => new Map(),
+  );
+
+  const pendingVocabsRef = useRef<Map<string, PendingVocab>>(new Map());
+
+  // 4-1. 단어장 추가 대기 토글
+  const togglePendingVocab = (word: string, sentenceIndex: number) => {
+    const key = makeVocabKey(sentenceIndex, word);
+
+    setPendingVocabs((prev) => {
+      const next = new Map(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.set(key, { sentenceIndex, word });
+      }
+
+      pendingVocabsRef.current = next; // 최신값 캐시
+      return next;
+    });
+  };
+
+  // 4-2. 단어장에 추가 처리 함수 (화면 나갈 때 호출)
+  const flushPendingVocabs = useCallback(() => {
+    const finalMap = pendingVocabsRef.current;
+    if (!finalMap.size) return;
+
+    console.log('📝 화면 떠날 때 단어장 일괄 저장 시작');
+
+    finalMap.forEach(({ sentenceIndex, word }) => {
+      const key = makeVocabKey(sentenceIndex, word);
+      const entry = vocabMap.get(key);
+      const wordToSave = entry?.word ?? word;
+
+      addVocabMutation.mutate({
+        generatedContentId,
+        index: sentenceIndex,
+        word: wordToSave,
+      });
+    });
+  }, [vocabMap, generatedContentId, addVocabMutation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        flushPendingVocabs();
+      };
+    }, [flushPendingVocabs]),
+  );
+
+  // 5. 각 라인 렌더
+  const renderLine = ({
     item,
     index: lineIndex,
   }: ListRenderItemInfo<Sentence>) => {
     const isHighlighted = lineIndex === currentLineIndex;
-    const start = parseFloat(item.start_time);
-    const time = Number.isFinite(start) ? start : 0;
-    const text = item.text?.trim() ?? '';
-    const words = text.length ? text.split(/\s+/) : ['...'];
+    const startTime = Number.parseFloat(item.start_time) || 0;
+    const words = item.text?.trim()?.split(/\s+/) ?? ['...'];
 
     return (
       <Pressable
-        onPress={() => {
-          onLinePress(time, lineIndex);
-          setWordPopup(null);
-        }}
+        onPress={() => onLinePress(startTime, lineIndex)}
         className={`px-6 ${isHighlighted ? 'py-3' : 'py-1.5'}`}
       >
         <View
@@ -198,12 +252,9 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
               text={w}
               appendSpace={i < words.length - 1}
               isHighlighted={isHighlighted}
-              onPress={() => {
-                onLinePress(time, lineIndex);
-                setWordPopup(null);
-              }}
+              onPress={() => onLinePress(startTime, lineIndex)}
               onLongPress={(layout: WordLayout) =>
-                handleWordLongPress(w, layout)
+                handleWordLongPress(w, layout, lineIndex)
               }
             />
           ))}
@@ -212,40 +263,16 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     );
   };
 
-  // 단어장 추가 버튼 핸들러
-  const handleAddVocab = (rawWord: string) => {
-    // 1) 정규화 & 사전 엔트리 조회
-    const key = norm(rawWord);
-    const entry = vocabMap.get(key);
-    const wordToSave = entry?.word ?? rawWord; // 사전에 있으면 표제어, 없으면 원문
-
-    // 2) 인덱스 결정(표제어 우선, 실패 시 원문으로 재시도)
-    const idx = resolveVocabIndex(wordToSave) ?? resolveVocabIndex(rawWord);
-
-    if (idx == null) {
-      console.warn('[Vocab] 해당 단어의 index를 찾지 못함:', rawWord);
-      return;
-    }
-
-    // 3) 뮤테이션 호출
-    addVocabMutation.mutate(
-      { generatedContentId, index: idx, word: wordToSave },
-      {
-        onSuccess: () => {
-          setLastSavedKey(key); // 마지막 저장된 키(정규화) 보관
-        },
-        onError: (e) => {
-          console.error('📕 단어 저장 실패:', wordToSave, e);
-        },
-      },
-    );
-  };
-
+  // 6. 메인 렌더
   return (
     <SafeAreaView className="flex-1 bg-transparent">
       <View className="flex-1">
+        {/* 가사 부분 */}
         <FlatList
           ref={flatListRef}
+          onTouchStart={() => setIsUserTouching(true)} // 터치 시작
+          onTouchEnd={() => setIsUserTouching(false)} // 터치 끝
+          onTouchCancel={() => setIsUserTouching(false)} // 터치 취소
           onScrollToIndexFailed={(info) => {
             // 스크롤 실패 시 약간의 오프셋을 주고 재시도
             setTimeout(() => {
@@ -257,20 +284,19 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
             }, 100);
           }}
           data={scripts}
-          renderItem={renderItem}
+          renderItem={renderLine}
           keyExtractor={(it) => it.id.toString()}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<View style={{ height: 28 }} />}
-          ListFooterComponent={<View style={{ height: 28 }} />}
+          contentContainerStyle={{ paddingVertical: 28 }}
           ItemSeparatorComponent={() => <View className="h-1" />}
-          removeClippedSubviews
         />
 
+        {/* 단어 팝업 */}
         {wordPopup && (
           <View className="absolute inset-0" pointerEvents="box-none">
             <Pressable
-              className="absolute inset-0"
-              onPress={handleClosePopup}
+              className="absolute inset-0 bg-black/20"
+              onPress={() => setWordPopup(null)}
             />
 
             {(() => {
@@ -293,11 +319,10 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
               );
               const arrowLeft = clamp(centerX - left - ARROW / 2, 8, cardW - 8);
 
-              const key = norm(wordPopup.word);
-              const entry = key ? vocabMap.get(key) : undefined;
+              const key = makeVocabKey(wordPopup.sentenceIndex, wordPopup.word);
+              const entry = vocabMap.get(key);
 
-              const isSaving = addVocabMutation.isPending;
-              const isSaved = lastSavedKey === key && !isSaving;
+              const isQueued = pendingVocabs.has(key); // 이 단어가 현재 선택(북마크)된 상태인지
 
               return (
                 <View className="absolute" style={{ top, left }}>
@@ -333,14 +358,16 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
                       </View>
 
                       <Pressable
-                        disabled={isSaving}
                         onPress={() =>
-                          handleAddVocab(entry?.word ?? wordPopup.word)
+                          togglePendingVocab(
+                            entry?.word ?? wordPopup.word,
+                            wordPopup.sentenceIndex,
+                          )
                         }
                         className="pl-2 active:opacity-70"
                         hitSlop={8}
                       >
-                        {isSaving || isSaved ? (
+                        {isQueued ? (
                           <Ionicons name="bookmark" size={16} color="#0EA5E9" />
                         ) : (
                           <Ionicons
