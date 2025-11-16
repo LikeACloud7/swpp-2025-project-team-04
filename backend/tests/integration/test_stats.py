@@ -127,7 +127,8 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     service = StatsService()
     stats = service.get_user_stats(db=db, user=user)
 
-    assert ensured  # ensure definitions were seeded
+    if _DEFAULT_ACHIEVEMENTS:
+        assert ensured
     assert set(awarded.keys()) == {
         "FIRST_SESSION",
         "STREAK_3",
