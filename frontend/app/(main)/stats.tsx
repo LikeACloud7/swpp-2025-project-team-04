@@ -184,35 +184,71 @@ export default function StatsScreen() {
       >
         <View className="bg-primary px-6 py-6">
           <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
-            <View className="mb-3 flex-row items-center justify-between">
+            <View className="mb-3">
               <Text className="text-base font-bold text-neutral-700">
                 현재 레벨
               </Text>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
             </View>
             <View className="items-center py-4">
               <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-sm">
                 <Text className="text-4xl font-black text-white">
-                  {stats.current_level.level}
+                  {stats.current_level.lexical.cefr_level}
                 </Text>
               </View>
               <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
-                {stats.current_level.level_description}
+                종합 레벨
               </Text>
-              <View className="mt-2 w-full rounded-xl bg-neutral-50 p-3">
-                <View className="mb-2 flex-row items-center justify-between">
-                  <Text className="text-xs font-semibold text-neutral-600">
-                    레벨 점수
-                  </Text>
-                  <Text className="text-sm font-bold text-primary">
-                    {stats.current_level.level_score}/100
-                  </Text>
+              
+              <View className="mt-2 w-full space-y-2">
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      어휘력 ({stats.current_level.lexical.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {stats.current_level.lexical.score}
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full bg-blue-500"
+                      style={{ width: `${Math.min(stats.current_level.lexical.score / 10, 100)}%` }}
+                    />
+                  </View>
                 </View>
-                <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                  <View
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${stats.current_level.level_score}%` }}
-                  />
+                
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      문법 ({stats.current_level.syntactic.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {stats.current_level.syntactic.score}
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full bg-green-500"
+                      style={{ width: `${Math.min(stats.current_level.syntactic.score / 10, 100)}%` }}
+                    />
+                  </View>
+                </View>
+                
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      청취력 ({stats.current_level.auditory.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {stats.current_level.auditory.score}
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full bg-purple-500"
+                      style={{ width: `${Math.min(stats.current_level.auditory.score / 10, 100)}%` }}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
