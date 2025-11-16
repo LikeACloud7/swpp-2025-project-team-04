@@ -97,8 +97,13 @@ class AudioService:
     @staticmethod
     def _select_voice_algorithmically(
         all_voices: list[dict], 
-        user_level: CEFRLevel
+        user: User
     ) -> dict:
+        
+        # TODO user_level 수정
+        user_level = None
+
+
         try:
             min_score, max_score = LEVEL_CHALLENGE_MAP[user_level]
         except KeyError:
@@ -151,11 +156,28 @@ class AudioService:
     async def _generate_script(
         mood: str, 
         theme: str, 
-        user_level: CEFRLevel,
+        user: User,
         selected_voice: dict,
         level_score: int | None = None ,
     ) -> tuple[str, str]:
         """
+        (Special Points 1 & 3)
+        Generates a script, ensures it's long enough, and formats
+        each sentence on a new line.
+        )
+        """
+        # TODO user_level 수정
+        user_level = None
+
+
+        start_total = time.time()  # ⏱ 전체 시작
+
+        voice_detail = (
+            f"{selected_voice['name']} (Gender: {selected_voice['tags']['gender']}, "
+            f"Accent: {selected_voice['tags']['accent']}, Style: {selected_voice['tags']['style']})"
+        )
+        
+        prompt = f"""
         You are a scriptwriter. Generate a script for an audio narration.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
@@ -356,18 +378,18 @@ class AudioService:
         
         all_voices = cls._load_voices()
         
-        user_level = user.level 
+        
         level_score = user.level_score
 
         selected_voice = cls._select_voice_algorithmically(
             all_voices=all_voices,
-            user_level=user_level
+            user=user
         )
         
         title, script = await cls._generate_script(
             mood=request.mood,
             theme=request.theme,
-            user_level=user_level,
+            user=user,
             level_score=level_score,
             selected_voice=selected_voice
         )

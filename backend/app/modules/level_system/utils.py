@@ -1,5 +1,8 @@
 from . import schemas
 from enum import Enum
+from sqlalchemy.orm import Session
+from ..audio.model import GeneratedContent
+from dataclasses import dataclass
 
 
 class CEFRLevel(Enum):
@@ -17,26 +20,33 @@ LEVEL_THRESHOLDS = {
     CEFRLevel.A1: 0,
     CEFRLevel.A2: 25,
     CEFRLevel.B1: 50,
-    CEFRLevel.B2: 75,
-    CEFRLevel.C1: 100,
-    CEFRLevel.C2: 125,
+    CEFRLevel.B2: 100,
+    CEFRLevel.C1: 150,
+    CEFRLevel.C2: 200,
 }
-MAX_SCORE = 150  # 최대 스코어
+MIN_SCORE = 0 # 최소 스코어
+MAX_SCORE = 300  # 최대 스코어
 
+# 단어 조회(Lookup) 기준 비율
+LOOKUP_THRESHOLD_RATIO = 0.1  # 10% (이하: 긍정적, 초과: 부정적)
+LOOKUP_HIGH_THRESHOLD_RATIO = 0.15 # 15% (이 이상 초과 시 더 큰 패널티)
 
+# 단어 저장(Save) 기준 비율
+SAVE_THRESHOLD_RATIO = 0.05   # 5% (이하: 긍정적, 초과: 부정적)
+SAVE_HIGH_THRESHOLD_RATIO = 0.1 # 10% (이 이상 초과 시 더 큰 패널티)
 
 def get_cefr_level_from_score(score: float) -> CEFRLevel:
     """
-    스코어(0~150)로부터 CEFR 레벨(A1~C2)을 반환합니다.
+    스코어(0~300)로부터 CEFR 레벨(A1~C2)을 반환합니다.
     
     Args:
-        score: 0~150 범위의 레벨 스코어
+        score: 0~300 범위의 레벨 스코어
         
     Returns:
         CEFRLevel Enum 객체
     """
-    # 스코어를 0~150 범위로 클램프
-    score = max(0, min(MAX_SCORE, score))
+    # 스코어를 클램프
+    score = max(MIN_SCORE, min(MAX_SCORE, score))
     
     # 레벨 결정 (내림차순으로 체크)
     if score >= LEVEL_THRESHOLDS[CEFRLevel.C2]:
@@ -62,10 +72,10 @@ def get_average_score_and_level(
     3개의 레벨 스코어를 받아 평균 스코어와 평균 CEFR 레벨을 반환합니다.
     
     Args:
-        lexical_score: 어휘 레벨 스코어 (0~150)
-        syntactic_score: 구문 레벨 스코어 (0~150)
-        speed_score: 속도 레벨 스코어 (0~150)
-        
+        lexical_score: 어휘 레벨 스코어 
+        syntactic_score: 구문 레벨 스코어 
+        speed_score: 속도 레벨 스코어 
+    
     Returns:
         {
             "average_score": 평균 스코어 (float),
@@ -84,27 +94,30 @@ def get_average_score_and_level(
     }
 
 
+@dataclass
+class NormalizedFeedback:
+    """정규화된 피드백 데이터를 담는 데이터 클래스"""
+    pause: float
+    rewind: float
+    vocab_lookup: float
+    vocab_save: float
+    understanding: float
+    speed: float
 
 
-def _feedback_to_vector(feedback: schemas.SessionFeedbackRequest) -> list[int]:
-    """SessionFeedbackRequest에서 generated_content_id를 제외한 6개의 정수 요소를
-    순서대로 추출하여 벡터로 반환합니다.
-
-    순서: pause_cnt, rewind_cnt, vocab_lookup_cnt, vocab_save_cnt, understanding_difficulty, speed_difficulty
-    None은 0으로 취급합니다.
-    """
+def _feedback_to_vector(normalized_feedback: NormalizedFeedback) -> list[float]:
     return [
-        int(feedback.pause_cnt or 0),
-        int(feedback.rewind_cnt or 0),
-        int(feedback.vocab_lookup_cnt or 0),
-        int(feedback.vocab_save_cnt or 0),
-        int(feedback.understanding_difficulty or 0),
-        int(feedback.speed_difficulty or 0),
+        normalized_feedback.pause,
+        normalized_feedback.rewind,
+        normalized_feedback.vocab_lookup,
+        normalized_feedback.vocab_save,
+        normalized_feedback.understanding,
+        normalized_feedback.speed,
     ]
 
 
 def _compute_levels_delta_from_weights(
-    vector: list[int],
+    vector: list[float],
     W: list[list[float]],
     clip_ranges: dict[str, tuple[float, float]] | None = None,
 ) -> tuple[float, float, float]:
@@ -148,3 +161,120 @@ def _compute_levels_delta_from_weights(
 
     return res[0], res[1], res[2]
 
+
+def normalize_vocab_factor(
+    db: Session,
+    generated_content_id: int,
+    vocab_lookup_cnt: int,
+    vocab_save_cnt: int,
+) -> tuple[float, float]:
+   # --- 0. script_wc 조회 ---
+    # generated_content_id를 사용해 DB에서 스크립트의 총 단어 수(script_wc)를 가져옵니다.
+    content = db.query(GeneratedContent).filter(GeneratedContent.generated_content_id == generated_content_id).first()
+    if not content:
+        raise ValueError(f"Generated content with id {generated_content_id} not found")
+    if not content.script_data:
+        raise ValueError(f"Script data is missing for generated content id {generated_content_id}")
+    
+    # script_data에서 단어 수 계산
+    script_wc = len(content.script_data.split())
+
+    # --- 1. 초기 설정 ---
+    lexical_level_update_lookup = 0.0
+    lexical_level_update_save = 0.0
+
+    # 기준선 계산
+    lookup_threshold = script_wc * LOOKUP_THRESHOLD_RATIO
+    lookup_high_threshold = script_wc * LOOKUP_HIGH_THRESHOLD_RATIO
+
+    save_threshold = script_wc * SAVE_THRESHOLD_RATIO
+    save_high_threshold = script_wc * SAVE_HIGH_THRESHOLD_RATIO
+
+
+    # --- 2. '단어 조회(vocab_lookup)' 점수 계산 ---
+    if vocab_lookup_cnt == 0:
+        lexical_level_update_lookup = +1.0
+
+    elif vocab_lookup_cnt < lookup_threshold:  # (예: 1% ~ 9.9%)
+        # "정상"보다 적게 조회함 -> 스크립트가 쉬웠음.
+        lexical_level_update_lookup = +0.5
+
+    else:  # (10% 이상 조회)
+        # "정상"보다 많이 조회함 -> 스크립트가 어려웠음.
+        
+        # 15% 이상 조회 시 더 큰 패널티(-1)를 부여
+        if vocab_lookup_cnt > lookup_high_threshold:
+            lexical_level_update_lookup = -1.0
+        else:  # (10% ~ 15% 조회)
+            lexical_level_update_lookup = -0.5
+
+
+    # --- 3. '단어 저장(vocab_save)' 점수 계산 ---
+    # (참고: 이 로직은 저장을 '부정적 신호'로 간주합니다)
+
+    if vocab_save_cnt == 0:
+        lexical_level_update_save = +1.0
+
+    elif vocab_save_cnt < save_threshold:  # (예: 1% ~ 4.9%)
+        # "정상"보다 적게 저장함.
+        lexical_level_update_save = +0.5
+
+    else:  # (5% 이상 저장)
+        # "정상"보다 많이 저장함.
+        
+        # 10% 이상 저장 시 더 큰 패널티(-1)를 부여
+        if vocab_save_cnt > save_high_threshold:
+            lexical_level_update_save = -1.0
+        else:  # (5% ~ 10% 저장)
+            lexical_level_update_save = -0.5
+
+    # 두 개의 숫자 값을 튜플로 반환
+    return lexical_level_update_lookup, lexical_level_update_save
+
+
+
+def normalize_interaction_factor(
+        pause_cnt: int,
+        rewind_cnt: int,
+        )-> tuple[float, float]:
+    
+    return pause_cnt, rewind_cnt
+
+def normalize_understanding_factor(understanding_difficulty: int) -> float: 
+    # unterstanding은 0 1 2(적당) 3 4(매우 쉬움)로 온다고 가정
+    return understanding_difficulty-1.5
+
+def normalize_speed_factor(speed_difficulty: int) -> float: 
+    # speed_difficulty는 0 1 2(적당) 3 4(매우 느림)으로 온다고 가정
+    return speed_difficulty-1.5
+
+
+
+def get_speed_from_level_score(level_score: float) -> float:
+
+    if level_score <= MIN_SCORE:
+        return 0.75
+    
+    if level_score >= 250:
+        return 1.13
+    elif level_score >= 200:
+        return 1.12
+
+    # (start_score, end_score, start_speed, end_speed)
+    LEVEL_RANGES = [
+        (0,   25,  0.75, 0.80),  # A1
+        (25,  50,  0.80, 0.90),  # A2
+        (50,  100, 0.90, 1.00),  # B1
+        (100, 150, 1.00, 1.08),  # B2
+        (150, 200, 1.08, 1.12),  # C1
+    ]
+
+
+    # Linear interpolation in the correct range
+    for start_s, end_s, start_v, end_v in LEVEL_RANGES:
+        if start_s <= level_score <= end_s:
+            ratio = (level_score - start_s) / (end_s - start_s)
+            value = start_v + (end_v - start_v) * ratio
+            return round(value, 2)
+
+    return 1.00
