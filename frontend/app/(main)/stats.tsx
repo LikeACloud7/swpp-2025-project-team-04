@@ -51,6 +51,27 @@ export default function StatsScreen() {
     return dayData ? dayData.minutes : 0;
   });
 
+  // Helper function to calculate progress within current level
+  const calculateLevelProgress = (score: number, cefr_level: string) => {
+    const levelRanges = {
+      'A1': { min: 0, max: 25 },
+      'A2': { min: 25, max: 50 },
+      'B1': { min: 50, max: 100 },
+      'B2': { min: 100, max: 150 },
+      'C1': { min: 150, max: 200 },
+      'C2': { min: 200, max: 300 }
+    };
+    
+    const range = levelRanges[cefr_level as keyof typeof levelRanges];
+    if (!range) return { progress: 0, current: 0, total: 0 };
+    
+    const current = Math.max(0, score - range.min);
+    const total = range.max - range.min;
+    const progress = Math.min(100, (current / total) * 100);
+    
+    return { progress, current: Math.round(current), total };
+  };
+
   //Mock
   const mockAchievements = [
     {
@@ -206,13 +227,13 @@ export default function StatsScreen() {
                       어휘력 ({stats.current_level.lexical.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {stats.current_level.lexical.score}
+                      {calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).current}/{calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).total}
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full bg-blue-500"
-                      style={{ width: `${Math.min(stats.current_level.lexical.score / 10, 100)}%` }}
+                      style={{ width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%` }}
                     />
                   </View>
                 </View>
@@ -223,13 +244,13 @@ export default function StatsScreen() {
                       문법 ({stats.current_level.syntactic.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {stats.current_level.syntactic.score}
+                      {calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).current}/{calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).total}
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full bg-green-500"
-                      style={{ width: `${Math.min(stats.current_level.syntactic.score / 10, 100)}%` }}
+                      style={{ width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%` }}
                     />
                   </View>
                 </View>
@@ -240,13 +261,13 @@ export default function StatsScreen() {
                       청취력 ({stats.current_level.auditory.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {stats.current_level.auditory.score}
+                      {calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).current}/{calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).total}
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full bg-purple-500"
-                      style={{ width: `${Math.min(stats.current_level.auditory.score / 10, 100)}%` }}
+                      style={{ width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%` }}
                     />
                   </View>
                 </View>
@@ -311,9 +332,9 @@ export default function StatsScreen() {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
                 const isToday =
-                  (index === new Date().getDay()) === 0
+                  index === (new Date().getDay() === 0
                     ? 6
-                    : new Date().getDay() - 1;
+                    : new Date().getDay() - 1);
 
                 return (
                   <View key={index} className="flex-1 items-center">
