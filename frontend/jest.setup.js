@@ -154,3 +154,5 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+process.env.EXPO_PUBLIC_API_URL = 'http://test-api.example.com';
