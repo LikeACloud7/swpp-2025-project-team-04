@@ -30,7 +30,7 @@ export default function LevelSelector({
           return (
             <TouchableOpacity
               key={level.id}
-              className={`p-5 rounded-2xl items-center shadow-sm ${
+              className={`p-4 rounded-2xl items-center shadow-sm ${
                 isSelected
                   ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
                   : 'bg-white border-2 border-gray-200'

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react-native';
-import AudioSlider from '../slider';
+import AudioSlider from '../AudioSlider';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 
 jest.mock('react-native-track-player');

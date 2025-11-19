@@ -17,6 +17,7 @@ describe('ChipSelectorGroup', () => {
         <ChipSelectorGroup
           title="Test Title"
           chips={mockChips}
+          value={null}
           onSelectionChange={mockOnSelectionChange}
         />,
       );
@@ -30,6 +31,7 @@ describe('ChipSelectorGroup', () => {
         <ChipSelectorGroup
           title="Test"
           chips={mockChips}
+          value={null}
           onSelectionChange={mockOnSelectionChange}
         />,
       );
@@ -46,6 +48,7 @@ describe('ChipSelectorGroup', () => {
         <ChipSelectorGroup
           title="Many Chips"
           chips={manyChips}
+          value={null}
           onSelectionChange={mockOnSelectionChange}
         />,
       );
@@ -62,6 +65,7 @@ describe('ChipSelectorGroup', () => {
         <ChipSelectorGroup
           title="Few Chips"
           chips={mockChips}
+          value={null}
           onSelectionChange={mockOnSelectionChange}
         />,
       );
@@ -73,13 +77,22 @@ describe('ChipSelectorGroup', () => {
   describe('단일 선택 모드', () => {
     // 칩 클릭 선택 테스트
     it('selects a chip when clicked', () => {
-      render(
-        <ChipSelectorGroup
-          title="Single Select"
-          chips={mockChips}
-          onSelectionChange={mockOnSelectionChange}
-        />,
-      );
+      const TestComponent = () => {
+        const [value, setValue] = React.useState<string | null>(null);
+        return (
+          <ChipSelectorGroup
+            title="Single Select"
+            chips={mockChips}
+            value={value}
+            onSelectionChange={(next) => {
+              setValue(next);
+              mockOnSelectionChange(next);
+            }}
+          />
+        );
+      };
+
+      render(<TestComponent />);
 
       const chip = screen.getByText('Option 1');
       fireEvent.press(chip);
@@ -89,13 +102,22 @@ describe('ChipSelectorGroup', () => {
 
     // 같은 칩 다시 클릭 선택 해제 테스트
     it('deselects a chip when clicked again', () => {
-      render(
-        <ChipSelectorGroup
-          title="Single Select"
-          chips={mockChips}
-          onSelectionChange={mockOnSelectionChange}
-        />,
-      );
+      const TestComponent = () => {
+        const [value, setValue] = React.useState<string | null>(null);
+        return (
+          <ChipSelectorGroup
+            title="Single Select"
+            chips={mockChips}
+            value={value}
+            onSelectionChange={(next) => {
+              setValue(next);
+              mockOnSelectionChange(next);
+            }}
+          />
+        );
+      };
+
+      render(<TestComponent />);
 
       const chip = screen.getByText('Option 1');
 
@@ -108,13 +130,22 @@ describe('ChipSelectorGroup', () => {
 
     // 다른 칩 클릭하면 이전 선택이 교체되는지 테스트
     it('replaces selection when clicking different chip', () => {
-      render(
-        <ChipSelectorGroup
-          title="Single Select"
-          chips={mockChips}
-          onSelectionChange={mockOnSelectionChange}
-        />,
-      );
+      const TestComponent = () => {
+        const [value, setValue] = React.useState<string | null>(null);
+        return (
+          <ChipSelectorGroup
+            title="Single Select"
+            chips={mockChips}
+            value={value}
+            onSelectionChange={(next) => {
+              setValue(next);
+              mockOnSelectionChange(next);
+            }}
+          />
+        );
+      };
+
+      render(<TestComponent />);
 
       const chip1 = screen.getByText('Option 1');
       fireEvent.press(chip1);
@@ -135,17 +166,6 @@ describe('ChipSelectorGroup', () => {
       expect(() => fireEvent.press(chip)).not.toThrow();
     });
 
-    // 초기 렌더링때 콜백 호출 테스트
-    it('calls onSelectionChange on initial render', () => {
-      render(
-        <ChipSelectorGroup
-          title="Initial Call"
-          chips={mockChips}
-          onSelectionChange={mockOnSelectionChange}
-        />,
-      );
-
-      expect(mockOnSelectionChange).toHaveBeenCalledWith(null);
-    });
+    // 초기 렌더링 콜백 테스트는 제어형 컴포넌트 전환으로 제거했습니다.
   });
 });

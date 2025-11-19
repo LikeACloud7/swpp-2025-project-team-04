@@ -42,7 +42,7 @@ const infoModalCopy: Record<
   help: {
     title: 'Help & Support',
     body: [
-      '사용 중 궁금한 점이나 문제가 발생하면 언제든 swpp-team04-support@lingofit.com 으로 문의해주세요.',
+      '사용 중 궁금한 점이나 문제가 발생하면 언제든 step215@snu.ac.kr 으로 문의해주세요.',
       '버그 제보나 기능 개선 제안 등 모든 피드백을 환영합니다. 여러분의 의견이 LingoFit을 더 나은 서비스로 만듭니다.',
     ],
   },
@@ -108,7 +108,7 @@ const ProfileModal = ({
       onRequestClose={onClose}
     >
       <Pressable
-        className="flex-1 items-center justify-center bg-black/50"
+        className="flex-1 items-center justify-center bg-black/50 px-8"
         onPress={() => {
           if (!disableBackdropClose && !isPrimaryLoading) {
             onClose();
@@ -116,7 +116,7 @@ const ProfileModal = ({
         }}
       >
         <Pressable
-          className="mx-6 w-full rounded-3xl bg-white p-6 shadow-2xl"
+          className="w-full rounded-3xl bg-white p-6 shadow-2xl"
           style={{ maxWidth: 420 }}
           onPress={(event) => event.stopPropagation()}
         >
@@ -267,7 +267,6 @@ export default function ProfileScreen() {
     setIsLogoutProcessing(true);
     try {
       await logout();
-      router.replace('/(auth)/login');
     } catch (error) {
       Alert.alert(
         '로그아웃 실패',
@@ -573,11 +572,11 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-[#EBF4FB]">
       <ScrollView
-        className="flex-1 px-5 pt-6"
-        contentContainerStyle={{ paddingBottom: 48 }}
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-8 rounded-3xl bg-white p-6 shadow-sm">
+        <View className="mt-6 mb-8 rounded-3xl bg-white p-6 shadow-sm">
           <View className="items-center">
             <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-primary">
               <Text className="text-3xl font-bold text-white">
@@ -638,7 +637,7 @@ export default function ProfileScreen() {
           <ActionRow
             iconName="shield-checkmark-outline"
             title="개인정보 보호"
-            description="데이터 수집 및 보안 사항."
+            description="데이터 수집 및 보안 사항"
             onPress={() => openModal('privacy')}
           />
         </View>
@@ -655,14 +654,14 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <View className="mb-8">
+        <View>
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
             About
           </Text>
           <ActionRow
             iconName="information-circle-outline"
             title="LingoFit 소개"
-            description="우리가 만들어가는 새로운 리스닝 경험."
+            description="우리가 만들어가는 새로운 리스닝 경험"
             onPress={() => openModal('about')}
           />
         </View>

@@ -1,26 +1,29 @@
+// screens/LoginScreen.tsx
 import { useLogin } from '@/hooks/mutations/useAuthMutations';
 import { validatePassword, validateUsername } from '@/utils/authValidation';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import AuthInput from '@/components/auth/AuthInput';
+import AuthButton from '@/components/auth/AuthButton';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isFocusedUsername, setIsFocusedUsername] = useState(false);
-  const [isFocusedPassword, setIsFocusedPassword] = useState(false);
 
   const loginMutation = useLogin();
+
+  // 화면 벗어날 때 에러 초기화
+  useFocusEffect(
+    useCallback(() => {
+      return () => setErrorMessage(null);
+    }, []),
+  );
 
   const handleSubmit = () => {
     const usernameError = validateUsername(username);
@@ -30,143 +33,110 @@ export default function LoginScreen() {
       setErrorMessage(usernameError || passwordError);
       return;
     }
-
     setErrorMessage(null);
 
     loginMutation.mutate(
       { username, password },
       {
-        onSuccess: () => {
-          router.replace('/');
-        },
+        onSuccess: () => router.replace('/'),
         onError: (error) => {
-          setErrorMessage(error.message ?? 'Login failed. Please try again.');
+          setErrorMessage(error.message ?? '로그인에 실패했습니다.');
         },
       },
     );
   };
 
+  const disabled = !username || !password || loginMutation.isPending;
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-      style={{ flex: 1 }}
+    <LinearGradient
+      colors={['#0C4A6E', '#0284C7', '#7DD3FC']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      className="flex-1"
     >
-      <View className="flex-1 bg-primary">
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        enableOnAndroid
+        enableAutomaticScroll
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={60}
+        extraHeight={0}
+      >
         <View className="flex-1 justify-center px-6 py-12">
           <View className="w-full max-w-md self-center">
+            {/* 헤더 */}
             <View className="mb-10">
-              <Text className="mb-3 text-center text-5xl font-bold text-white">
+              <Text className="mb-2 text-center text-[46px] font-extrabold text-white tracking-tight">
                 LingoFit
               </Text>
-              <Text className="text-center text-base text-white/90">
+              <Text className="text-center text-[15px] text-white/90">
                 듣는 만큼 영어가 된다
               </Text>
             </View>
 
-            <View className="rounded-2xl bg-white p-6 shadow-lg">
-              <View className="mb-5">
-                <Text className="mb-2 text-sm font-semibold text-neutral-700">
-                  아이디
-                </Text>
-                <View
-                  className={`overflow-hidden rounded-xl border-2 bg-neutral-50 ${
-                    isFocusedUsername
-                      ? 'border-primary'
-                      : errorMessage
-                        ? 'border-red-400'
-                        : 'border-neutral-200'
-                  }`}
-                >
-                  <TextInput
-                    value={username}
-                    onChangeText={(text) => {
-                      setUsername(text);
-                      setErrorMessage(null);
-                    }}
-                    onFocus={() => setIsFocusedUsername(true)}
-                    onBlur={() => setIsFocusedUsername(false)}
-                    autoCapitalize="none"
-                    textContentType="username"
-                    placeholder="아이디를 입력하세요"
-                    placeholderTextColor="#9ca3af"
-                    className="px-4 py-3.5 text-base text-neutral-900"
-                    editable={!loginMutation.isPending}
-                  />
-                </View>
-              </View>
+            {/* 카드 */}
+            <View className="rounded-3xl bg-white p-6 shadow-[0px_6px_20px_rgba(2,132,199,0.18)]">
+              <AuthInput
+                label="아이디"
+                leftIcon="person-outline"
+                value={username}
+                onChangeText={(t) => {
+                  setUsername(t);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                autoCapitalize="none"
+                textContentType="username"
+                placeholder="아이디를 입력하세요"
+                editable={!loginMutation.isPending}
+                returnKeyType="next"
+                containerClassName="mb-5"
+              />
 
-              <View className="mb-2">
-                <Text className="mb-2 text-sm font-semibold text-neutral-700">
-                  비밀번호
-                </Text>
-                <View
-                  className={`overflow-hidden rounded-xl border-2 bg-neutral-50 ${
-                    isFocusedPassword
-                      ? 'border-primary'
-                      : errorMessage
-                        ? 'border-red-400'
-                        : 'border-neutral-200'
-                  }`}
-                >
-                  <TextInput
-                    value={password}
-                    onChangeText={(text) => {
-                      setPassword(text);
-                      setErrorMessage(null);
-                    }}
-                    onFocus={() => setIsFocusedPassword(true)}
-                    onBlur={() => setIsFocusedPassword(false)}
-                    secureTextEntry
-                    textContentType="password"
-                    placeholder="비밀번호를 입력하세요"
-                    placeholderTextColor="#9ca3af"
-                    className="px-4 py-3.5 text-base text-neutral-900"
-                    editable={!loginMutation.isPending}
-                    onSubmitEditing={handleSubmit}
-                  />
-                </View>
-              </View>
+              <AuthInput
+                label="비밀번호"
+                leftIcon="lock-closed-outline"
+                value={password}
+                onChangeText={(t) => {
+                  setPassword(t);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                secureTextEntry
+                textContentType="password"
+                placeholder="비밀번호를 입력하세요"
+                editable={!loginMutation.isPending}
+                onSubmitEditing={handleSubmit}
+                returnKeyType="done"
+              />
 
               {errorMessage ? (
-                <View className="mb-4 rounded-lg bg-red-50 p-3">
-                  <Text className="text-sm font-medium text-red-600">
+                <View className="mt-3 rounded-lg bg-red-50 px-3 py-2.5">
+                  <Text className="text-[13px] font-medium text-red-600">
                     {errorMessage}
                   </Text>
                 </View>
               ) : null}
 
-              <Pressable
-                className={`mt-4 rounded-xl py-4 ${
-                  loginMutation.isPending
-                    ? 'bg-primary/60'
-                    : 'bg-primary active:bg-primary/90'
-                }`}
+              <AuthButton
+                title="로그인"
                 onPress={handleSubmit}
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? (
-                  <View className="flex-row items-center justify-center">
-                    <ActivityIndicator color="white" size="small" />
-                    <Text className="ml-2 text-center text-base font-semibold text-white">
-                      로그인 중...
-                    </Text>
-                  </View>
-                ) : (
-                  <Text className="text-center text-base font-semibold text-white">
-                    로그인
-                  </Text>
-                )}
-              </Pressable>
+                disabled={disabled}
+                loading={loginMutation.isPending}
+                className="mt-6"
+              />
             </View>
 
+            {/* 하단 링크 (유지) */}
             <View className="mt-8">
               <Pressable
-                onPress={() => {
-                  router.push('/signup');
-                }}
+                onPress={() => router.push('/signup')}
                 disabled={loginMutation.isPending}
+                android_ripple={{
+                  color: 'rgba(255,255,255,0.25)',
+                  borderless: true,
+                }}
               >
-                <Text className="text-center text-base text-white/90">
+                <Text className="text-center text-base text-white/95">
                   계정이 없으신가요?{' '}
                   <Text className="font-bold text-white">회원가입</Text>
                 </Text>
@@ -174,7 +144,7 @@ export default function LoginScreen() {
             </View>
           </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+    </LinearGradient>
   );
 }
