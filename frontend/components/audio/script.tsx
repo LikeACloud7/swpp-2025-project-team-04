@@ -284,36 +284,6 @@ export default function Script({
     );
   };
 
-  // 단어장 추가 버튼 핸들러
-  const handleAddVocab = (rawWord: string) => {
-    // 1) 정규화 & 사전 엔트리 조회
-    const key = norm(rawWord);
-    const entry = vocabMap.get(key);
-    const wordToSave = entry?.word ?? rawWord; // 사전에 있으면 표제어, 없으면 원문
-
-    // 2) 인덱스 결정(표제어 우선, 실패 시 원문으로 재시도)
-    const idx = resolveVocabIndex(wordToSave) ?? resolveVocabIndex(rawWord);
-
-    if (idx == null) {
-      console.warn('[Vocab] 해당 단어의 index를 찾지 못함:', rawWord);
-      return;
-    }
-
-    // 3) 뮤테이션 호출
-    addVocabMutation.mutate(
-      { generatedContentId, index: idx, word: wordToSave },
-      {
-        onSuccess: () => {
-          setLastSavedKey(key); // 마지막 저장된 키(정규화) 보관
-          onVocabSave?.(); // 단어 저장 카운트
-        },
-        onError: (e) => {
-          console.error('📕 단어 저장 실패:', wordToSave, e);
-        },
-      },
-    );
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-transparent">
       <View className="flex-1">
