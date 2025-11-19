@@ -126,9 +126,9 @@ describe('AudioSlider', () => {
         require('@react-native-community/slider').default,
       );
 
-      expect(slider.props.minimumTrackTintColor).toBe('#6FA4D7');
-      expect(slider.props.maximumTrackTintColor).toBe('#dbeafe');
-      expect(slider.props.thumbTintColor).toBe('#3b82f6');
+      expect(slider.props.minimumTrackTintColor).toBe('rgba(255,255,255,0.95)');
+      expect(slider.props.maximumTrackTintColor).toBe('rgba(255,255,255,0.28)');
+      expect(slider.props.thumbTintColor).toBe('rgba(255,255,255,0.98)');
     });
   });
 });
