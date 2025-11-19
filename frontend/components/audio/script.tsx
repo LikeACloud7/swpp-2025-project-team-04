@@ -26,6 +26,9 @@ import { useFocusEffect } from 'expo-router';
 export type ScriptProps = {
   generatedContentId: number;
   scripts: Sentence[];
+  onVocabLookup?: () => void; // 단어 검색 콜백
+  onVocabSave?: () => void; // 단어 저장 콜백
+  onRewind?: () => void; // 되감기 콜백
 };
 
 // Word popup 위치, 크기 관리
@@ -65,14 +68,23 @@ const CARD_MAX_W = Math.min(220, SCREEN_W - SAFE_PAD * 2);
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(v, max));
 
-// =================== Component ===================
-export default function Script({ scripts, generatedContentId }: ScriptProps) {
+// ========== Component ==========
+export default function Script({
+  scripts,
+  generatedContentId,
+  onVocabLookup,
+  onVocabSave,
+  onRewind,
+}: ScriptProps) {
   const { data: vocabData } = useVocab(generatedContentId);
   const [wordPopup, setWordPopup] = useState<WordPopupState>(null);
   const [isUserTouching, setIsUserTouching] = useState(false); // 사용자 터치 상태 관리
   const addVocabMutation = useAddVocab();
 
-  // 1. 단어장 데이터 가져오기 및 캐싱
+  // 되감기 감지를 위한 이전 position 추적
+  const prevPositionRef = useRef<number>(0);
+
+  // vocab map (빠른 뜻/품사 조회용)
   const vocabMap = useMemo(() => {
     const map = new Map<
       string,
@@ -99,6 +111,15 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     () => scripts.map((s) => parseFloat(s.start_time)),
     [scripts],
   );
+
+  // 되감기 감지: position이 이전보다 2초 이상 뒤로 가면 rewind로 간주
+  useEffect(() => {
+    const REWIND_THRESHOLD = 2.0; // 초 단위
+    if (prevPositionRef.current - position > REWIND_THRESHOLD) {
+      onRewind?.();
+    }
+    prevPositionRef.current = position;
+  }, [position, onRewind]);
 
   useEffect(() => {
     if (!startTimes.length) return;
@@ -263,7 +284,36 @@ export default function Script({ scripts, generatedContentId }: ScriptProps) {
     );
   };
 
-  // 6. 메인 렌더
+  // 단어장 추가 버튼 핸들러
+  const handleAddVocab = (rawWord: string) => {
+    // 1) 정규화 & 사전 엔트리 조회
+    const key = norm(rawWord);
+    const entry = vocabMap.get(key);
+    const wordToSave = entry?.word ?? rawWord; // 사전에 있으면 표제어, 없으면 원문
+
+    // 2) 인덱스 결정(표제어 우선, 실패 시 원문으로 재시도)
+    const idx = resolveVocabIndex(wordToSave) ?? resolveVocabIndex(rawWord);
+
+    if (idx == null) {
+      console.warn('[Vocab] 해당 단어의 index를 찾지 못함:', rawWord);
+      return;
+    }
+
+    // 3) 뮤테이션 호출
+    addVocabMutation.mutate(
+      { generatedContentId, index: idx, word: wordToSave },
+      {
+        onSuccess: () => {
+          setLastSavedKey(key); // 마지막 저장된 키(정규화) 보관
+          onVocabSave?.(); // 단어 저장 카운트
+        },
+        onError: (e) => {
+          console.error('📕 단어 저장 실패:', wordToSave, e);
+        },
+      },
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-transparent">
       <View className="flex-1">

@@ -6,9 +6,17 @@ import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AudioGenerationResponse } from '@/api/audio';
 import PlayerControls from '@/components/audio/PlayerControls';
+import Script from '@/components/audio/script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
-import Script from '@/components/audio/script';
+
+// ========== 행동 로그 타입 ==========
+export type BehaviorLogs = {
+  pauseCount: number;
+  rewindCount: number;
+  vocabLookupCount: number;
+  vocabSaveCount: number;
+};
 
 export default function AudioPlayer() {
   const { id: idParam } = useLocalSearchParams();
@@ -24,10 +32,28 @@ export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
+  // ========== 행동 로그 상태 ==========
+  const [behaviorLogs, setBehaviorLogs] = useState<BehaviorLogs>({
+    pauseCount: 0,
+    rewindCount: 0,
+    vocabLookupCount: 0,
+    vocabSaveCount: 0,
+  });
+
+  // 행동 로그 증가 헬퍼
+  const incrementLog = useCallback((type: keyof BehaviorLogs) => {
+    setBehaviorLogs((prev) => {
+      const updated = { ...prev, [type]: prev[type] + 1 };
+      console.log(`📊 [행동 로그] ${type}: ${updated[type]}`);
+      return updated;
+    });
+  }, []);
+
   const togglePlayback = async () => {
     if (isPlaying) {
       await TrackPlayer.pause();
       setIsPlaying(false);
+      incrementLog('pauseCount'); // 일시정지 카운트
     } else {
       await TrackPlayer.play();
       setIsPlaying(true);
@@ -43,8 +69,18 @@ export default function AudioPlayer() {
 
   const goFeedback = useCallback(async () => {
     await stopAndCleanup();
-    router.push('/feedback');
-  }, [router, stopAndCleanup]);
+
+    // 행동 로그와 generated_content_id를 피드백 페이지로 전달
+    const params = {
+      generated_content_id: data?.generated_content_id?.toString() ?? '0',
+      pause_cnt: behaviorLogs.pauseCount.toString(),
+      rewind_cnt: behaviorLogs.rewindCount.toString(),
+      vocab_lookup_cnt: behaviorLogs.vocabLookupCount.toString(),
+      vocab_save_cnt: behaviorLogs.vocabSaveCount.toString(),
+    };
+
+    router.push({ pathname: '/feedback', params });
+  }, [router, stopAndCleanup, data, behaviorLogs]);
 
   // ✅ 마운트 시 자동 재생
   useEffect(() => {
@@ -136,6 +172,9 @@ export default function AudioPlayer() {
         <Script
           generatedContentId={data.generated_content_id}
           scripts={data.sentences}
+          onVocabLookup={() => incrementLog('vocabLookupCount')}
+          onVocabSave={() => incrementLog('vocabSaveCount')}
+          onRewind={() => incrementLog('rewindCount')}
         />
       </View>
 

@@ -46,35 +46,133 @@ export default function StatsScreen() {
     );
   }
 
-  // --- [수정 1] ---
-  // stats가 존재함이 보장되는 여기로 로직 이동
-  // 1. [월, 화, 수, 목, 금, 토, 일] (총 7칸)에 맞는 0으로 채워진 배열 생성
-  const weeklyActivity = Array(7).fill(0);
-
-  // 2. API에서 받은 daily_minutes 데이터를 순회
-  stats.streak.daily_minutes.forEach((dayData) => {
-    const date = new Date(dayData.date); // 3. 날짜(string)를 Date 객체로 변환
-    const dayOfWeek = date.getDay(); // 4. 요일(일=0, 월=1 ... 토=6)
-    const chartIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // (월=0 ... 일=6)
-
-    // 5. 올바른 요일 인덱스에 학습 시간(minutes)을 넣음
-    // (API가 7일치만 준다는 가정 하에)
-    if (chartIndex >= 0 && chartIndex < 7) {
-      weeklyActivity[chartIndex] = dayData.minutes;
-    }
+  const weeklyActivity = weekDays.map((_, index) => {
+    const dayData = stats.streak.daily_minutes[index];
+    return dayData ? dayData.minutes : 0;
   });
 
-  // 6. maxMinutes 계산 (데이터 구조에 맞게)
-  const maxMinutes = Math.max(
-    ...stats.streak.daily_minutes.map((d) => d.minutes),
-    1, // 0으로 나누는 것을 방지하기 위해 최소 1
-  );
-  // -----------------
+  // Helper function to calculate progress within current level
+  const calculateLevelProgress = (score: number, cefr_level: string) => {
+    const levelRanges = {
+      A1: { min: 0, max: 25 },
+      A2: { min: 25, max: 50 },
+      B1: { min: 50, max: 100 },
+      B2: { min: 100, max: 150 },
+      C1: { min: 150, max: 200 },
+      C2: { min: 200, max: 300 },
+    };
 
-  // --- [수정 3] ---
-  // Mock 데이터 제거. 실제 API 데이터 사용
-  const achievements = stats.achievements;
-  // -----------------
+    const range = levelRanges[cefr_level as keyof typeof levelRanges];
+    if (!range) return { progress: 0, current: 0, total: 0 };
+
+    const current = Math.max(0, score - range.min);
+    const total = range.max - range.min;
+    const progress = Math.min(100, (current / total) * 100);
+
+    return { progress, current: Math.round(current), total };
+  };
+
+  //Mock
+  const mockAchievements = [
+    {
+      code: 'first_step',
+      name: '첫 걸음',
+      description: '첫 번째 레슨 완료',
+      category: 'beginner',
+      achieved: true,
+      achieved_at: '2025-10-28T10:00:00Z',
+    },
+    {
+      code: 'week_warrior',
+      name: '일주일 전사',
+      description: '7일 연속 학습',
+      category: 'streak',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'early_bird',
+      name: '아침형 인간',
+      description: '오전 9시 이전 학습 5회',
+      category: 'time',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'night_owl',
+      name: '올빼미',
+      description: '밤 10시 이후 학습 10회',
+      category: 'time',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'hour_master',
+      name: '한 시간의 마법',
+      description: '총 학습 시간 1시간 달성',
+      category: 'time',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'ten_hour_hero',
+      name: '10시간 영웅',
+      description: '총 학습 시간 10시간 달성',
+      category: 'time',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'month_master',
+      name: '꾸준함',
+      description: '30일 연속 학습',
+      category: 'streak',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'level_up',
+      name: '레벨업',
+      description: '최초 레벨에서 레벨업',
+      category: 'level',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: '100_hours',
+      name: '100 시간',
+      description: '총 학습시간 6000분 달성',
+      category: 'mastery',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'vocab_rookie',
+      name: '단어 초보',
+      description: '단어 100개 학습',
+      category: 'vocabulary',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'vocab_expert',
+      name: '단어 전문가',
+      description: '단어 500개 학습',
+      category: 'vocabulary',
+      achieved: false,
+      achieved_at: null,
+    },
+    {
+      code: 'speed_demon',
+      name: '스피드 러너',
+      description: '하루에 5개 레슨 완료',
+      category: 'special',
+      achieved: false,
+      achieved_at: null,
+    },
+  ];
+
+  const achievements = mockAchievements;
   const achievedCount = achievements.filter((a) => a.achieved).length;
   const totalAchievements = achievements.length;
 
@@ -117,42 +215,116 @@ export default function StatsScreen() {
         {/* ----- 현재 레벨 ----- */}
         <View className="bg-primary px-6 py-6">
           <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
-            <View className="mb-3 flex-row items-center justify-between">
+            <View className="mb-3">
               <Text className="text-base font-bold text-neutral-700">
                 현재 레벨
               </Text>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
             </View>
             <View className="items-center py-4">
               <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-sm">
                 <Text className="text-4xl font-black text-white">
-                  {/* API 데이터의 level_description이 없으므로 level을 바로 표시 */}
-                  {stats.current_level.level}
+                  {stats.current_level.overall_cefr_level.cefr_level}
                 </Text>
               </View>
-              {/* API 응답에 level_description이 없으므로 이 라인은 주석 처리하거나 제거 */}
-              {/* <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
-                {stats.current_level.level_description}
-              </Text> */}
-              <View className="mt-2 w-full rounded-xl bg-neutral-50 p-3">
-                <View className="mb-2 flex-row items-center justify-between">
-                  <Text className="text-xs font-semibold text-neutral-600">
-                    레벨 점수
-                  </Text>
-                  <Text className="text-sm font-bold text-primary">
-                    {/* --- [수정 2] --- */}
-                    {/* null일 경우 0으로 표시 */}
-                    {stats.current_level.level_score || 0}/100
-                  </Text>
+              <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
+                종합 레벨
+              </Text>
+
+              <View className="mt-2 w-full space-y-2">
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      어휘력 ({stats.current_level.lexical.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.lexical.score,
+                          stats.current_level.lexical.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.lexical.score,
+                          stats.current_level.lexical.cefr_level,
+                        ).total
+                      }
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
+                        backgroundColor: '#3b82f6',
+                      }}
+                    />
+                  </View>
                 </View>
-                <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                  <View
-                    className="h-full rounded-full bg-primary"
-                    // [수정 2] null일 경우 0%로 설정
-                    style={{
-                      width: `${stats.current_level.level_score || 0}%`,
-                    }}
-                  />
+
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      문법 ({stats.current_level.syntactic.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.syntactic.score,
+                          stats.current_level.syntactic.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.syntactic.score,
+                          stats.current_level.syntactic.cefr_level,
+                        ).total
+                      }
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
+                        backgroundColor: '#7c3aed',
+                      }}
+                    />
+                  </View>
+                </View>
+
+                <View className="rounded-xl bg-neutral-50 p-3">
+                  <View className="mb-2 flex-row items-center justify-between">
+                    <Text className="text-xs font-semibold text-neutral-600">
+                      청취력 ({stats.current_level.auditory.cefr_level})
+                    </Text>
+                    <Text className="text-sm font-bold text-primary">
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.auditory.score,
+                          stats.current_level.auditory.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.auditory.score,
+                          stats.current_level.auditory.cefr_level,
+                        ).total
+                      }
+                    </Text>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                    <View
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
+                        backgroundColor: '#10b981',
+                      }}
+                    />
+                  </View>
                 </View>
               </View>
             </View>
@@ -217,7 +389,9 @@ export default function StatsScreen() {
               {weeklyActivity.map((minutes, index) => {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
-                const isToday = index === todayIndex;
+                const isToday =
+                  index ===
+                  (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
 
                 return (
                   <View key={index} className="flex-1 items-center">
