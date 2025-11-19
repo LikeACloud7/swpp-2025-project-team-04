@@ -402,7 +402,7 @@ export default function ProfileScreen() {
                 현재 비밀번호를 확인하고 새 비밀번호를 설정하세요.
               </Text>
               <Text className="mt-2 text-center text-xs text-neutral-500">
-                {PASSWORD_RULE_MESSAGE}
+                비밀번호 규칙: {PASSWORD_RULE_MESSAGE}
               </Text>
             </View>
           </View>
