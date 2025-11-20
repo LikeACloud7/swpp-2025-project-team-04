@@ -132,25 +132,10 @@ jest.mock('react-native-lyric', () => ({
   default: 'LyricView',
 }));
 
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: jest.fn(() => ({
-    data: null,
-    isLoading: false,
-    error: null,
-    refetch: jest.fn(),
-  })),
-  useMutation: jest.fn(() => ({
-    mutate: jest.fn(),
-    mutateAsync: jest.fn(),
-    isLoading: false,
-    error: null,
-  })),
-  QueryClient: jest.fn(),
-  QueryClientProvider: ({ children }) => children,
-}));
-
 global.console = {
   ...console,
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+process.env.EXPO_PUBLIC_API_URL = 'http://test-api.example.com';
