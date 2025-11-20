@@ -26,7 +26,10 @@ export function mockFetchResponse(
     const urlString = url.toString();
     const requestMethod = init?.method?.toUpperCase() || 'GET';
 
-    if (urlString.includes(urlPattern) && requestMethod === method.toUpperCase()) {
+    if (
+      urlString.includes(urlPattern) &&
+      requestMethod === method.toUpperCase()
+    ) {
       return Promise.resolve({
         ok: (response.status || 200) < 400,
         status: response.status || 200,
@@ -55,7 +58,10 @@ export function mockFetchError(
     const urlString = url.toString();
     const requestMethod = init?.method?.toUpperCase() || 'GET';
 
-    if (urlString.includes(urlPattern) && requestMethod === method.toUpperCase()) {
+    if (
+      urlString.includes(urlPattern) &&
+      requestMethod === method.toUpperCase()
+    ) {
       return Promise.resolve({
         ok: false,
         status: error.status,
@@ -73,31 +79,47 @@ export function mockFetchError(
 }
 
 export function mockLoginSuccess() {
-  return mockFetchResponse('/auth/login', {
-    data: mockLoginResponse,
-    status: 200,
-  }, 'POST');
+  return mockFetchResponse(
+    '/auth/login',
+    {
+      data: mockLoginResponse,
+      status: 200,
+    },
+    'POST',
+  );
 }
 
 export function mockLoginFailure(message = 'Invalid credentials') {
-  return mockFetchError('/auth/login', {
-    status: 401,
-    message,
-  }, 'POST');
+  return mockFetchError(
+    '/auth/login',
+    {
+      status: 401,
+      message,
+    },
+    'POST',
+  );
 }
 
 export function mockSignupSuccess() {
-  return mockFetchResponse('/auth/signup', {
-    data: mockSignupResponse,
-    status: 201,
-  }, 'POST');
+  return mockFetchResponse(
+    '/auth/signup',
+    {
+      data: mockSignupResponse,
+      status: 201,
+    },
+    'POST',
+  );
 }
 
 export function mockSignupFailure(message = 'Email already exists') {
-  return mockFetchError('/auth/signup', {
-    status: 400,
-    message,
-  }, 'POST');
+  return mockFetchError(
+    '/auth/signup',
+    {
+      status: 400,
+      message,
+    },
+    'POST',
+  );
 }
 
 export function mockGetProfile() {
@@ -129,24 +151,36 @@ export function mockGetStats() {
 }
 
 export function mockAddVocab() {
-  return mockFetchResponse('/vocab', {
-    data: { success: true, message: 'Vocabulary added' },
-    status: 201,
-  }, 'POST');
+  return mockFetchResponse(
+    '/vocab',
+    {
+      data: { success: true, message: 'Vocabulary added' },
+      status: 201,
+    },
+    'POST',
+  );
 }
 
 export function mockSubmitFeedback() {
-  return mockFetchResponse('/feedback', {
-    data: { success: true, message: 'Feedback submitted' },
-    status: 201,
-  }, 'POST');
+  return mockFetchResponse(
+    '/feedback',
+    {
+      data: { success: true, message: 'Feedback submitted' },
+      status: 201,
+    },
+    'POST',
+  );
 }
 
 export function mockSubmitSurvey() {
-  return mockFetchResponse('/survey', {
-    data: { success: true, redirect: '/home' },
-    status: 201,
-  }, 'POST');
+  return mockFetchResponse(
+    '/survey',
+    {
+      data: { success: true, redirect: '/home' },
+      status: 201,
+    },
+    'POST',
+  );
 }
 
 export function resetApiMocks() {

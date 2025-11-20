@@ -111,9 +111,7 @@ export const mockProfile = {
 };
 
 // 커스텀 문장 생성
-export function createMockSentence(
-  overrides?: Partial<Sentence>,
-): Sentence {
+export function createMockSentence(overrides?: Partial<Sentence>): Sentence {
   return {
     id: '1',
     start_time: '0.0',

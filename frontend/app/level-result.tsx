@@ -62,10 +62,12 @@ function getCEFRLevel(score: number): CEFRLevel {
 }
 
 // 다음 레벨 정보 계산
-function getNextLevelInfo(currentLevel: CEFRLevel): { nextLevel: CEFRLevel; nextThreshold: number } | null {
+function getNextLevelInfo(
+  currentLevel: CEFRLevel,
+): { nextLevel: CEFRLevel; nextThreshold: number } | null {
   const currentIndex = ORDERED_LEVELS.indexOf(currentLevel);
   if (currentIndex === ORDERED_LEVELS.length - 1) return null; // C2는 다음 레벨 없음
-  
+
   const nextLevel = ORDERED_LEVELS[currentIndex + 1];
   return {
     nextLevel,
@@ -85,9 +87,10 @@ function calculateLevelDetail(score: number, delta: number): LevelDetail {
   const currentStart = LEVEL_THRESHOLDS[cefrLevel];
   const currentEnd = getCurrentLevelEnd(cefrLevel);
   const nextInfo = getNextLevelInfo(cefrLevel);
-  
+
   const remainingToNext = nextInfo ? nextInfo.nextThreshold - score : 0;
-  const progressInCurrent = ((score - currentStart) / (currentEnd - currentStart)) * 100;
+  const progressInCurrent =
+    ((score - currentStart) / (currentEnd - currentStart)) * 100;
 
   return {
     current_level: score,
@@ -132,15 +135,17 @@ function LevelCard({ title, icon, detail, color }: LevelCardProps) {
       {/* 변화량 */}
       <View className="items-center mb-3">
         <View className="flex-row items-center">
-          {isPositive && (
-            <Ionicons name="arrow-up" size={28} color="#10b981" />
-          )}
+          {isPositive && <Ionicons name="arrow-up" size={28} color="#10b981" />}
           {isNegative && (
             <Ionicons name="arrow-down" size={28} color="#ef4444" />
           )}
           <Text
             className={`ml-1 text-4xl font-bold ${
-              isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'
+              isPositive
+                ? 'text-green-600'
+                : isNegative
+                  ? 'text-red-600'
+                  : 'text-gray-600'
             }`}
           >
             {Math.abs(detail.delta).toFixed(1)}
@@ -160,7 +165,8 @@ function LevelCard({ title, icon, detail, color }: LevelCardProps) {
       {detail.next_level && (
         <View>
           <Text className="text-xs text-gray-500 mb-1.5">
-            다음 레벨: {detail.next_level} (남은 점수: {detail.remaining_to_next.toFixed(0)})
+            다음 레벨: {detail.next_level} (남은 점수:{' '}
+            {detail.remaining_to_next.toFixed(0)})
           </Text>
           <View className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <View
@@ -190,22 +196,34 @@ export default function LevelResultScreen() {
 
   // ============ URL 파라미터 파싱 (임시, 실제로는 API 응답 사용) ============
   const lexicalLevel = parseFloat(
-    Array.isArray(params.lexical_level) ? params.lexical_level[0] : params.lexical_level ?? '100',
+    Array.isArray(params.lexical_level)
+      ? params.lexical_level[0]
+      : (params.lexical_level ?? '100'),
   );
   const syntacticLevel = parseFloat(
-    Array.isArray(params.syntactic_level) ? params.syntactic_level[0] : params.syntactic_level ?? '100',
+    Array.isArray(params.syntactic_level)
+      ? params.syntactic_level[0]
+      : (params.syntactic_level ?? '100'),
   );
   const speedLevel = parseFloat(
-    Array.isArray(params.speed_level) ? params.speed_level[0] : params.speed_level ?? '100',
+    Array.isArray(params.speed_level)
+      ? params.speed_level[0]
+      : (params.speed_level ?? '100'),
   );
   const lexicalDelta = parseFloat(
-    Array.isArray(params.lexical_delta) ? params.lexical_delta[0] : params.lexical_delta ?? '5',
+    Array.isArray(params.lexical_delta)
+      ? params.lexical_delta[0]
+      : (params.lexical_delta ?? '5'),
   );
   const syntacticDelta = parseFloat(
-    Array.isArray(params.syntactic_delta) ? params.syntactic_delta[0] : params.syntactic_delta ?? '3',
+    Array.isArray(params.syntactic_delta)
+      ? params.syntactic_delta[0]
+      : (params.syntactic_delta ?? '3'),
   );
   const speedDelta = parseFloat(
-    Array.isArray(params.speed_delta) ? params.speed_delta[0] : params.speed_delta ?? '-2',
+    Array.isArray(params.speed_delta)
+      ? params.speed_delta[0]
+      : (params.speed_delta ?? '-2'),
   );
 
   // ============ 레벨 상세 정보 계산 ============

@@ -124,9 +124,7 @@ describe('WelcomeStep', () => {
   });
 
   it('renders empty sections array', () => {
-    render(
-      <WelcomeStep title="환영합니다" subtitle="부제목" sections={[]} />,
-    );
+    render(<WelcomeStep title="환영합니다" subtitle="부제목" sections={[]} />);
 
     expect(screen.getByText('환영합니다')).toBeTruthy();
   });

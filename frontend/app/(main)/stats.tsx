@@ -54,21 +54,21 @@ export default function StatsScreen() {
   // Helper function to calculate progress within current level
   const calculateLevelProgress = (score: number, cefr_level: string) => {
     const levelRanges = {
-      'A1': { min: 0, max: 25 },
-      'A2': { min: 25, max: 50 },
-      'B1': { min: 50, max: 100 },
-      'B2': { min: 100, max: 150 },
-      'C1': { min: 150, max: 200 },
-      'C2': { min: 200, max: 300 }
+      A1: { min: 0, max: 25 },
+      A2: { min: 25, max: 50 },
+      B1: { min: 50, max: 100 },
+      B2: { min: 100, max: 150 },
+      C1: { min: 150, max: 200 },
+      C2: { min: 200, max: 300 },
     };
-    
+
     const range = levelRanges[cefr_level as keyof typeof levelRanges];
     if (!range) return { progress: 0, current: 0, total: 0 };
-    
+
     const current = Math.max(0, score - range.min);
     const total = range.max - range.min;
     const progress = Math.min(100, (current / total) * 100);
-    
+
     return { progress, current: Math.round(current), total };
   };
 
@@ -219,7 +219,7 @@ export default function StatsScreen() {
               <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
                 종합 레벨
               </Text>
-              
+
               <View className="mt-2 w-full space-y-2">
                 <View className="rounded-xl bg-neutral-50 p-3">
                   <View className="mb-2 flex-row items-center justify-between">
@@ -227,55 +227,91 @@ export default function StatsScreen() {
                       어휘력 ({stats.current_level.lexical.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).current}/{calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).total}
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.lexical.score,
+                          stats.current_level.lexical.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.lexical.score,
+                          stats.current_level.lexical.cefr_level,
+                        ).total
+                      }
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full"
-                      style={{ 
+                      style={{
                         width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
-                        backgroundColor: '#3b82f6'
+                        backgroundColor: '#3b82f6',
                       }}
                     />
                   </View>
                 </View>
-                
+
                 <View className="rounded-xl bg-neutral-50 p-3">
                   <View className="mb-2 flex-row items-center justify-between">
                     <Text className="text-xs font-semibold text-neutral-600">
                       문법 ({stats.current_level.syntactic.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).current}/{calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).total}
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.syntactic.score,
+                          stats.current_level.syntactic.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.syntactic.score,
+                          stats.current_level.syntactic.cefr_level,
+                        ).total
+                      }
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full"
-                      style={{ 
+                      style={{
                         width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
-                        backgroundColor: '#7c3aed'
+                        backgroundColor: '#7c3aed',
                       }}
                     />
                   </View>
                 </View>
-                
+
                 <View className="rounded-xl bg-neutral-50 p-3">
                   <View className="mb-2 flex-row items-center justify-between">
                     <Text className="text-xs font-semibold text-neutral-600">
                       청취력 ({stats.current_level.auditory.cefr_level})
                     </Text>
                     <Text className="text-sm font-bold text-primary">
-                      {calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).current}/{calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).total}
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.auditory.score,
+                          stats.current_level.auditory.cefr_level,
+                        ).current
+                      }
+                      /
+                      {
+                        calculateLevelProgress(
+                          stats.current_level.auditory.score,
+                          stats.current_level.auditory.cefr_level,
+                        ).total
+                      }
                     </Text>
                   </View>
                   <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
                     <View
                       className="h-full rounded-full"
-                      style={{ 
+                      style={{
                         width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
-                        backgroundColor: '#10b981'
+                        backgroundColor: '#10b981',
                       }}
                     />
                   </View>
@@ -341,9 +377,8 @@ export default function StatsScreen() {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
                 const isToday =
-                  index === (new Date().getDay() === 0
-                    ? 6
-                    : new Date().getDay() - 1);
+                  index ===
+                  (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
 
                 return (
                   <View key={index} className="flex-1 items-center">

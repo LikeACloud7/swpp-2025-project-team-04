@@ -200,11 +200,7 @@ describe('useVocabMutations', () => {
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-        expect(vocabAPI.addVocab).toHaveBeenCalledWith(
-          300,
-          i,
-          specialWords[i],
-        );
+        expect(vocabAPI.addVocab).toHaveBeenCalledWith(300, i, specialWords[i]);
 
         result.current.reset();
       }

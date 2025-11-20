@@ -39,7 +39,9 @@ export function mockConsole() {
 }
 
 // 타입 안전한 mock 함수
-export function createMockFn<T extends (...args: any[]) => any>(): jest.MockedFunction<T> {
+export function createMockFn<
+  T extends (...args: any[]) => any,
+>(): jest.MockedFunction<T> {
   return jest.fn() as jest.MockedFunction<T>;
 }
 
@@ -83,11 +85,7 @@ export function createMockSearchParams(params: Record<string, any> = {}) {
 }
 
 // 파일 업로드 mock
-export function createMockFile(
-  name: string,
-  size: number,
-  type: string,
-): File {
+export function createMockFile(name: string, size: number, type: string): File {
   const blob = new Blob(['mock content'], { type });
   return new File([blob], name, { type });
 }
@@ -101,9 +99,7 @@ export function expectCalledWithPartial<T extends any[]>(
   const match = calls.some((call) =>
     partialArgs.every((arg, index) => {
       if (typeof arg === 'object' && arg !== null) {
-        return Object.keys(arg).every(
-          (key) => call[index]?.[key] === arg[key],
-        );
+        return Object.keys(arg).every((key) => call[index]?.[key] === arg[key]);
       }
       return call[index] === arg;
     }),

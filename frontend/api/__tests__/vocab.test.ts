@@ -71,14 +71,11 @@ describe('vocab API', () => {
 
       await addVocab(generatedContentId, index, word);
 
-      expect(mockCustomFetch).toHaveBeenCalledWith(
-        '/vocabs/123/sentences/0',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word }),
-        },
-      );
+      expect(mockCustomFetch).toHaveBeenCalledWith('/vocabs/123/sentences/0', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word }),
+      });
     });
 
     it('여러 단어 순차 추가', async () => {
@@ -181,7 +178,9 @@ describe('vocab API', () => {
       const error = new Error('Failed to delete vocab');
       mockCustomFetch.mockRejectedValue(error);
 
-      await expect(deleteMyVocab(123)).rejects.toThrow('Failed to delete vocab');
+      await expect(deleteMyVocab(123)).rejects.toThrow(
+        'Failed to delete vocab',
+      );
     });
 
     it('존재하지 않는 단어 삭제', async () => {

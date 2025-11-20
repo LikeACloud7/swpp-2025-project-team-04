@@ -108,6 +108,5 @@ describe('useUserQueries', () => {
       expect(result.current.data).toBeNull();
       expect(result.current.isError).toBe(false);
     });
-
   });
 });

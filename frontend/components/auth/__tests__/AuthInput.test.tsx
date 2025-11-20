@@ -11,11 +11,7 @@ describe('AuthInput', () => {
 
   it('renders correctly with label', () => {
     render(
-      <AuthInput
-        label="이메일"
-        value=""
-        onChangeText={mockOnChangeText}
-      />,
+      <AuthInput label="이메일" value="" onChangeText={mockOnChangeText} />,
     );
 
     expect(screen.getByText('이메일')).toBeTruthy();
@@ -35,13 +31,7 @@ describe('AuthInput', () => {
   });
 
   it('calls onChangeText when text changes', () => {
-    render(
-      <AuthInput
-        label="이름"
-        value=""
-        onChangeText={mockOnChangeText}
-      />,
-    );
+    render(<AuthInput label="이름" value="" onChangeText={mockOnChangeText} />);
 
     const input = screen.getByDisplayValue('');
     fireEvent.changeText(input, 'John Doe');
@@ -92,11 +82,7 @@ describe('AuthInput', () => {
 
   it('handles focus state', () => {
     render(
-      <AuthInput
-        label="이메일"
-        value=""
-        onChangeText={mockOnChangeText}
-      />,
+      <AuthInput label="이메일" value="" onChangeText={mockOnChangeText} />,
     );
 
     const input = screen.getByDisplayValue('');

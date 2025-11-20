@@ -12,11 +12,7 @@ describe('Word', () => {
 
   it('renders word text correctly', () => {
     render(
-      <Word
-        text="Hello"
-        onPress={mockOnPress}
-        onLongPress={mockOnLongPress}
-      />,
+      <Word text="Hello" onPress={mockOnPress} onLongPress={mockOnLongPress} />,
     );
 
     expect(screen.getByText('Hello')).toBeTruthy();
@@ -24,11 +20,7 @@ describe('Word', () => {
 
   it('calls onPress when pressed', () => {
     render(
-      <Word
-        text="Test"
-        onPress={mockOnPress}
-        onLongPress={mockOnLongPress}
-      />,
+      <Word text="Test" onPress={mockOnPress} onLongPress={mockOnLongPress} />,
     );
 
     const word = screen.getByText('Test').parent;
@@ -39,11 +31,7 @@ describe('Word', () => {
 
   it('renders text for long press interaction', () => {
     render(
-      <Word
-        text="Test"
-        onPress={mockOnPress}
-        onLongPress={mockOnLongPress}
-      />,
+      <Word text="Test" onPress={mockOnPress} onLongPress={mockOnLongPress} />,
     );
 
     expect(screen.getByText('Test')).toBeTruthy();
@@ -64,11 +52,7 @@ describe('Word', () => {
 
   it('does not append space by default', () => {
     render(
-      <Word
-        text="Word"
-        onPress={mockOnPress}
-        onLongPress={mockOnLongPress}
-      />,
+      <Word text="Word" onPress={mockOnPress} onLongPress={mockOnLongPress} />,
     );
 
     expect(screen.getByText('Word')).toBeTruthy();
@@ -104,11 +88,7 @@ describe('Word', () => {
 
   it('renders multiple words with different props', () => {
     const { rerender } = render(
-      <Word
-        text="First"
-        onPress={mockOnPress}
-        onLongPress={mockOnLongPress}
-      />,
+      <Word text="First" onPress={mockOnPress} onLongPress={mockOnLongPress} />,
     );
 
     expect(screen.getByText('First')).toBeTruthy();

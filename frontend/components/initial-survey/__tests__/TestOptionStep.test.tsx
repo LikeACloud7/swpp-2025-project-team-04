@@ -14,7 +14,9 @@ describe('TestOptionStep', () => {
 
     expect(screen.getByText('듣기 테스트를 진행할까요?')).toBeTruthy();
     expect(
-      screen.getByText(/더 정확한 레벨 측정을 위해 짧은 듣기 테스트를 권장합니다/),
+      screen.getByText(
+        /더 정확한 레벨 측정을 위해 짧은 듣기 테스트를 권장합니다/,
+      ),
     ).toBeTruthy();
   });
 

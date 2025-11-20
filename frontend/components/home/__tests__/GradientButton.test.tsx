@@ -45,20 +45,14 @@ describe('GradientButton', () => {
 
   it('renders with icon when provided', () => {
     render(
-      <GradientButton
-        title="Play Music"
-        icon="play"
-        onPress={mockOnPress}
-      />,
+      <GradientButton title="Play Music" icon="play" onPress={mockOnPress} />,
     );
 
     expect(screen.getByText('Play Music')).toBeTruthy();
   });
 
   it('does not call onPress when loading', () => {
-    render(
-      <GradientButton title="Loading" onPress={mockOnPress} loading />,
-    );
+    render(<GradientButton title="Loading" onPress={mockOnPress} loading />);
 
     const button = screen.getByText('생성 중...').parent?.parent;
     fireEvent.press(button!);

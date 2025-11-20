@@ -190,10 +190,7 @@ describe('Script', () => {
 
   it('renders without optional callbacks', () => {
     const { UNSAFE_root } = render(
-      <Script
-        generatedContentId={1}
-        scripts={mockScripts}
-      />,
+      <Script generatedContentId={1} scripts={mockScripts} />,
     );
 
     expect(UNSAFE_root).toBeTruthy();

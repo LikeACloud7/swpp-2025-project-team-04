@@ -82,7 +82,9 @@ describe('audio API', () => {
       const error = new Error('Invalid parameters');
       mockCustomFetch.mockRejectedValue(error);
 
-      await expect(generateAudio(payload)).rejects.toThrow('Invalid parameters');
+      await expect(generateAudio(payload)).rejects.toThrow(
+        'Invalid parameters',
+      );
     });
   });
 });
