@@ -571,6 +571,17 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
+      <View className="border-b border-slate-200 bg-white px-6 pb-3 pt-12">
+        <View className="flex-row items-center">
+          <Pressable
+            onPress={() => router.back()}
+            className="mr-3 h-9 w-9 items-center justify-center rounded-full active:bg-neutral-100"
+          >
+            <Ionicons name="close" size={24} color="#1e293b" />
+          </Pressable>
+          <Text className="text-xl font-extrabold text-slate-900">프로필</Text>
+        </View>
+      </View>
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{ paddingBottom: 32 }}

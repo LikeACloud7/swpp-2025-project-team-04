@@ -62,14 +62,14 @@ export default function MainLayout() {
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="history"
           options={{
-            title: '프로필',
-            tabBarLabel: '프로필',
+            title: '히스토리',
+            tabBarLabel: '히스토리',
             headerShown: true,
-            header: () => <MainHeader title="프로필" />,
+            header: () => <MainHeader title="히스토리" />,
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
+              <Ionicons name="time" size={size} color={color} />
             ),
           }}
         />
