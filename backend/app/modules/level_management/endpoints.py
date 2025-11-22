@@ -18,9 +18,13 @@ from .service import (
     LevelTestScriptNotFoundException,
     GeneratedContentNotFoundException,
 )
+from ...core.level.context import LevelContext            
+from .strategy_impl import AILevelManagementStrategy  
+
 
 router = APIRouter(prefix="/level-management", tags=["level-management"])
-service = LevelManagementService()
+
+context = LevelContext(AILevelManagementStrategy())  
 
 
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
@@ -56,7 +60,7 @@ def evaluate_level(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return service.evaluate_initial_level(db=db, user=current_user, payload=payload)
+    return context.evaluate_initial_level(db=db, user=current_user, payload=payload)
 
 
 @router.post(
@@ -79,7 +83,7 @@ def evaluate_session_feedback(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return service.evaluate_session_feedback(db=db, user=current_user, payload=payload)
+    return context.evaluate_session_feedback(db=db, user=current_user, payload=payload)
 
 
 @router.post(
@@ -100,4 +104,4 @@ def set_manual_level(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return service.set_manual_level(db=db, user=current_user, payload=payload)
+    return context.set_manual_level(db=db, user=current_user, payload=payload)

@@ -36,7 +36,7 @@ DEFAULT_CLIP_RANGES = {
 class LevelSystemService:
     """레벨 시스템 서비스 - static 메서드 기반"""
 
-    @staticmethod
+    
     def update_level_by_feedback(
         db: Session,
         user: User,
@@ -121,7 +121,6 @@ class LevelSystemService:
             "speed_level_delta": speed_delta,
         }
 
-    @staticmethod
     def initialize_level(
         db: Session,
         user: User,
@@ -162,7 +161,6 @@ class LevelSystemService:
             "speed_level": float(user.speed_level),
         }
 
-    @staticmethod
     def set_manual_level(
         db: Session,
         user: User,
@@ -225,7 +223,6 @@ class LevelSystemService:
             "speed_level": float(user.speed_level),
         }
 
-    @staticmethod
     def evaluate_level_test(
         db: Session,
         user: User,

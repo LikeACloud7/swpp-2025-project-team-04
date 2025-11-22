@@ -5,12 +5,13 @@ from ...core.exceptions import UserNotFoundException
 from ..users import crud as user_crud
 from . import schemas
 from ...core.logger import logger
-from .service import LevelSystemService
 from ...core.auth import oauth2_scheme, verify_token, TokenType
+from ...core.level.context import LevelContext
+from .strategy_impl import HeuristicLevelSystemStrategy
 
 
 router = APIRouter(prefix="/level-system", tags=["level-system"])
-
+context = LevelContext(HeuristicLevelSystemStrategy())
 
 def get_current_user(token=Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = verify_token(token.credentials, TokenType.ACCESS_TOKEN)
@@ -34,7 +35,7 @@ def submit_session_feedback(
         feedback.model_dump(exclude_none=True)
     )
 
-    result = LevelSystemService.update_level_by_feedback(
+    result = context.update_level_by_feedback(
         db=db,
         user=current_user,
         feedback_request_payload=feedback
@@ -63,7 +64,7 @@ def evaluate_level_test(
             ]
         }
         """
-        return LevelSystemService.evaluate_level_test(
+        return context.evaluate_level_test(
                 db=db,
                 user=current_user,
                 level_test_payload=payload,
@@ -78,7 +79,7 @@ def set_manual_level(
 ):
     """수동으로 CEFR 레벨을 설정하는 엔드포인트.
     """
-    LevelSystemService.set_manual_level(db=db, user=current_user, manual_level_payload=payload)
+    context.set_manual_level(db=db, user=current_user, manual_level_payload=payload)
     return schemas.ManualLevelResponse(success=True)
 
 
