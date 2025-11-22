@@ -35,10 +35,10 @@ def submit_session_feedback(
         feedback.model_dump(exclude_none=True)
     )
 
-    result = context.update_level_by_feedback(
+    result = context.evaluate_session_feedback(
         db=db,
         user=current_user,
-        feedback_request_payload=feedback
+        payload=feedback
     )
 
     logger.info(
@@ -67,7 +67,7 @@ def evaluate_level_test(
         return context.evaluate_level_test(
                 db=db,
                 user=current_user,
-                level_test_payload=payload,
+                payload=payload,
         )
 
 
@@ -79,7 +79,7 @@ def set_manual_level(
 ):
     """수동으로 CEFR 레벨을 설정하는 엔드포인트.
     """
-    context.set_manual_level(db=db, user=current_user, manual_level_payload=payload)
+    context.set_manual_level(db=db, user=current_user, payload=payload)
     return schemas.ManualLevelResponse(success=True)
 
 

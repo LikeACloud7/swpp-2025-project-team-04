@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Enum as SAEnum, func, Boolean, DECIMAL
 from enum import Enum
 from ...core.config import Base
-from ..level_management.models import CEFRLevel
 
 
 class CEFRLevel(Enum):

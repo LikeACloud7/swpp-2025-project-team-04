@@ -9,7 +9,7 @@ class HeuristicLevelSystemStrategy(LevelServiceStrategy):
         return self.service.evaluate_level_test(db, user, payload)
 
     def evaluate_session_feedback(self, db, user, payload):
-        return self.service.update_level_by_feedback(db, user, payload)
+        return self.service.evaluate_session_feedback(db, user, payload)
 
     def set_manual_level(self, db, user, payload):
         return self.service.set_manual_level(db, user, payload)

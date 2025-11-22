@@ -37,7 +37,8 @@ class LevelSystemService:
     """레벨 시스템 서비스 - static 메서드 기반"""
 
     
-    def update_level_by_feedback(
+    def evaluate_session_feedback(
+        self,
         db: Session,
         user: User,
         feedback_request_payload: schemas.SessionFeedbackRequest,
@@ -122,6 +123,7 @@ class LevelSystemService:
         }
 
     def initialize_level(
+        self,
         db: Session,
         user: User,
         initial_survey_payload ,
@@ -162,6 +164,7 @@ class LevelSystemService:
         }
 
     def set_manual_level(
+        self,
         db: Session,
         user: User,
         manual_level_payload: schemas.ManualLevelRequest,
@@ -224,6 +227,7 @@ class LevelSystemService:
         }
 
     def evaluate_level_test(
+        self,
         db: Session,
         user: User,
         level_test_payload: schemas.LevelTestRequest,
