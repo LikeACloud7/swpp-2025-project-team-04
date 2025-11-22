@@ -169,9 +169,10 @@ def test_get_me_response_schema():
         "level_updated_at",
         "initial_level_completed",
         "level_score",
+        "interests",
     }
     actual_fields = set(response_data.keys())
     assert actual_fields == expected_fields
-    
+
     # Verify no extra or missing fields
-    assert len(response_data) == 7
+    assert len(response_data) == len(expected_fields)
