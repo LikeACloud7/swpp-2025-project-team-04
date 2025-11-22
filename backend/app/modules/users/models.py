@@ -37,6 +37,7 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         lazy="joined",
+        order_by="UserInterest.id",
     )
 
 
