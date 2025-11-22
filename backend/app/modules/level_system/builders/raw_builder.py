@@ -1,4 +1,4 @@
-from .base_builder import InputVectorBuilder
+from .interface import InputVectorBuilder
 
 class RawInputVectorBuilder(InputVectorBuilder):
     def __init__(self, feedback):

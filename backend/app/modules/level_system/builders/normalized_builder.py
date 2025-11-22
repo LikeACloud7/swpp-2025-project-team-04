@@ -1,4 +1,4 @@
-from .base_builder import InputVectorBuilder
+from .interface import InputVectorBuilder
 from ..utils import (
     normalize_vocab_factor,
     normalize_interaction_factor,
