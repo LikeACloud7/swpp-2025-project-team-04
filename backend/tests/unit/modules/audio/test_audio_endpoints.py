@@ -37,7 +37,19 @@ def test_list_audio_history_endpoint(monkeypatch, sqlite_session):
     monkeypatch.setattr(
         audio_endpoints.AudioService.AudioService,
         "list_user_audio_history",
-        lambda *args, **kwargs: [{"generated_content_id": 1}],
+        lambda *args, **kwargs: [
+            {
+                "generated_content_id": 1,
+                "user_id": 7,
+                "title": "Story",
+                "audio_url": "https://cdn/1.mp3",
+                "script_data": "script",
+                "response_json": {"sentences": []},
+                "script_vocabs": {},
+                "created_at": __import__("datetime").datetime.utcnow(),
+                "updated_at": __import__("datetime").datetime.utcnow(),
+            }
+        ],
     )
     monkeypatch.setattr(
         audio_endpoints.AudioService.AudioService,
