@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 class AudioGenerateRequest(BaseModel):
@@ -44,9 +44,12 @@ class GeneratedContentListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     generated_content_id: int
+    user_id: int
     title: str
     audio_url: Optional[str] = None
     script_data: Optional[str] = None
+    response_json: Optional[Any] = None
+    script_vocabs: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
 

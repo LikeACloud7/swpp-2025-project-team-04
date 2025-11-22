@@ -31,9 +31,15 @@ def override_dependencies():
 class DummyGeneratedContent:
     def __init__(self, idx: int, created: datetime):
         self.generated_content_id = idx
+        self.user_id = TEST_USER.id
         self.title = f"Story {idx}"
         self.audio_url = f"https://cdn.example.com/audio/{idx}.mp3"
         self.script_data = f"Script {idx}"
+        self.response_json = {
+            "generated_content_id": idx,
+            "sentences": [{"id": 1, "start_time": 0.0, "text": "Hello"}],
+        }
+        self.script_vocabs = {"keyword": "value"}
         self.created_at = created
         self.updated_at = created
 
@@ -68,6 +74,7 @@ def test_audio_history_endpoint_returns_paginated_items(monkeypatch):
     assert len(payload["items"]) == 2
     assert payload["items"][0]["generated_content_id"] == 1
     assert payload["items"][0]["audio_url"].endswith("1.mp3")
+    assert payload["items"][0]["response_json"]["sentences"][0]["id"] == 1
 
 
 def test_audio_history_endpoint_respects_requested_pagination(monkeypatch):
