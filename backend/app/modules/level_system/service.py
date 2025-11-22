@@ -14,6 +14,8 @@ from .utils import (
     normalize_understanding_factor,
 )
 from typing import Optional, List, Dict
+from .builders.normalized_builder import NormalizedInputVectorBuilder
+from .builders.director import Director
 
 # 기본 설정값 (모듈 레벨)
 DEFAULT_WEIGHT_MATRIX: List[List[float]] = [
@@ -60,49 +62,20 @@ class LevelSystemService:
         """
 
 
-        # [1] 입력 normalize
-        normalized_vl_cnt, normalized_vs_cnt = normalize_vocab_factor(
+        # [1] Builder 선택
+        builder = NormalizedInputVectorBuilder(
             db=db,
-            generated_content_id=feedback_request_payload.generated_content_id, 
-            vocab_lookup_cnt=feedback_request_payload.vocab_lookup_cnt,
-            vocab_save_cnt=feedback_request_payload.vocab_save_cnt
+            feedback=feedback_request_payload
         )
 
-        normalized_pause_cnt, normalized_rewind_cnt = normalize_interaction_factor(pause_cnt=feedback_request_payload.pause_cnt, rewind_cnt=feedback_request_payload.rewind_cnt)
+        # [2[] Director 생성
+        director = Director(builder)
 
-        normalized_understanding = normalize_understanding_factor(
-            understanding_difficulty=feedback_request_payload.understanding_difficulty
-        )
-        normalized_speed = normalize_speed_factor(
-            speed_difficulty=feedback_request_payload.speed_difficulty
-        )
+        # [3] 입력 벡터 생성
+        vector = director.buildInputVector()
 
-        # [2] 정규화된 값들을 NormalizedFeedback 객체로 생성
-        normalized_feedback = NormalizedFeedback(
-            pause=normalized_pause_cnt,
-            rewind=normalized_rewind_cnt,
-            vocab_lookup=normalized_vl_cnt,
-            vocab_save=normalized_vs_cnt,
-            understanding=normalized_understanding,
-            speed=normalized_speed,
-        )
+        logger.info("Built feedback vector via Builder: %s", vector)
 
-        # 로그: 정규화된 피드백 필드들
-        logger.info(
-            "NormalizedFeedback - pause=%.2f, rewind=%.2f, vocab_lookup=%.2f, vocab_save=%.2f, understanding=%.2f, speed=%.2f",
-            normalized_feedback.pause,
-            normalized_feedback.rewind,
-            normalized_feedback.vocab_lookup,
-            normalized_feedback.vocab_save,
-            normalized_feedback.understanding,
-            normalized_feedback.speed,
-        )
-
-        # [3] NormalizedFeedback을 벡터로 변환
-        vector = _feedback_to_vector(normalized_feedback)
-
-        # 로그: 변환된 벡터
-        logger.info("Feedback vector: %s", vector)
 
         # [4] weight matrix를 이용하여 각 level 별 변화량 계산
         W = DEFAULT_WEIGHT_MATRIX
