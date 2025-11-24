@@ -48,7 +48,7 @@ class GeneratedContentListItem(BaseModel):
     title: str
     audio_url: Optional[str] = None
     script_data: Optional[str] = None
-    response_json: Optional[Any] = None
+    response_json: Optional[FinalAudioResponse] = None
     script_vocabs: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
