@@ -26,6 +26,14 @@ class FinalAudioResponse(BaseModel):
     audio_url: str
     sentences: List[SentenceTimestamp]
 
+
+class StoredAudioResponse(BaseModel):
+    """Stored response payload for history view (fields may be missing)."""
+    generated_content_id: Optional[int] = None
+    title: Optional[str] = None
+    audio_url: Optional[str] = None
+    sentences: Optional[List[SentenceTimestamp]] = None
+
 class GeneratedScriptResponse(BaseModel):
     """
     A temporary response model to show the output of Part 1.
@@ -48,7 +56,7 @@ class GeneratedContentListItem(BaseModel):
     title: str
     audio_url: Optional[str] = None
     script_data: Optional[str] = None
-    response_json: Optional[FinalAudioResponse] = None
+    response_json: Optional[StoredAudioResponse] = None
     script_vocabs: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
