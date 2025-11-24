@@ -5,6 +5,7 @@ import pytest
 from app.modules.users import crud
 from app.core.exceptions import UserNotFoundException
 from app.modules.users.models import CEFRLevel
+from app.modules.users.interests import InterestKey
 
 
 def test_user_crud_flow(sqlite_session):
@@ -59,3 +60,28 @@ def test_update_user_level_without_commit(sqlite_session):
     assert updated.level_score == 10
     assert updated.llm_confidence == 20
     assert updated.initial_level_completed is False
+
+
+def test_set_user_interests_flow(sqlite_session):
+    user = crud.create_user(sqlite_session, username="interest", hashed_password="pw")
+    updated = crud.set_user_interests(
+        sqlite_session,
+        user_id=user.id,
+        interest_keys=[InterestKey.POLITICS, InterestKey.SCIENCE],
+    )
+    assert [interest.key for interest in updated.interests] == [InterestKey.POLITICS, InterestKey.SCIENCE]
+
+    updated = crud.set_user_interests(
+        sqlite_session,
+        user_id=user.id,
+        interest_keys=[InterestKey.SCIENCE, InterestKey.SCIENCE, InterestKey.IT_AI],
+    )
+    assert [interest.key for interest in updated.interests] == [InterestKey.SCIENCE, InterestKey.IT_AI]
+
+    updated = crud.set_user_interests(sqlite_session, user_id=user.id, interest_keys=[])
+    assert updated.interests == []
+
+
+def test_set_user_interests_missing_user(sqlite_session):
+    with pytest.raises(UserNotFoundException):
+        crud.set_user_interests(sqlite_session, user_id=999, interest_keys=[InterestKey.MUSIC])
