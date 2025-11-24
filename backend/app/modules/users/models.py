@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, DateTime, Enum as SAEnum, func, 
 from sqlalchemy.orm import relationship
 from enum import Enum
 from ...core.config import Base
-from ..level_management.models import CEFRLevel
 from .interests import InterestKey, get_interest_option
 
 
