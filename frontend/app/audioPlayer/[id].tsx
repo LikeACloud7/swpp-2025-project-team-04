@@ -19,12 +19,13 @@ export type BehaviorLogs = {
 };
 
 export default function AudioPlayer() {
-  const { id: idParam } = useLocalSearchParams();
+  const { id: idParam, fromHistory } = useLocalSearchParams();
   const qc = useQueryClient();
   const router = useRouter();
   const navigation = useNavigation();
 
   const id = Array.isArray(idParam) ? idParam[0] : (idParam ?? null);
+  const isFromHistory = fromHistory === 'true';
   const data = id
     ? (qc.getQueryData(['audio', id]) as AudioGenerationResponse | undefined)
     : undefined;
@@ -82,6 +83,11 @@ export default function AudioPlayer() {
     router.push({ pathname: '/feedback', params });
   }, [router, stopAndCleanup, data, behaviorLogs]);
 
+  const goBackToHistory = useCallback(async () => {
+    await stopAndCleanup();
+    router.push('/(main)/history');
+  }, [router, stopAndCleanup]);
+
   // ✅ 마운트 시 자동 재생
   useEffect(() => {
     let mounted = true;
@@ -111,10 +117,14 @@ export default function AudioPlayer() {
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
-        await goFeedback();
+        if (isFromHistory) {
+          await goBackToHistory();
+        } else {
+          await goFeedback();
+        }
       })();
     }
-  }, [position, duration, goFeedback]);
+  }, [position, duration, goFeedback, goBackToHistory, isFromHistory]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -125,10 +135,14 @@ export default function AudioPlayer() {
     };
   }, []);
 
-  // 뒤로가기 눌렀을 때 모달
+  // 뒤로가기 눌렀을 때 모달 (히스토리에서 온 경우 바로 종료)
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (!data) return false;
+      if (isFromHistory) {
+        goBackToHistory();
+        return true;
+      }
       if (modalVisible) {
         setModalVisible(false);
         return true;
@@ -137,17 +151,21 @@ export default function AudioPlayer() {
       return true;
     });
     return () => sub.remove();
-  }, [data, modalVisible]);
+  }, [data, modalVisible, isFromHistory, goBackToHistory]);
 
   useEffect(() => {
     const beforeRemove = navigation.addListener('beforeRemove', (e) => {
       if (!data) return;
+      if (isFromHistory) {
+        goBackToHistory();
+        return;
+      }
       if (modalVisible) return;
       e.preventDefault();
       setModalVisible(true);
     });
     return beforeRemove;
-  }, [navigation, data, modalVisible]);
+  }, [navigation, data, modalVisible, isFromHistory, goBackToHistory]);
 
   if (!data) {
     return (
@@ -172,9 +190,9 @@ export default function AudioPlayer() {
         <Script
           generatedContentId={data.generated_content_id}
           scripts={data.sentences}
-          onVocabLookup={() => incrementLog('vocabLookupCount')}
-          onVocabSave={() => incrementLog('vocabSaveCount')}
-          onRewind={() => incrementLog('rewindCount')}
+          onVocabLookup={isFromHistory ? () => {} : () => incrementLog('vocabLookupCount')}
+          onVocabSave={isFromHistory ? () => {} : () => incrementLog('vocabSaveCount')}
+          onRewind={isFromHistory ? () => {} : () => incrementLog('rewindCount')}
         />
       </View>
 
@@ -187,7 +205,8 @@ export default function AudioPlayer() {
       <PlayerControls
         isPlaying={isPlaying}
         onTogglePlay={togglePlayback}
-        onFinish={() => setModalVisible(true)}
+        onFinish={isFromHistory ? goBackToHistory : () => setModalVisible(true)}
+        finishButtonText={isFromHistory ? '복습 끝내기' : '학습 끝내기'}
       />
 
       {/* 종료 모달 */}

@@ -63,7 +63,7 @@ export default function HistoryScreen() {
 
         qc.setQueryData(['audio', String(item.generated_content_id)], audioData);
 
-        router.push(`/audioPlayer/${item.generated_content_id}`);
+        router.push(`/audioPlayer/${item.generated_content_id}?fromHistory=true`);
       } catch (error) {
         console.error('Failed to play audio:', error);
         alert('오디오를 재생할 수 없습니다.');
