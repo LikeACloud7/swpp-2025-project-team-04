@@ -34,20 +34,20 @@ const infoModalCopy: Record<
   { title: string; body: string[] }
 > = {
   privacy: {
-    title: 'Privacy & Security',
+    title: '개인정보 보호',
     body: [
       'LingoFit은 서비스 제공에 꼭 필요한 정보만 수집하며, 모든 유저 데이터를 안전하게 보관하고 있습니다.',
     ],
   },
   help: {
-    title: 'Help & Support',
+    title: '도움말 및 지원',
     body: [
       '사용 중 궁금한 점이나 문제가 발생하면 언제든 step215@snu.ac.kr 으로 문의해주세요.',
       '버그 제보나 기능 개선 제안 등 모든 피드백을 환영합니다. 여러분의 의견이 LingoFit을 더 나은 서비스로 만듭니다.',
     ],
   },
   about: {
-    title: 'About',
+    title: 'LingoFit 소개',
     body: [
       'LingoFit은 AI 기반 맞춤형 영어 리스닝 학습 애플리케이션으로, 사용자의 수준과 관심사에 맞춘 오디오 콘텐츠를 제공합니다.',
       '매일 짧은 시간 동안 부담 없이 들으며 청취 이해력을 향상시키는 것을 목표로 하고 있습니다.',
