@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import type { AudioHistoryItem, AudioGenerationResponse } from '@/api/audio';
 import { useQueryClient } from '@tanstack/react-query';
 import TrackPlayer from 'react-native-track-player';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HistoryScreen() {
   const router = useRouter();
@@ -31,6 +32,12 @@ export default function HistoryScreen() {
   const items = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, []),
+  );
 
   const handleItemPress = useCallback(
     async (item: AudioHistoryItem) => {
