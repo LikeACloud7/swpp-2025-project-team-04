@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,15 +8,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioHistory } from '@/hooks/queries/useAudioQueries';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { useFocusEffect } from '@react-navigation/native';
-import type { AudioHistoryItem } from '@/api/audio';
+import { useRouter } from 'expo-router';
+import type { AudioHistoryItem, AudioGenerationResponse } from '@/api/audio';
+import { useQueryClient } from '@tanstack/react-query';
+import TrackPlayer from 'react-native-track-player';
 
 export default function HistoryScreen() {
-  const player = useAudioPlayer(null);
-  const status = useAudioPlayerStatus(player);
-  const [activeId, setActiveId] = useState<number | null>(null);
-  const [isFocused, setIsFocused] = useState(true);
+  const router = useRouter();
+  const qc = useQueryClient();
 
   const {
     data,
@@ -29,60 +28,48 @@ export default function HistoryScreen() {
     isFetchingNextPage,
   } = useAudioHistory();
 
-  useFocusEffect(
-    useCallback(() => {
-      setIsFocused(true);
-      return () => {
-        setIsFocused(false);
-      };
-    }, []),
-  );
-
   const items = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];
   }, [data]);
-  const stopAndReset = useCallback(async () => {
-    if (!player) return;
-    try {
-      await player.pause();
-      await player.seekTo(0);
-    } catch {}
-    setActiveId(null);
-  }, [player]);
 
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        stopAndReset();
-      };
-    }, [stopAndReset]),
-  );
-
-  useEffect(() => {
-    return () => {
-      stopAndReset();
-    };
-  }, [stopAndReset]);
-
-  const handlePlayPause = useCallback(
+  const handleItemPress = useCallback(
     async (item: AudioHistoryItem) => {
-      if (!player) return;
+      try {
+        const lines = item.script_data
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
 
-      if (activeId === item.generated_content_id) {
-        if (status.playing) {
-          await player.pause();
-        } else {
-          await player.play();
-        }
-      } else {
-        try {
-          await player.replace(item.audio_url);
-          await player.play();
-          setActiveId(item.generated_content_id);
-        } catch {}
+        const sentences = lines.map((text, index) => ({
+          id: String(index + 1),
+          start_time: String(index * 3),
+          text,
+        }));
+
+        await TrackPlayer.reset();
+        await TrackPlayer.add({
+          id: item.generated_content_id,
+          url: item.audio_url,
+          title: item.title,
+          artist: 'LingoFit',
+        });
+
+        const audioData: AudioGenerationResponse = {
+          generated_content_id: item.generated_content_id,
+          title: item.title,
+          audio_url: item.audio_url,
+          sentences,
+        };
+
+        qc.setQueryData(['audio', String(item.generated_content_id)], audioData);
+
+        router.push(`/audioPlayer/${item.generated_content_id}`);
+      } catch (error) {
+        console.error('Failed to play audio:', error);
+        alert('오디오를 재생할 수 없습니다.');
       }
     },
-    [player, status, activeId],
+    [router, qc],
   );
 
   const formatDate = (dateString: string) => {
@@ -99,6 +86,42 @@ export default function HistoryScreen() {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: AudioHistoryItem }) => {
+      return (
+        <Pressable
+          onPress={() => handleItemPress(item)}
+          className="mb-3 overflow-hidden rounded-2xl bg-white shadow-sm active:bg-neutral-50"
+        >
+          <View className="flex-row items-center justify-between p-4">
+            <View className="flex-1 pr-3">
+              <Text className="mb-1 text-base font-bold text-neutral-900">
+                {item.title}
+              </Text>
+              <Text className="text-xs text-neutral-500">
+                {formatDate(item.created_at)}
+              </Text>
+            </View>
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
+              <Ionicons name="play" size={24} color="white" />
+            </View>
+          </View>
+        </Pressable>
+      );
+    },
+    [handleItemPress, formatDate],
+  );
+
+  const renderFooter = useCallback(() => {
+    if (!isFetchingNextPage) return null;
+
+    return (
+      <View className="py-4">
+        <ActivityIndicator color="#0EA5E9" />
+      </View>
+    );
+  }, [isFetchingNextPage]);
 
   if (isLoading) {
     return (
@@ -144,76 +167,6 @@ export default function HistoryScreen() {
       </View>
     );
   }
-
-  const renderItem = useCallback(
-    ({ item }: { item: AudioHistoryItem }) => {
-      const isActive = activeId === item.generated_content_id;
-      const isPlaying = isActive && status.playing;
-
-      return (
-        <View className="mb-3 overflow-hidden rounded-2xl bg-white shadow-sm">
-          <Pressable
-            onPress={() => handlePlayPause(item)}
-            className="flex-row items-center justify-between p-4 active:bg-neutral-50"
-          >
-            <View className="flex-1 pr-3">
-              <Text className="mb-1 text-base font-bold text-neutral-900">
-                {item.title}
-              </Text>
-              <Text className="text-xs text-neutral-500">
-                {formatDate(item.created_at)}
-              </Text>
-            </View>
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-primary">
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={24}
-                color="white"
-              />
-            </View>
-          </Pressable>
-
-          {isActive && (
-            <View className="border-t border-neutral-100 px-4 py-3">
-              <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-semibold text-neutral-500">
-                  {Math.floor((status.currentTime ?? 0) / 60)}:
-                  {String(Math.floor((status.currentTime ?? 0) % 60)).padStart(2, '0')}
-                </Text>
-                <Text className="text-xs font-semibold text-neutral-500">
-                  {Math.floor((status.duration ?? 0) / 60)}:
-                  {String(Math.floor((status.duration ?? 0) % 60)).padStart(2, '0')}
-                </Text>
-              </View>
-              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                <View
-                  className="h-full rounded-full bg-primary"
-                  style={{
-                    width: `${
-                      status.duration
-                        ? ((status.currentTime ?? 0) / status.duration) * 100
-                        : 0
-                    }%`,
-                  }}
-                />
-              </View>
-            </View>
-          )}
-        </View>
-      );
-    },
-    [activeId, status, handlePlayPause, formatDate],
-  );
-
-  const renderFooter = useCallback(() => {
-    if (!isFetchingNextPage) return null;
-
-    return (
-      <View className="py-4">
-        <ActivityIndicator color="#0EA5E9" />
-      </View>
-    );
-  }, [isFetchingNextPage]);
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
