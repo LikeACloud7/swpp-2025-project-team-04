@@ -24,3 +24,12 @@ class GeneratedContent(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    @property
+    def sentences(self):
+        """Expose parsed sentences stored inside response_json."""
+        if not self.response_json:
+            return None
+        if isinstance(self.response_json, dict):
+            return self.response_json.get("sentences")
+        return None
