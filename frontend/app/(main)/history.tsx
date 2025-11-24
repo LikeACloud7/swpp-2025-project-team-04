@@ -42,16 +42,10 @@ export default function HistoryScreen() {
   const handleItemPress = useCallback(
     async (item: AudioHistoryItem) => {
       try {
-        const lines = item.script_data
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => line.length > 0);
-
-        const sentences = lines.map((text, index) => ({
-          id: String(index + 1),
-          start_time: String(index * 3),
-          text,
-        }));
+        if (!item.sentences || item.sentences.length === 0) {
+          alert('오디오 데이터를 불러올 수 없습니다.');
+          return;
+        }
 
         await TrackPlayer.reset();
         await TrackPlayer.add({
@@ -65,14 +59,13 @@ export default function HistoryScreen() {
           generated_content_id: item.generated_content_id,
           title: item.title,
           audio_url: item.audio_url,
-          sentences,
+          sentences: item.sentences,
         };
 
         qc.setQueryData(['audio', String(item.generated_content_id)], audioData);
 
         router.push(`/audioPlayer/${item.generated_content_id}?fromHistory=true`);
       } catch (error) {
-        console.error('Failed to play audio:', error);
         alert('오디오를 재생할 수 없습니다.');
       }
     },

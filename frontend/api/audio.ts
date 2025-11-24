@@ -8,8 +8,8 @@ export type AudioGenerationPayload = {
 };
 
 export type Sentence = {
-  id: string;
-  start_time: string;
+  id: number;
+  start_time: number;
   text: string;
 };
 
@@ -33,9 +33,11 @@ export const generateAudio = async (
 
 export type AudioHistoryItem = {
   generated_content_id: number;
+  user_id: number;
   title: string;
   audio_url: string;
   script_data: string;
+  sentences: Sentence[];
   created_at: string;
   updated_at: string;
 };
