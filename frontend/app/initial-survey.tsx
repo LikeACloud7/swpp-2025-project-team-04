@@ -94,12 +94,16 @@ export default function InitialSurveyScreen() {
     }
   };
 
+  const goToWalkthrough = () => {
+    router.replace('/walkthrough');
+  };
+
   const handleSubmit = () => {
     if (isSubmitting) return;
 
     if (skipTest === true) {
-      // 레벨은 이미 Step 1에서 제출했으므로, 바로 메인 화면으로 이동
-      router.replace('/(main)');
+      // 레벨은 이미 Step 1에서 제출했으므로, 워크스루로 안내
+      goToWalkthrough();
     } else {
       // 레벨 테스트 제출
       submitLevelTest(
@@ -114,7 +118,7 @@ export default function InitialSurveyScreen() {
           ],
         },
         {
-          onSuccess: () => router.replace('/(main)'),
+          onSuccess: () => goToWalkthrough(),
           onError: () =>
             Alert.alert(
               '제출 실패',
