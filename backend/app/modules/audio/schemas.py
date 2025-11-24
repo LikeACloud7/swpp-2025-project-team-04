@@ -47,6 +47,7 @@ class GeneratedContentListItem(BaseModel):
     title: str
     audio_url: Optional[str] = None
     script_data: Optional[str] = None
+    sentences: Optional[List[SentenceTimestamp]] = None
     created_at: datetime
     updated_at: datetime
 
