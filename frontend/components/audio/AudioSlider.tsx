@@ -11,7 +11,7 @@ function formatTime(seconds: number) {
 }
 
 export default function AudioSlider() {
-  const { position, duration } = useProgress(250);
+  const { position, duration } = useProgress(100);
 
   return (
     <View className="mt-1">
