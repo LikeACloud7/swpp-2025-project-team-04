@@ -1,53 +1,30 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Text, View, Modal, Pressable, BackHandler } from 'react-native';
-import TrackPlayer, { Event, useProgress } from 'react-native-track-player';
+import TrackPlayer, { useProgress } from 'react-native-track-player';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AudioGenerationResponse } from '@/api/audio';
 import PlayerControls from '@/components/audio/PlayerControls';
-import Script from '@/components/audio/script';
+import Script from '@/components/audio/Script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// ========== 행동 로그 타입 ==========
-export type BehaviorLogs = {
-  pauseCount: number;
-  rewindCount: number;
-  vocabLookupCount: number;
-  vocabSaveCount: number;
-};
+import { useBehaviorLogs } from '@/hooks/useBehaviorLogs';
 
 export default function AudioPlayer() {
-  const { id: idParam } = useLocalSearchParams();
-  const qc = useQueryClient();
   const router = useRouter();
-  const navigation = useNavigation();
 
+  const qc = useQueryClient();
+  const { id: idParam } = useLocalSearchParams();
   const id = Array.isArray(idParam) ? idParam[0] : (idParam ?? null);
   const data = id
     ? (qc.getQueryData(['audio', id]) as AudioGenerationResponse | undefined)
     : undefined;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // ========== 행동 로그 상태 ==========
-  const [behaviorLogs, setBehaviorLogs] = useState<BehaviorLogs>({
-    pauseCount: 0,
-    rewindCount: 0,
-    vocabLookupCount: 0,
-    vocabSaveCount: 0,
-  });
-
-  // 행동 로그 증가 헬퍼
-  const incrementLog = useCallback((type: keyof BehaviorLogs) => {
-    setBehaviorLogs((prev) => {
-      const updated = { ...prev, [type]: prev[type] + 1 };
-      console.log(`📊 [행동 로그] ${type}: ${updated[type]}`);
-      return updated;
-    });
-  }, []);
+  const { behaviorLogs, incrementLog } = useBehaviorLogs();
 
   const togglePlayback = async () => {
     if (isPlaying) {
@@ -67,7 +44,7 @@ export default function AudioPlayer() {
     } catch {}
   }, []);
 
-  const goFeedback = useCallback(async () => {
+  const endSessionWithFeedback = useCallback(async () => {
     await stopAndCleanup();
 
     // 행동 로그와 generated_content_id를 피드백 페이지로 전달
@@ -79,8 +56,13 @@ export default function AudioPlayer() {
       vocab_save_cnt: behaviorLogs.vocabSaveCount.toString(),
     };
 
-    router.push({ pathname: '/feedback', params });
+    router.replace({ pathname: '/feedback', params });
   }, [router, stopAndCleanup, data, behaviorLogs]);
+
+  const handleExitWithoutFeedback = async () => {
+    await stopAndCleanup();
+    router.replace('/');
+  };
 
   // ✅ 마운트 시 자동 재생
   useEffect(() => {
@@ -97,7 +79,7 @@ export default function AudioPlayer() {
   }, []);
 
   // 컴포넌트 상단에
-  const { position, duration } = useProgress(250); // 250ms 간격 (원하는 주기로)
+  const { position, duration } = useProgress(100);
 
   const didFinishRef = useRef(false);
 
@@ -107,14 +89,14 @@ export default function AudioPlayer() {
     if (!duration || duration <= 0) return;
 
     // 끝으로부터 epsilon(여유) 안으로 들어오면 완료 처리
-    const EPSILON = 0.4; // 초 단위 여유 (원하는 값으로 조절)
+    const EPSILON = 0.1; // 초 단위 여유 (원하는 값으로 조절)
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
-        await goFeedback();
+        await endSessionWithFeedback();
       })();
     }
-  }, [position, duration, goFeedback]);
+  }, [position, duration, endSessionWithFeedback]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -129,25 +111,15 @@ export default function AudioPlayer() {
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (!data) return false;
-      if (modalVisible) {
-        setModalVisible(false);
+      if (isModalVisible) {
+        setIsModalVisible(false);
         return true;
       }
-      setModalVisible(true);
+      setIsModalVisible(true);
       return true;
     });
     return () => sub.remove();
-  }, [data, modalVisible]);
-
-  useEffect(() => {
-    const beforeRemove = navigation.addListener('beforeRemove', (e) => {
-      if (!data) return;
-      if (modalVisible) return;
-      e.preventDefault();
-      setModalVisible(true);
-    });
-    return beforeRemove;
-  }, [navigation, data, modalVisible]);
+  }, [data, isModalVisible]);
 
   if (!data) {
     return (
@@ -167,73 +139,75 @@ export default function AudioPlayer() {
       end={{ x: 0, y: 1 }}
       className="flex-1"
     >
-      {/* 상단 스크립트 */}
-      <View className="flex-1 relative">
-        <Script
-          generatedContentId={data.generated_content_id}
-          scripts={data.sentences}
-          onVocabLookup={() => incrementLog('vocabLookupCount')}
-          onVocabSave={() => incrementLog('vocabSaveCount')}
-          onRewind={() => incrementLog('rewindCount')}
-        />
-      </View>
-
-      {/* 슬라이더 */}
-      <View className="px-4 pb-3">
-        <AudioSlider />
-      </View>
-
-      {/* 컨트롤 */}
-      <PlayerControls
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlayback}
-        onFinish={() => setModalVisible(true)}
+      {/* 스크립트 */}
+      <Script
+        generatedContentId={data.generated_content_id}
+        scripts={data.sentences}
+        onVocabLookup={() => incrementLog('vocabLookupCount')}
+        onVocabSave={() => incrementLog('vocabSaveCount')}
+        onRewind={() => incrementLog('rewindCount')}
       />
 
+      {/* 슬라이더 */}
+      <AudioSlider />
+
+      {/* 컨트롤 */}
+      <PlayerControls isPlaying={isPlaying} onTogglePlay={togglePlayback} />
+
       {/* 종료 모달 */}
-      <Modal
-        transparent
-        animationType="fade" // ✅ 기본 fade 사용
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/40">
-          <Pressable
-            onPress={() => setModalVisible(false)}
-            className="absolute inset-0"
-          />
-          <View className="w-80 rounded-2xl bg-white p-5">
-            <View className="flex-row items-center">
-              <View className="mr-3 rounded-full bg-sky-100 p-2">
-                <Ionicons name="information-circle" size={20} color="#0EA5E9" />
+      {isModalVisible && (
+        <Modal
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsModalVisible(false)}
+        >
+          <View className="flex-1 items-center justify-center bg-black/40">
+            <Pressable
+              onPress={() => setIsModalVisible(false)}
+              className="absolute inset-0"
+            />
+            <View className="w-80 rounded-2xl bg-white p-5">
+              <View className="flex-row items-center">
+                <View className="mr-3 rounded-full bg-sky-100 p-2">
+                  <Ionicons
+                    name="warning-outline"
+                    size={20}
+                    color="#f97316" // 주황 느낌 경고
+                  />
+                </View>
+                <Text className="text-lg font-bold text-slate-900">
+                  학습을 종료할까요?
+                </Text>
               </View>
-              <Text className="text-lg font-bold text-slate-900">
-                학습을 종료할까요?
+
+              <Text className="mt-3 text-slate-600">
+                지금 화면을 떠나면 이번 학습의 진행 상태와 행동 기록이 저장되지
+                않습니다. 그래도 종료할까요?
               </Text>
-            </View>
 
-            <Text className="mt-3 text-slate-600">
-              지금까지의 진행 상태가 저장되고 피드백 화면으로 이동합니다.
-            </Text>
+              <View className="mt-5 flex-row justify-end gap-2">
+                <Pressable
+                  onPress={() => setIsModalVisible(false)}
+                  className="rounded-full bg-slate-100 px-4 py-2 active:opacity-80"
+                >
+                  <Text className="font-semibold text-slate-700">
+                    계속 학습
+                  </Text>
+                </Pressable>
 
-            <View className="mt-5 flex-row justify-end gap-2">
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                className="rounded-full bg-slate-100 px-4 py-2 active:opacity-80"
-              >
-                <Text className="font-semibold text-slate-700">계속 학습</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={goFeedback}
-                className="rounded-full bg-red-500 px-4 py-2 active:opacity-90"
-              >
-                <Text className="font-semibold text-white">종료</Text>
-              </Pressable>
+                <Pressable
+                  onPress={handleExitWithoutFeedback}
+                  className="rounded-full bg-red-500 px-4 py-2 active:opacity-90"
+                >
+                  <Text className="font-semibold text-white">
+                    종료하고 나가기
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </LinearGradient>
   );
 }
