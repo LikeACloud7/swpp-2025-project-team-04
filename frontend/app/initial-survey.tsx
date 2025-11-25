@@ -310,7 +310,7 @@ export default function InitialSurveyScreen() {
   const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
 
   return (
-    <View className="flex-1 bg-[#EBF4FB]">
+    <View className="flex-1 bg-gradient-to-b from-sky-50 to-sky-100" style={{ backgroundColor: '#F0F9FF' }}>
       {isLastPage ? (
         <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
           {currentStep > 0 && (

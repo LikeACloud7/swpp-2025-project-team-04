@@ -146,8 +146,8 @@ export default function ListeningAudioButton({
 
   return (
     <View className="items-center mt-8 mb-4 w-full px-4">
-      <View className="w-full max-w-[320px] bg-white rounded-2xl p-6 shadow-md">
-        <Text className="text-gray-800 text-[16px] font-bold text-center mb-4">
+      <View className="w-full max-w-[320px] bg-white rounded-3xl p-6 shadow-lg border border-sky-100">
+        <Text className="text-sky-900 text-[16px] font-bold text-center mb-4">
           오디오 {questionNumber}
         </Text>
 
@@ -155,9 +155,9 @@ export default function ListeningAudioButton({
         {status?.playing || isLoading ? (
           <Pressable
             onPress={handlePlayPause}
-            className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
+            className="py-4 rounded-xl bg-sky-500 mb-4 shadow-md"
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-            android_ripple={{ color: '#4D7BAA' }}
+            android_ripple={{ color: '#0284C7' }}
             disabled={isLoading}
           >
             <Text className="text-white text-[18px] font-bold text-center">
@@ -169,9 +169,9 @@ export default function ListeningAudioButton({
           hasFinished ? (
             <Pressable
               onPress={handleRestart}
-              className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
+              className="py-4 rounded-xl bg-sky-500 mb-4 shadow-md"
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-              android_ripple={{ color: '#4D7BAA' }}
+              android_ripple={{ color: '#0284C7' }}
             >
               <Text className="text-white text-[18px] font-bold text-center">
                 ⏮ 처음부터
@@ -181,9 +181,9 @@ export default function ListeningAudioButton({
             <View className="flex-row gap-2 mb-4">
               <Pressable
                 onPress={handleRestart}
-                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
+                className="flex-1 py-4 rounded-xl bg-sky-500 shadow-md"
                 style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                android_ripple={{ color: '#4D7BAA' }}
+                android_ripple={{ color: '#0284C7' }}
               >
                 <Text className="text-white text-[16px] font-bold text-center">
                   ⏮ 처음부터
@@ -191,9 +191,9 @@ export default function ListeningAudioButton({
               </Pressable>
               <Pressable
                 onPress={handlePlayPause}
-                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
+                className="flex-1 py-4 rounded-xl bg-sky-500 shadow-md"
                 style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                android_ripple={{ color: '#4D7BAA' }}
+                android_ripple={{ color: '#0284C7' }}
               >
                 <Text className="text-white text-[16px] font-bold text-center">
                   ▶ 재생
@@ -204,9 +204,9 @@ export default function ListeningAudioButton({
         ) : (
           <Pressable
             onPress={handlePlayPause}
-            className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
+            className="py-4 rounded-xl bg-sky-500 mb-4 shadow-md"
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-            android_ripple={{ color: '#4D7BAA' }}
+            android_ripple={{ color: '#0284C7' }}
             disabled={isLoading}
           >
             <Text className="text-white text-[18px] font-bold text-center">
@@ -217,9 +217,9 @@ export default function ListeningAudioButton({
 
         {/* Progress Bar */}
         <View className="mb-2">
-          <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <View className="h-2 bg-sky-100 rounded-full overflow-hidden">
             <View
-              className="h-full bg-[#6FA4D7] rounded-full"
+              className="h-full bg-sky-500 rounded-full"
               style={{ width: `${progress * 100}%` }}
             />
           </View>
@@ -227,10 +227,10 @@ export default function ListeningAudioButton({
 
         {/* Time Display */}
         <View className="flex-row justify-between">
-          <Text className="text-gray-600 text-[12px]">
+          <Text className="text-sky-700 text-[12px] font-semibold">
             {formatTime(currentTime)}
           </Text>
-          <Text className="text-gray-600 text-[12px]">
+          <Text className="text-sky-700 text-[12px] font-semibold">
             {formatTime(duration)}
           </Text>
         </View>

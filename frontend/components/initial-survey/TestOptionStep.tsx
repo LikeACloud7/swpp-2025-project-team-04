@@ -16,10 +16,10 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
   return (
     <View className="flex-1 justify-center px-6 pb-8">
       <View className="items-center mb-8">
-        <Text className="text-3xl font-bold text-[#2E5077] mb-4 text-center">
+        <Text className="text-3xl font-extrabold text-sky-900 mb-4 text-center">
           듣기 테스트를 진행할까요?
         </Text>
-        <Text className="text-base text-[#4A5568] text-center leading-6">
+        <Text className="text-base text-sky-700 text-center leading-6">
           더 정확한 레벨 측정을 위해 짧은 듣기 테스트를 권장합니다.{'\n'}
           (약 5분 소요)
         </Text>
@@ -28,15 +28,15 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
       <View className="w-full gap-4">
         <TouchableOpacity
           onPress={() => handleSelect(false)}
-          className={`w-full py-4 rounded-2xl shadow-sm active:opacity-80 ${
+          className={`w-full py-5 rounded-2xl shadow-md active:opacity-80 ${
             selected === false
-              ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
-              : 'bg-white border-2 border-[#D1D5DB]'
+              ? 'bg-sky-500 border-2 border-sky-600'
+              : 'bg-white border-2 border-sky-200'
           }`}
         >
           <Text
-            className={`text-lg font-semibold text-center ${
-              selected === false ? 'text-white' : 'text-[#4A5568]'
+            className={`text-lg font-bold text-center ${
+              selected === false ? 'text-white' : 'text-slate-700'
             }`}
           >
             테스트 진행하기
@@ -45,15 +45,15 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
 
         <TouchableOpacity
           onPress={() => handleSelect(true)}
-          className={`w-full py-4 rounded-2xl shadow-sm active:opacity-80 ${
+          className={`w-full py-5 rounded-2xl shadow-md active:opacity-80 ${
             selected === true
-              ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
-              : 'bg-white border-2 border-[#D1D5DB]'
+              ? 'bg-sky-500 border-2 border-sky-600'
+              : 'bg-white border-2 border-sky-200'
           }`}
         >
           <Text
-            className={`text-lg font-semibold text-center ${
-              selected === true ? 'text-white' : 'text-[#4A5568]'
+            className={`text-lg font-bold text-center ${
+              selected === true ? 'text-white' : 'text-slate-700'
             }`}
           >
             건너뛰기
@@ -61,7 +61,7 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
         </TouchableOpacity>
       </View>
 
-      <Text className="text-sm text-[#718096] mt-6 text-center">
+      <Text className="text-sm text-sky-600 mt-6 text-center">
         테스트를 건너뛰면 선택한 레벨을 기준으로 시작합니다.
       </Text>
     </View>

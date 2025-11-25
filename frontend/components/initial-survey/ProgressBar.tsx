@@ -13,9 +13,9 @@ export default function ProgressBar({
 
   return (
     <View className="mb-10">
-      <View className="h-1 bg-gray-200 rounded-full overflow-hidden">
+      <View className="h-1.5 bg-sky-200 rounded-full overflow-hidden shadow-sm">
         <View
-          className="h-full bg-[#6FA4D7] rounded-full"
+          className="h-full bg-sky-500 rounded-full"
           style={{ width: `${progress}%` }}
         />
       </View>

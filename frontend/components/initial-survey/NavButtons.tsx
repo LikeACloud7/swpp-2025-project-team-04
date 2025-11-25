@@ -18,20 +18,20 @@ export default function NavButtons({
   showBackButton = false,
 }: NavButtonsProps) {
   return (
-    <View className="flex-row gap-4 p-6 pb-10 bg-[#EBF4FB]">
+    <View className="flex-row gap-4 p-6 pb-10" style={{ backgroundColor: '#F0F9FF' }}>
       {showBackButton && onBack && (
         <TouchableOpacity
-          className="flex-1 p-5 rounded-2xl bg-white border-2 border-gray-200 items-center shadow-md"
+          className="flex-1 p-5 rounded-2xl bg-white border-2 border-sky-200 items-center shadow-md"
           onPress={onBack}
           activeOpacity={0.7}
         >
-          <Text className="text-[16px] text-gray-700 font-bold">
+          <Text className="text-[16px] text-slate-700 font-bold">
             {backLabel}
           </Text>
         </TouchableOpacity>
       )}
       <TouchableOpacity
-        className={`p-5 rounded-2xl bg-[#6FA4D7] items-center shadow-md ${!showBackButton ? 'flex-[2]' : 'flex-1'} ${!canProceed ? 'opacity-40' : ''}`}
+        className={`p-5 rounded-2xl bg-sky-500 items-center shadow-lg ${!showBackButton ? 'flex-[2]' : 'flex-1'} ${!canProceed ? 'opacity-40' : ''}`}
         onPress={onNext}
         disabled={!canProceed}
         activeOpacity={0.8}

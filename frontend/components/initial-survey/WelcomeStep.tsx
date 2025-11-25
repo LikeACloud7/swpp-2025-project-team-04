@@ -19,27 +19,27 @@ export default function WelcomeStep({
 }: WelcomeStepProps) {
   return (
     <View className="py-8">
-      <Text className="text-[36px] font-bold text-gray-900 mb-4 text-center leading-[44px]">
+      <Text className="text-[36px] font-extrabold text-sky-900 mb-4 text-center leading-[44px]">
         {title}
       </Text>
-      <Text className="text-lg text-gray-500 mb-4 text-center leading-[28px] px-2">
+      <Text className="text-lg text-sky-700 mb-6 text-center leading-[28px] px-2">
         {subtitle}
       </Text>
 
-      <View className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+      <View className="bg-white p-8 rounded-3xl shadow-lg border border-sky-100">
         {sections.map((section, index) => (
           <View key={index} className={index > 0 ? 'mt-8' : ''}>
             {section.heading && (
-              <Text className="text-[22px] font-bold text-gray-900 mb-5 leading-[30px]">
+              <Text className="text-[22px] font-bold text-slate-900 mb-5 leading-[30px]">
                 {section.heading}
               </Text>
             )}
-            <Text className="text-[16px] text-gray-600 leading-[26px] mb-5">
+            <Text className="text-[16px] text-slate-600 leading-[26px] mb-5">
               {section.content}
             </Text>
             {section.highlight && (
-              <View className="bg-[#EBF4FB] p-5 rounded-xl mt-2">
-                <Text className="text-[18px] font-semibold text-[#6FA4D7] leading-[28px] text-center">
+              <View className="bg-gradient-to-r from-sky-50 to-cyan-50 p-5 rounded-xl mt-2 border border-sky-200" style={{ backgroundColor: '#F0F9FF' }}>
+                <Text className="text-[18px] font-semibold text-sky-700 leading-[28px] text-center">
                   {section.highlight}
                 </Text>
               </View>
