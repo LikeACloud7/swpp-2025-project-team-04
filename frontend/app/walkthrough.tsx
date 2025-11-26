@@ -5,7 +5,6 @@ import {
   Dimensions,
   Easing,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from 'react-native';
@@ -14,7 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const DEVICE_WIDTH = Math.min(width - 96, 320);
+const DEVICE_WIDTH = Math.min(width - 120, 280);
 
 type FlowStep = {
   key: 'generate' | 'session' | 'vocab';
@@ -127,11 +126,11 @@ const AnimatedGradientBackground = () => {
 const HomePreview = ({ action }: { action: Animated.Value }) => {
   const pointerX = action.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0, 80, 0],
+    outputRange: [-6, 50, -6],
   });
   const pointerY = action.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0, 110, 0],
+    outputRange: [10, 90, 10],
   });
   const buttonScale = action.interpolate({
     inputRange: [0, 0.5, 1],
@@ -139,36 +138,51 @@ const HomePreview = ({ action }: { action: Animated.Value }) => {
   });
 
   const chips = [
-    { label: '🌎 여행', sub: 'Theme' },
-    { label: '💼 비즈니스', sub: 'Theme' },
-    { label: '🎧 집중', sub: 'Mood' },
-    { label: '🌅 차분', sub: 'Mood' },
+    { label: '여행', emoji: '🌎', type: 'Theme', badge: '관심 기반 추천' },
+    { label: '비즈니스', emoji: '💼', type: 'Theme' },
+    { label: '집중', emoji: '🎧', type: 'Mood' },
+    { label: '차분', emoji: '🌅', type: 'Mood' },
   ];
 
   return (
-    <View className="relative h-full rounded-[30px] bg-white px-5 py-6 shadow-lg shadow-black/20">
-      <Text className="text-sm font-semibold text-slate-500">관심 주제 선택</Text>
-      <Text className="mt-1 text-2xl font-bold text-slate-900">
-        Generate로 나만의 루틴
-      </Text>
-      <View className="mt-5 flex-row flex-wrap gap-3">
+    <View className="relative h-full rounded-[32px] bg-[#EBF4FB] px-5 py-6 shadow-lg shadow-black/20">
+      <View className="flex-row items-center justify-between">
+        <View>
+          <Text className="text-xs font-semibold uppercase tracking-[3px] text-slate-500">
+            관심 주제 선택
+          </Text>
+          <Text className="mt-1 text-2xl font-bold text-slate-900">
+            Generate로 나만의 루틴
+          </Text>
+        </View>
+        <View className="rounded-full bg-white px-3 py-1 shadow">
+          <Text className="text-[11px] font-semibold text-slate-500">
+            추천 새로고침
+          </Text>
+        </View>
+      </View>
+      <View className="mt-5 space-y-3">
         {chips.map((chip, idx) => (
           <View
             key={chip.label}
-            style={{
-              width: (DEVICE_WIDTH - 64) / 2,
-            }}
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+            className="flex-row items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm"
           >
-            <Text className="text-base font-semibold text-slate-800">
-              {chip.label}
-            </Text>
-            <Text className="text-[11px] text-slate-400">{chip.sub}</Text>
-            {idx === 0 && (
-              <Text className="mt-2 text-[11px] text-slate-400">
-                관심 기반 추천
+            <View>
+              <Text className="text-base font-semibold text-slate-900">
+                {chip.emoji} {chip.label}
               </Text>
-            )}
+              <Text className="text-[11px] text-slate-400">{chip.type}</Text>
+              {chip.badge ? (
+                <Text className="mt-1 text-[10px] text-slate-400">
+                  {chip.badge}
+                </Text>
+              ) : null}
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color="rgba(15,23,42,0.4)"
+            />
           </View>
         ))}
       </View>
@@ -200,7 +214,7 @@ const HomePreview = ({ action }: { action: Animated.Value }) => {
         style={{
           transform: [{ translateX: pointerX }, { translateY: pointerY }],
         }}
-        className="pointer-events-none absolute left-10 top-28 rounded-full border-2 border-sky-300 bg-white/80 p-2"
+        className="pointer-events-none absolute left-8 top-20 rounded-full border-2 border-sky-300 bg-white/80 p-2"
       >
         <Ionicons name="hand-left-outline" size={18} color="#0EA5E9" />
       </Animated.View>
@@ -215,57 +229,63 @@ const SessionPreview = ({ action }: { action: Animated.Value }) => {
   });
   const sliderProgress = action.interpolate({
     inputRange: [0, 1],
-    outputRange: ['35%', '75%'],
+    outputRange: ['25%', '80%'],
   });
 
   const scriptLines = [
-    'AI가 추천한 스피치를 따라가요.',
-    '하이라이트가 현재 문장을 보여줘요.',
-    '필요하면 되돌리고 다시 듣습니다.',
-    '단어는 길게 눌러 저장할 수 있어요.',
+    'Listening to authentic accents sharpens intuition.',
+    'Highlighted 문장이 현재 구간을 알려줘요.',
+    '필요한 부분은 살짝 되돌아가 다시 듣습니다.',
+    '모르는 단어는 길게 눌러 단어장으로 보냅니다.',
   ];
 
   return (
-    <View className="h-full rounded-[30px] bg-white px-5 py-6 shadow-lg shadow-black/20">
-      <Text className="text-sm font-semibold text-slate-500">세션 재생</Text>
-      <Text className="mt-1 text-2xl font-bold text-slate-900">
-        스크립트와 오디오 동시 진행
-      </Text>
-      <LinearGradient
-        colors={['#0C4A6E', '#0369A1']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        className="mt-5 rounded-3xl p-4"
-      >
+    <View className="h-full rounded-[32px] bg-[#031726] px-5 py-6 shadow-lg shadow-black/30">
+      <View className="flex-row items-center justify-between">
+        <View>
+          <Text className="text-xs font-semibold uppercase tracking-[3px] text-white/60">
+            세션 진행
+          </Text>
+          <Text className="mt-1 text-2xl font-bold text-white">
+            오디오 + 스크립트
+          </Text>
+        </View>
+        <View className="rounded-full bg-white/10 px-3 py-1">
+          <Text className="text-[11px] text-white/70">Focus 모드</Text>
+        </View>
+      </View>
+
+      <View className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4">
         <View className="flex-row items-center justify-between">
           <Text className="text-xs uppercase tracking-[3px] text-white/70">
-            focus mode
+            track 04
           </Text>
-          <Text className="text-xs text-white/80">03:42 / 12:10</Text>
+          <Text className="text-xs text-white/70">03:42 / 12:10</Text>
         </View>
-        <View className="mt-4 flex-row items-center justify-between">
-          <Ionicons name="play" size={28} color="#FFFFFF" />
-          <View className="flex-row items-center gap-3">
-            <Ionicons name="volume-high" size={22} color="#FFFFFF" />
-            <Ionicons name="repeat" size={22} color="#FFFFFF" />
-          </View>
-        </View>
-        <View className="mt-4 h-1.5 rounded-full bg-white/30">
+        <View className="mt-4 h-1.5 rounded-full bg-white/20">
           <Animated.View
             style={{ width: sliderProgress }}
             className="h-full rounded-full bg-white"
           />
         </View>
-      </LinearGradient>
-      <View className="mt-5 flex-1 rounded-3xl bg-slate-50 p-4">
-        <View className="relative overflow-hidden rounded-2xl bg-white">
+        <View className="mt-4 flex-row items-center justify-between">
+          <Ionicons name="play-back" size={26} color="#FFFFFF" />
+          <View className="rounded-full bg-white/10 p-3">
+            <Ionicons name="play" size={30} color="#FFFFFF" />
+          </View>
+          <Ionicons name="play-forward" size={26} color="#FFFFFF" />
+        </View>
+      </View>
+
+      <View className="mt-5 flex-1 rounded-3xl bg-white p-4">
+        <View className="relative overflow-hidden rounded-2xl bg-slate-50">
           <Animated.View
             style={{ transform: [{ translateY: highlightY }] }}
-            className="absolute left-0 right-0 h-12 bg-sky-100/70"
+            className="absolute left-0 right-0 h-12 bg-[#D2EBFF]"
           />
           {scriptLines.map((line) => (
             <View key={line} className="px-4 py-3">
-              <Text className="text-[13px] text-slate-600">{line}</Text>
+              <Text className="text-[13px] text-slate-700">{line}</Text>
             </View>
           ))}
         </View>
@@ -281,25 +301,25 @@ const VocabPreview = ({ action }: { action: Animated.Value }) => {
   });
   const cardTranslate = action.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [24, 0, 24],
+    outputRange: [30, 0, 30],
   });
-  const cardOpacity = action.interpolate({
+  const pointerTranslate = action.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0, 1, 0],
+    outputRange: [0, 35, 0],
   });
 
   return (
-    <View className="h-full rounded-[30px] bg-white px-5 py-6 shadow-lg shadow-black/20">
+    <View className="h-full rounded-[32px] bg-[#F5F7FB] px-5 py-6 shadow-lg shadow-black/20">
       <Text className="text-sm font-semibold text-slate-500">단어 저장</Text>
       <Text className="mt-1 text-2xl font-bold text-slate-900">
         길게 눌러 단어장에 추가
       </Text>
-      <View className="mt-5 flex-1 rounded-3xl bg-slate-50 p-4">
-        <View className="rounded-3xl bg-white p-4">
+      <View className="mt-5 flex-1 rounded-3xl bg-white p-4">
+        <View className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
           <Text className="text-xs uppercase tracking-[3px] text-slate-400">
             스크립트
           </Text>
-          <Text className="mt-3 text-[13px] text-slate-500 leading-6">
+          <Text className="mt-3 text-[13px] leading-6 text-slate-600">
             The speaker shares a{' '}
             <Animated.Text
               style={{ transform: [{ scale: highlightScale }] }}
@@ -307,22 +327,30 @@ const VocabPreview = ({ action }: { action: Animated.Value }) => {
             >
               breakthrough
             </Animated.Text>{' '}
-            moment from last week.
+            story from last week.
           </Text>
-          <Text className="mt-2 text-[13px] text-slate-400">
-            단어를 길게 눌러 바로 저장하세요.
+          <Text className="mt-2 text-[12px] text-slate-400">
+            단어를 길게 눌러 단어장에 저장하세요.
           </Text>
+          <Animated.View
+            style={{ transform: [{ translateY: pointerTranslate }] }}
+            className="pointer-events-none mt-4 self-end rounded-full border-2 border-sky-300 bg-white/80 p-2"
+          >
+            <Ionicons name="hand-left-outline" size={18} color="#0EA5E9" />
+          </Animated.View>
         </View>
         <Animated.View
           style={{
-            opacity: cardOpacity,
             transform: [{ translateY: cardTranslate }],
           }}
-          className="mt-5 rounded-[24px] bg-white p-4 shadow-lg shadow-black/10"
+          className="mt-5 rounded-[24px] border border-slate-100 bg-white p-4 shadow-xl shadow-black/10"
         >
-          <Text className="text-xs font-semibold uppercase tracking-[3px] text-slate-400">
-            단어장
-          </Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-xs font-semibold uppercase tracking-[3px] text-slate-400">
+              내 단어장
+            </Text>
+            <Ionicons name="bookmark" size={18} color="#0EA5E9" />
+          </View>
           <Text className="mt-2 text-2xl font-extrabold text-slate-900">
             breakthrough
           </Text>
@@ -364,7 +392,7 @@ const DevicePreview = ({
   return (
     <Animated.View
       style={{ transform: [{ scale: screenScale }] }}
-      className="mt-10 items-center justify-center"
+      className="mt-6 items-center justify-center"
     >
       <View
         style={{ width: DEVICE_WIDTH, height: DEVICE_WIDTH * 1.8 }}
@@ -383,7 +411,7 @@ const StepSelector = ({
   activeIndex: number;
   onSelect: (index: number) => void;
 }) => (
-  <View className="mt-8 flex-row flex-wrap justify-center gap-3">
+  <View className="mt-4 flex-row flex-wrap justify-center gap-3">
     {FLOW_STEPS.map((step, index) => {
       const isActive = index === activeIndex;
       if (isActive) {
@@ -472,59 +500,59 @@ export default function WalkthroughScreen() {
   return (
     <View className="flex-1 bg-black">
       <AnimatedGradientBackground />
-      <ScrollView
-        contentContainerStyle={{
-          paddingTop: top + 12,
-          paddingBottom: bottom + 32,
-        }}
+      <View
+        style={{ paddingTop: top + 12, paddingBottom: bottom + 16 }}
         className="flex-1 px-6"
-        showsVerticalScrollIndicator={false}
       >
         <Text className="text-3xl font-bold text-white">
           한눈에 보는 LingoFit 루틴
         </Text>
 
-        <DevicePreview
-          activeKey={FLOW_STEPS[activeStep].key}
-          actionAnim={actionAnim}
-          screenScale={screenScale}
-        />
+        <View className="mt-6 flex-1">
+          <DevicePreview
+            activeKey={FLOW_STEPS[activeStep].key}
+            actionAnim={actionAnim}
+            screenScale={screenScale}
+          />
 
-        <StepSelector activeIndex={activeStep} onSelect={setActiveStep} />
+          <View className="mt-6 flex-1 justify-between">
+            <View>
+              <StepSelector activeIndex={activeStep} onSelect={setActiveStep} />
 
-        <View className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-lg">
-          <Text className="text-sm font-semibold text-white/80">
-            {FLOW_STEPS[activeStep].title}
-          </Text>
-          <Text className="mt-2 text-base text-white/90">
-            {FLOW_STEPS[activeStep].caption}
-          </Text>
-          <Text className="mt-2 text-sm text-white/60">
-            {FLOW_STEPS[activeStep].hint}
-          </Text>
-        </View>
-
-        <View className="mt-6">
-          <LinearGradient
-            colors={['#0EA5E9', '#38BDF8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="rounded-3xl"
-          >
-            <Pressable
-              onPress={handleStart}
-              className="w-full items-center rounded-3xl px-4 py-4"
-            >
-              <View className="flex-row items-center justify-center gap-2">
-                <Text className="text-base font-semibold text-white">
-                  지금 바로 LingoFit 시작
+              <View className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-lg">
+                <Text className="text-sm font-semibold text-white/80">
+                  {FLOW_STEPS[activeStep].title}
                 </Text>
-                <Ionicons name="arrow-forward" size={18} color="#fff" />
+                <Text className="mt-2 text-base text-white/90">
+                  {FLOW_STEPS[activeStep].caption}
+                </Text>
+                <Text className="mt-2 text-sm text-white/60">
+                  {FLOW_STEPS[activeStep].hint}
+                </Text>
               </View>
-            </Pressable>
-          </LinearGradient>
+            </View>
+
+            <LinearGradient
+              colors={['#0EA5E9', '#38BDF8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="mt-5 rounded-3xl"
+            >
+              <Pressable
+                onPress={handleStart}
+                className="w-full items-center rounded-3xl px-4 py-4"
+              >
+                <View className="flex-row items-center justify-center gap-2">
+                  <Text className="text-base font-semibold text-white">
+                    지금 바로 LingoFit 시작
+                  </Text>
+                  <Ionicons name="arrow-forward" size={18} color="#fff" />
+                </View>
+              </Pressable>
+            </LinearGradient>
+          </View>
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 }
