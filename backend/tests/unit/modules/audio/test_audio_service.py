@@ -69,7 +69,7 @@ def _patch_audio_pipeline(monkeypatch, sqlite_session):
         records["record"] = record
         return record
 
-    def fake_update(db, content_id, audio_url, response_json):
+    def fake_update(db, content_id, audio_url, response_json, duration_seconds=None):
         records["updated"] = {"id": content_id, "audio_url": audio_url, "response": response_json}
         return SimpleNamespace(generated_content_id=content_id, audio_url=audio_url, response_json=response_json)
 
@@ -80,7 +80,7 @@ def _patch_audio_pipeline(monkeypatch, sqlite_session):
 
 def test_generate_full_audio_with_timestamps(monkeypatch, sqlite_session, fake_user):
     records = _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="calm", theme="ocean")
+    request = AudioGenerateRequest(style="calm", theme="ocean")
 
     response = asyncio.run(AudioService.generate_full_audio_with_timestamps(request, fake_user))
 
@@ -91,7 +91,7 @@ def test_generate_full_audio_with_timestamps(monkeypatch, sqlite_session, fake_u
 
 def test_generate_full_audio_streaming(monkeypatch, sqlite_session, fake_user):
     records = _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="energetic", theme="space")
+    request = AudioGenerateRequest(style="energetic", theme="space")
     ws = DummyWebSocket()
 
     asyncio.run(AudioService.generate_full_audio_streaming(request, fake_user, ws))
