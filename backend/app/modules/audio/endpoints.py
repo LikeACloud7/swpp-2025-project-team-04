@@ -237,7 +237,7 @@ async def websocket_generate_audio(websocket: WebSocket):
     1. 클라이언트 연결
     2. 클라이언트 -> 서버: {"type": "auth", "payload": {"token": "..."}}
     3. 서버 -> 클라이언트: {"type": "auth_success"} 또는 {"type": "error"}
-    4. 클라이언트 -> 서버: {"type": "generate_audio", "payload": {"mood": "...", "theme": "..."}}
+    4. 클라이언트 -> 서버: {"type": "generate_audio", "payload": {"style": "...", "theme": "..."}}
     5. 서버 -> 클라이언트: (반복) {"type": "status_update", "payload": {...}}
     6. 서버 -> 클라이언트: {"type": "generation_complete", "payload": {...}}
     7. 연결 종료

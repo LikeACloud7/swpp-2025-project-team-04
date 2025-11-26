@@ -6,7 +6,7 @@ class AudioGenerateRequest(BaseModel):
     """
     Request body for the /audio/generate endpoint.
     """
-    mood: str = Field(..., example="excited")
+    style: str = Field(..., example="podcast")
     theme: str = Field(..., example="sports")
 
 class SentenceTimestamp(BaseModel):
