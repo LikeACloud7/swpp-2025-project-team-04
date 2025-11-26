@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 class AudioGenerateRequest(BaseModel):
@@ -26,6 +26,14 @@ class FinalAudioResponse(BaseModel):
     audio_url: str
     sentences: List[SentenceTimestamp]
 
+
+class StoredAudioResponse(BaseModel):
+    """Stored response payload for history view (fields may be missing)."""
+    generated_content_id: Optional[int] = None
+    title: Optional[str] = None
+    audio_url: Optional[str] = None
+    sentences: Optional[List[SentenceTimestamp]] = None
+
 class GeneratedScriptResponse(BaseModel):
     """
     A temporary response model to show the output of Part 1.
@@ -44,9 +52,11 @@ class GeneratedContentListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     generated_content_id: int
+    user_id: int
     title: str
     audio_url: Optional[str] = None
     script_data: Optional[str] = None
+    sentences: Optional[List[SentenceTimestamp]] = None
     created_at: datetime
     updated_at: datetime
 
