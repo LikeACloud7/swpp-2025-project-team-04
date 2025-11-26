@@ -46,7 +46,8 @@ export default function InitialSurveyScreen() {
   const { mutate: updateInterests, isPending: isUpdateInterestsPending } =
     useUpdateInterests();
 
-  const isSubmitting = isLevelTestPending || isManualLevelPending || isUpdateInterestsPending;
+  const isSubmitting =
+    isLevelTestPending || isManualLevelPending || isUpdateInterestsPending;
 
   const handleNext = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) {
@@ -353,7 +354,10 @@ export default function InitialSurveyScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
       {isLastPage ? (
-        <ScrollView className="flex-1" contentContainerClassName="px-6 pb-4 pt-12">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-6 pb-4 pt-12"
+        >
           {currentStep > 0 && (
             <ProgressBar
               currentStep={currentStep}
@@ -364,11 +368,12 @@ export default function InitialSurveyScreen() {
         </ScrollView>
       ) : (
         <>
-          <View className="flex-1 px-6 justify-center">
-            {renderStep()}
-          </View>
+          <View className="flex-1 px-6 justify-center">{renderStep()}</View>
           {currentStep > 0 && (
-            <View className="absolute top-0 left-0 right-0 px-6 pt-12" style={{ pointerEvents: 'box-none' }}>
+            <View
+              className="absolute top-0 left-0 right-0 px-6 pt-12"
+              style={{ pointerEvents: 'box-none' }}
+            >
               <ProgressBar
                 currentStep={currentStep}
                 totalPages={TOTAL_SURVEY_PAGES}

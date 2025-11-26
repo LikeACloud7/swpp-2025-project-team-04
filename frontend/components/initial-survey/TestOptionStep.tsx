@@ -27,13 +27,13 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
           </Text>
         </View>
 
-          <View className="flex-row items-center justify-center rounded-xl py-2 px-3">
-            <Ionicons name="time-outline" size={16} color="#0EA5E9" />
-            <Text className="text-sm text-sky-700 font-semibold ml-1.5">
-              약 3분 소요
-            </Text>
-          </View>
+        <View className="flex-row items-center justify-center rounded-xl py-2 px-3">
+          <Ionicons name="time-outline" size={16} color="#0EA5E9" />
+          <Text className="text-sm text-sky-700 font-semibold ml-1.5">
+            약 3분 소요
+          </Text>
         </View>
+      </View>
       <View className="w-full gap-4 px-2">
         <TouchableOpacity
           onPress={() => handleSelect(false)}
@@ -69,7 +69,11 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1">
                   <View className="bg-slate-100 rounded-full p-2 mr-3">
-                    <Ionicons name="play-circle-outline" size={32} color="#64748b" />
+                    <Ionicons
+                      name="play-circle-outline"
+                      size={32}
+                      color="#64748b"
+                    />
                   </View>
                   <View className="flex-1">
                     <Text className="text-xl font-black text-slate-800 mb-0.5">
@@ -101,7 +105,11 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1">
                   <View className="bg-white/20 rounded-full p-2 mr-3">
-                    <Ionicons name="arrow-forward-circle" size={32} color="#fff" />
+                    <Ionicons
+                      name="arrow-forward-circle"
+                      size={32}
+                      color="#fff"
+                    />
                   </View>
                   <View className="flex-1">
                     <Text className="text-xl font-black text-white mb-0.5">
@@ -120,7 +128,11 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1">
                   <View className="bg-slate-100 rounded-full p-2 mr-3">
-                    <Ionicons name="arrow-forward-circle-outline" size={32} color="#64748b" />
+                    <Ionicons
+                      name="arrow-forward-circle-outline"
+                      size={32}
+                      color="#64748b"
+                    />
                   </View>
                   <View className="flex-1">
                     <Text className="text-xl font-black text-slate-800 mb-0.5">

@@ -4,10 +4,7 @@ import {
   type LevelTestResponse,
   type ManualLevelResponse,
 } from '@/api/initialSurvey';
-import {
-  updateInterests,
-  type UpdateInterestsResponse,
-} from '@/api/user';
+import { updateInterests, type UpdateInterestsResponse } from '@/api/user';
 import { useMutation } from '@tanstack/react-query';
 
 type SubmitLevelTestParams = {

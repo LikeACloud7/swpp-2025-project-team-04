@@ -41,7 +41,10 @@ export default function TopicGrid({
           end={{ x: 1, y: 0 }}
           className="px-5 py-3 border"
           style={{
-            borderColor: selectedTopics.length === maxSelections ? 'transparent' : '#E2E8F0'
+            borderColor:
+              selectedTopics.length === maxSelections
+                ? 'transparent'
+                : '#E2E8F0',
           }}
         >
           <Text
@@ -73,7 +76,8 @@ export default function TopicGrid({
           <View className="flex-row flex-wrap">
             {categoryData.topics.map((topic) => {
               const isSelected = selectedTopics.includes(topic.id);
-              const isDisabled = !isSelected && selectedTopics.length >= maxSelections;
+              const isDisabled =
+                !isSelected && selectedTopics.length >= maxSelections;
 
               return (
                 <View key={topic.id} className="mb-2.5 mr-2.5">

@@ -58,8 +58,15 @@ export default function NavButtons({
             end={{ x: 1, y: 0 }}
             className="flex-row items-center justify-center px-5 py-4"
           >
-            <Text className="text-[17px] text-white font-bold">{nextLabel}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" style={{ marginLeft: 4 }} />
+            <Text className="text-[17px] text-white font-bold">
+              {nextLabel}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#fff"
+              style={{ marginLeft: 4 }}
+            />
           </LinearGradient>
         </TouchableOpacity>
       )}

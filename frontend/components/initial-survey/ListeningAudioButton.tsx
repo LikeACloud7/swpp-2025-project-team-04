@@ -255,7 +255,7 @@ export default function ListeningAudioButton({
               className="h-full rounded-full"
               style={{
                 width: `${progress * 100}%`,
-                backgroundColor: '#0EA5E9'
+                backgroundColor: '#0EA5E9',
               }}
             />
           </View>
