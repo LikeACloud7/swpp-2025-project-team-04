@@ -1,4 +1,5 @@
 import { View, Text } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type ContentSection = {
   heading?: string;
@@ -18,31 +19,53 @@ export default function WelcomeStep({
   sections,
 }: WelcomeStepProps) {
   return (
-    <View className="py-8">
-      <Text className="text-[36px] font-extrabold text-sky-900 mb-4 text-center leading-[44px]">
-        {title}
-      </Text>
-      <Text className="text-lg text-sky-700 mb-6 text-center leading-[28px] px-2">
-        {subtitle}
-      </Text>
+    <View>
+      <View className="mb-6">
+        <Text className="text-[40px] font-black text-slate-900 mb-3 text-center leading-[48px] tracking-tight">
+          {title}
+        </Text>
+        <Text className="text-base text-slate-600 mb-2 text-center leading-[24px] px-4">
+          {subtitle}
+        </Text>
+      </View>
 
-      <View className="bg-white p-8 rounded-3xl shadow-lg border border-sky-100">
+      <View className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {sections.map((section, index) => (
-          <View key={index} className={index > 0 ? 'mt-8' : ''}>
-            {section.heading && (
-              <Text className="text-[22px] font-bold text-slate-900 mb-5 leading-[30px]">
-                {section.heading}
+          <View key={index}>
+            <View className="p-6">
+              {section.heading && (
+                <View className="flex-row items-center mb-4">
+                  <LinearGradient
+                    colors={['#0EA5E9', '#38BDF8'] as const}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="mr-3 h-6 w-1.5 rounded-full"
+                  />
+                  <Text className="text-xl font-extrabold text-slate-900 leading-[28px] tracking-tight">
+                    {section.heading}
+                  </Text>
+                </View>
+              )}
+              <Text className="text-[15px] text-slate-600 leading-[24px]">
+                {section.content}
               </Text>
-            )}
-            <Text className="text-[16px] text-slate-600 leading-[26px] mb-5">
-              {section.content}
-            </Text>
-            {section.highlight && (
-              <View className="bg-gradient-to-r from-sky-50 to-cyan-50 p-5 rounded-xl mt-2 border border-sky-200" style={{ backgroundColor: '#F0F9FF' }}>
-                <Text className="text-[18px] font-semibold text-sky-700 leading-[28px] text-center">
-                  {section.highlight}
-                </Text>
-              </View>
+              {section.highlight && (
+                <View className="mt-4 overflow-hidden rounded-2xl">
+                  <LinearGradient
+                    colors={['#E0F2FE', '#F0F9FF'] as const}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    className="p-4 border border-sky-200"
+                  >
+                    <Text className="text-base font-bold text-sky-700 leading-[24px] text-center">
+                      {section.highlight}
+                    </Text>
+                  </LinearGradient>
+                </View>
+              )}
+            </View>
+            {index < sections.length - 1 && (
+              <View className="h-[1px] bg-slate-100 mx-6" />
             )}
           </View>
         ))}

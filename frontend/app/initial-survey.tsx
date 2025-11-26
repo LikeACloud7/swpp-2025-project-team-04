@@ -206,7 +206,18 @@ export default function InitialSurveyScreen() {
           />
         );
       case 2:
-        return <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />;
+        return (
+          <TestOptionStep
+            onSelect={(skip) => {
+              setSkipTest(skip);
+              if (skip) {
+                setCurrentStep(8);
+              } else {
+                setCurrentStep(currentStep + 1);
+              }
+            }}
+          />
+        );
       case 3:
         return (
           <>
@@ -310,9 +321,9 @@ export default function InitialSurveyScreen() {
   const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
 
   return (
-    <View className="flex-1 bg-gradient-to-b from-sky-50 to-sky-100" style={{ backgroundColor: '#F0F9FF' }}>
+    <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
       {isLastPage ? (
-        <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
+        <ScrollView className="flex-1" contentContainerClassName="px-6 pb-4 pt-12">
           {currentStep > 0 && (
             <ProgressBar
               currentStep={currentStep}
@@ -322,22 +333,28 @@ export default function InitialSurveyScreen() {
           {renderStep()}
         </ScrollView>
       ) : (
-        <View className="flex-1 p-6 pt-16">
+        <>
+          <View className="flex-1 px-6 justify-center">
+            {renderStep()}
+          </View>
           {currentStep > 0 && (
-            <ProgressBar
-              currentStep={currentStep}
-              totalPages={TOTAL_SURVEY_PAGES}
-            />
+            <View className="absolute top-0 left-0 right-0 px-6 pt-12" style={{ pointerEvents: 'box-none' }}>
+              <ProgressBar
+                currentStep={currentStep}
+                totalPages={TOTAL_SURVEY_PAGES}
+              />
+            </View>
           )}
-          {renderStep()}
-        </View>
+        </>
       )}
+
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
         showBackButton={currentStep > 0}
         canProceed={canProceed()}
+        hideNextButton={currentStep === 2}
       />
     </View>
   );
