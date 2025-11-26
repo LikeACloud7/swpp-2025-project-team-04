@@ -60,7 +60,8 @@ export default function InitialSurveyScreen() {
       submitManualLevel(
         { levelId: userInput.proficiencyLevel },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            console.log('Manual level submitted successfully:', data);
             setCurrentStep(currentStep + 1);
           },
           onError: () => {
@@ -114,7 +115,10 @@ export default function InitialSurveyScreen() {
           ],
         },
         {
-          onSuccess: () => router.replace('/(main)'),
+          onSuccess: (data) => {
+            console.log('Level test submitted successfully:', data);
+            router.replace('/(main)');
+          },
           onError: () =>
             Alert.alert(
               '제출 실패',
