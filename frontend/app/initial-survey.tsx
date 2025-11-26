@@ -23,6 +23,7 @@ import { THEME_OPTIONS } from '@/constants/homeOptions';
 import {
   useSubmitLevelTest,
   useSubmitManualLevel,
+  useUpdateInterests,
 } from '@/hooks/mutations/useInitialSurveyMutations';
 
 export default function InitialSurveyScreen() {
@@ -42,8 +43,10 @@ export default function InitialSurveyScreen() {
     useSubmitLevelTest();
   const { mutate: submitManualLevel, isPending: isManualLevelPending } =
     useSubmitManualLevel();
+  const { mutate: updateInterests, isPending: isUpdateInterestsPending } =
+    useUpdateInterests();
 
-  const isSubmitting = isLevelTestPending || isManualLevelPending;
+  const isSubmitting = isLevelTestPending || isManualLevelPending || isUpdateInterestsPending;
 
   const handleNext = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) {
@@ -98,9 +101,32 @@ export default function InitialSurveyScreen() {
   const handleSubmit = () => {
     if (isSubmitting) return;
 
+    const submitInterestsAndNavigate = () => {
+      if (userInput.selectedTopics.length > 0) {
+        updateInterests(
+          { interests: userInput.selectedTopics },
+          {
+            onSuccess: (data) => {
+              console.log('Interests updated successfully:', data);
+              router.replace('/(main)');
+            },
+            onError: () => {
+              Alert.alert(
+                '제출 실패',
+                '관심사 저장에 실패했습니다. 다시 시도해주세요.',
+                [{ text: '확인' }],
+              );
+            },
+          },
+        );
+      } else {
+        router.replace('/(main)');
+      }
+    };
+
     if (skipTest === true) {
-      // 레벨은 이미 Step 1에서 제출했으므로, 바로 메인 화면으로 이동
-      router.replace('/(main)');
+      // 레벨은 이미 Step 1에서 제출했으므로, 관심사만 저장
+      submitInterestsAndNavigate();
     } else {
       // 레벨 테스트 제출
       submitLevelTest(
@@ -117,7 +143,7 @@ export default function InitialSurveyScreen() {
         {
           onSuccess: (data) => {
             console.log('Level test submitted successfully:', data);
-            router.replace('/(main)');
+            submitInterestsAndNavigate();
           },
           onError: () =>
             Alert.alert(
