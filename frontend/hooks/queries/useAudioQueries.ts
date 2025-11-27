@@ -2,7 +2,7 @@ import type { ApiError } from '@/api/client';
 import {
   getAudioHistory,
   type AudioHistoryResponse,
-} from '@/api/audio';
+} from '@/api/audioHistory';
 import { AUDIO_HISTORY_QUERY_KEY } from '@/constants/queryKeys';
 import { useInfiniteQuery } from '@tanstack/react-query';
 

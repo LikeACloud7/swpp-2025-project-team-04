@@ -9,7 +9,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAudioHistory } from '@/hooks/queries/useAudioQueries';
 import { useRouter } from 'expo-router';
-import type { AudioHistoryItem, AudioGenerationResponse } from '@/api/audio';
+import type { AudioHistoryItem } from '@/api/audioHistory';
+import type { AudioGenerationResponse } from '@/api/audio';
 import { useQueryClient } from '@tanstack/react-query';
 import TrackPlayer from 'react-native-track-player';
 import { useFocusEffect } from '@react-navigation/native';
