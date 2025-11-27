@@ -13,7 +13,7 @@ describe('audio API', () => {
   describe('generateAudio', () => {
     it('오디오 생성 성공', async () => {
       const payload = {
-        mood: 'happy',
+        style: 'happy',
         theme: 'technology',
       };
 
@@ -41,7 +41,7 @@ describe('audio API', () => {
 
     it('빈 문장 배열로 응답', async () => {
       const payload = {
-        mood: 'calm',
+        style: 'calm',
         theme: 'nature',
       };
 
@@ -61,7 +61,7 @@ describe('audio API', () => {
 
     it('오디오 생성 실패', async () => {
       const payload = {
-        mood: 'sad',
+        style: 'sad',
         theme: 'music',
       };
 
@@ -75,7 +75,7 @@ describe('audio API', () => {
 
     it('잘못된 파라미터로 요청', async () => {
       const payload = {
-        mood: '',
+        style: '',
         theme: '',
       };
 

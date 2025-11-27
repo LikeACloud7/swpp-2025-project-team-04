@@ -6,3 +6,22 @@ export const getMe = async (): Promise<User> => {
     method: 'GET',
   });
 };
+
+export type UpdateInterestsPayload = {
+  interests: string[];
+};
+
+export type UpdateInterestsResponse = {
+  interests: string[];
+};
+
+export const updateInterests = async (
+  interests: string[],
+): Promise<UpdateInterestsResponse> => {
+  const payload: UpdateInterestsPayload = { interests };
+
+  return customFetch<UpdateInterestsResponse>('/user/me/interests', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+};

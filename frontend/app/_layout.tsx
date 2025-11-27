@@ -1,10 +1,11 @@
 // app/_layout.tsx
 import '@/global.css';
+import CustomSplashScreen from '@/components/SplashScreen';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import 'react-native-reanimated';
 export { ErrorBoundary } from 'expo-router';
@@ -111,28 +112,18 @@ function RootNavigation() {
     };
   }, [router]);
 
-  useEffect(() => {
-    let didHide = false;
-    if (!isAuthLoading) {
-      const start = Date.now();
-      const hide = async () => {
-        const elapsed = Date.now() - start;
-        const remaining = Math.max(0, 1000 - elapsed);
-        setTimeout(async () => {
-          if (!didHide) {
-            await SplashScreen.hideAsync();
-            didHide = true;
-          }
-        }, remaining);
-      };
-      hide();
-    }
-    return () => {
-      didHide = true;
-    };
-  }, [isAuthLoading]);
+  const [isSplashAnimationFinished, setIsSplashAnimationFinished] = useState(false);
 
-  if (isAuthLoading) return null;
+  const showSplash = isAuthLoading || !isSplashAnimationFinished;
+
+  if (showSplash) {
+    return (
+      <CustomSplashScreen
+        isReady={!isAuthLoading}
+        onAnimationComplete={() => setIsSplashAnimationFinished(true)}
+      />
+    );
+  }
 
   return (
     <Stack>

@@ -3,7 +3,7 @@ import { customFetch } from './client';
 // --- Types ---
 
 export type AudioGenerationPayload = {
-  mood: string;
+  style: string;
   theme: string;
 };
 
