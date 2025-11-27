@@ -1,5 +1,5 @@
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
-import { MOOD_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
+import { STYLE_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -26,47 +26,49 @@ export default function HomeScreen() {
   const { data: user, isLoading: isUserLoading } = useUser();
 
   // --- 타입 & 유틸
-  type TopicKey = keyof typeof THEME_OPTIONS;
-  type MoodKey = keyof typeof MOOD_OPTIONS;
+  type ThemeKey = keyof typeof THEME_OPTIONS;
+  type StyleKey = keyof typeof STYLE_OPTIONS;
 
   const THEME_KEYS = useMemo(
-    () => Object.keys(THEME_OPTIONS) as TopicKey[],
+    () => Object.keys(THEME_OPTIONS) as ThemeKey[],
     [],
   );
-  const MOOD_KEYS = useMemo(() => Object.keys(MOOD_OPTIONS) as MoodKey[], []);
+  const STYLE_KEYS = useMemo(
+    () => Object.keys(STYLE_OPTIONS) as StyleKey[],
+    [],
+  );
 
-  const toThemeDisplay = (k: TopicKey) =>
+  const toThemeDisplay = (k: ThemeKey) =>
     `${THEME_OPTIONS[k].emoji} ${THEME_OPTIONS[k].label}`;
-  const toMoodDisplay = (k: MoodKey) =>
-    `${MOOD_OPTIONS[k].emoji} ${MOOD_OPTIONS[k].label}`;
+  const toStyleDisplay = (k: StyleKey) =>
+    `${STYLE_OPTIONS[k].emoji} ${STYLE_OPTIONS[k].label}`;
 
   // display → key 역매핑 레코드
   const themeDisplayToKey = useMemo(
     () =>
       Object.fromEntries(
         THEME_KEYS.map((k) => [toThemeDisplay(k), k]),
-      ) as Record<string, TopicKey>,
+      ) as Record<string, ThemeKey>,
     [THEME_KEYS],
   );
-  const moodDisplayToKey = useMemo(
+  const StyleDisplayToKey = useMemo(
     () =>
-      Object.fromEntries(MOOD_KEYS.map((k) => [toMoodDisplay(k), k])) as Record<
-        string,
-        MoodKey
-      >,
-    [MOOD_KEYS],
+      Object.fromEntries(
+        STYLE_KEYS.map((k) => [toStyleDisplay(k), k]),
+      ) as Record<string, StyleKey>,
+    [STYLE_KEYS],
   );
 
   // --- 주제(Theme) 관리: 키 기반
-  const [selectedTheme, setSelectedTheme] = useState<TopicKey | null>(null);
-  const [displayedThemes, setDisplayedThemes] = useState<TopicKey[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeKey | null>(null);
+  const [displayedThemes, setDisplayedThemes] = useState<ThemeKey[]>([]);
 
   // 유저 관심사가 있다면 우선 채우고, 모자라면 랜덤 보충
-  const generateDisplayedThemes = useCallback((): TopicKey[] => {
+  const generateDisplayedThemes = useCallback((): ThemeKey[] => {
     const TOTAL = 5;
 
     // user?.interests 가 TopicKey[] 라고 가정 (아니라면 매핑 로직 추가 필요)
-    const userInterests = (user?.interests ?? []) as TopicKey[];
+    const userInterests = (user?.interests ?? []) as ThemeKey[];
 
     // 유효한 키만 추림
     const validInterests = userInterests.filter((k) => THEME_KEYS.includes(k));
@@ -85,24 +87,23 @@ export default function HomeScreen() {
     ];
   }, [user, THEME_KEYS]);
 
-  // --- 분위기(Mood) 관리: 키 기반
-  const [selectedMood, setSelectedMood] = useState<MoodKey | null>(null);
-  const [displayedMoods, setDisplayedMoods] = useState<MoodKey[]>(() => {
-    const shuffled = [...MOOD_KEYS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(5, MOOD_KEYS.length));
+  const [selectedStyle, setSelectedStyle] = useState<StyleKey | null>(null);
+  const [displayedStyles, setDisplayedStyles] = useState<StyleKey[]>(() => {
+    const shuffled = [...STYLE_KEYS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, STYLE_KEYS.length));
   });
 
-  const generateDisplayedMoods = useCallback((): MoodKey[] => {
-    const shuffled = [...MOOD_KEYS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(5, MOOD_KEYS.length));
+  const generateDisplayedStyles = useCallback((): StyleKey[] => {
+    const shuffled = [...STYLE_KEYS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(5, STYLE_KEYS.length));
   }, []);
 
   // --- 화면 복귀 시 한 번에 갱신
   useFocusEffect(
     useCallback(() => {
       setDisplayedThemes(generateDisplayedThemes());
-      setDisplayedMoods(generateDisplayedMoods());
-    }, [generateDisplayedThemes, generateDisplayedMoods]),
+      setDisplayedStyles(generateDisplayedStyles());
+    }, [generateDisplayedThemes, generateDisplayedStyles]),
   );
 
   // 오디오 API 훅
@@ -110,20 +111,22 @@ export default function HomeScreen() {
 
   // 하단 안내 문구
   const focusMessage = useMemo(() => {
-    const moodLabel = selectedMood ? MOOD_OPTIONS[selectedMood].label : null;
+    const StyleLabel = selectedStyle
+      ? STYLE_OPTIONS[selectedStyle].label
+      : null;
     const themeLabel = selectedTheme
       ? THEME_OPTIONS[selectedTheme].label
       : null;
 
-    if (!selectedTheme && !selectedMood) {
+    if (!selectedTheme && !selectedStyle) {
       return (
         <Text className="text-base leading-7 text-slate-600">
-          주제와 분위기를 선택해주세요.
+          주제와 스타일를 선택해주세요.
         </Text>
       );
     }
 
-    if (!selectedMood) {
+    if (!selectedStyle) {
       return (
         <Text className="text-base leading-7 text-slate-600">
           <Text className="font-bold text-slate-900">{themeLabel}</Text> 주제로
@@ -135,8 +138,8 @@ export default function HomeScreen() {
     if (!selectedTheme) {
       return (
         <Text className="text-base leading-7 text-slate-600">
-          <Text className="font-bold text-slate-900">{moodLabel}</Text> 분위기로
-          듣고싶어요.
+          <Text className="font-bold text-slate-900">{StyleLabel}</Text>{' '}
+          스타일로 듣고싶어요.
         </Text>
       );
     }
@@ -144,31 +147,31 @@ export default function HomeScreen() {
     return (
       <Text className="text-base leading-7 text-slate-600">
         <Text className="font-bold text-slate-900">{themeLabel}</Text> 주제와{' '}
-        <Text className="font-bold text-slate-900">{moodLabel}</Text> 분위기로
+        <Text className="font-bold text-slate-900">{StyleLabel}</Text> 스타일로
         듣고싶어요.
       </Text>
     );
-  }, [selectedTheme, selectedMood]);
+  }, [selectedTheme, selectedStyle]);
 
-  // Theme 및 Mood 선택 비우기
+  // Theme 및 Style 선택 비우기
   useFocusEffect(
     useCallback(() => {
       return () => {
         setSelectedTheme(null);
-        setSelectedMood(null);
+        setSelectedStyle(null);
       };
     }, []),
   );
 
   // 오디오 생성 핸들러
   const handleGenerateAudio = () => {
-    if (!selectedTheme || !selectedMood) {
+    if (!selectedTheme || !selectedStyle) {
       console.warn('테마와 스타일을 모두 선택하세요.');
       return;
     }
 
     audioMutate(
-      { style: selectedMood, theme: selectedTheme },
+      { style: selectedStyle, theme: selectedTheme },
       {
         onSuccess: async (data) => {
           try {
@@ -266,12 +269,12 @@ export default function HomeScreen() {
         <Text className="my-3 text-[15px] leading-6 text-slate-600">
           아래에서 듣고 싶은{' '}
           <Text className="font-semibold text-slate-800">주제</Text>와{' '}
-          <Text className="font-semibold text-slate-800">분위기</Text>를 고르면
+          <Text className="font-semibold text-slate-800">스타일</Text>를 고르면
           맞춤 오디오를 만들어드릴게요.
         </Text>
       </View>
 
-      {/* 주제 & 분위기 선택 칩 카드 */}
+      {/* 주제 & 스타일 선택 칩 카드 */}
       <View className="mb-5 rounded-3xl border border-slate-100 bg-white shadow-sm">
         {/* 주제 */}
         <View className="p-4 pb-2">
@@ -290,14 +293,16 @@ export default function HomeScreen() {
         {/* 구분선 */}
         <View className="h-[1px] bg-sky-100 mb-5" />
 
-        {/* 분위기 */}
+        {/* 스타일 */}
         <View className="p-4 pt-2">
           <ChipSelectorGroup
-            title="분위기"
-            chips={displayedMoods.map(toMoodDisplay)}
-            value={selectedMood ? toMoodDisplay(selectedMood) : null}
+            title="스타일"
+            chips={displayedStyles.map(toStyleDisplay)}
+            value={selectedStyle ? toStyleDisplay(selectedStyle) : null}
             onSelectionChange={(value) =>
-              setSelectedMood(value ? (moodDisplayToKey[value] ?? null) : null)
+              setSelectedStyle(
+                value ? (StyleDisplayToKey[value] ?? null) : null,
+              )
             }
           />
         </View>
@@ -322,7 +327,7 @@ export default function HomeScreen() {
           title="나만의 오디오 만들기"
           icon="musical-notes"
           loading={isAudioLoading}
-          disabled={!selectedTheme || !selectedMood}
+          disabled={!selectedTheme || !selectedStyle}
           onPress={handleGenerateAudio}
         />
       </View>
