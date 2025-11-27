@@ -90,7 +90,7 @@ function RootNavigation() {
         try {
           const activeTrack = await TrackPlayer.getActiveTrack();
           if (activeTrack?.id) {
-            router.push(`/audioPlayer/${activeTrack.id}`);
+            router.replace(`/audioPlayer/${activeTrack.id}`);
           }
         } catch (error) {
           console.error('Error getting active track:', error);

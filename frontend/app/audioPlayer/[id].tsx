@@ -80,12 +80,12 @@ export default function AudioPlayer() {
       vocab_save_cnt: behaviorLogs.vocabSaveCount.toString(),
     };
 
-    router.push({ pathname: '/feedback', params });
+    router.replace({ pathname: '/feedback', params });
   }, [router, stopAndCleanup, data, behaviorLogs]);
 
   const goBackToHistory = useCallback(async () => {
     await stopAndCleanup();
-    router.push('/(main)/history');
+    router.replace('/(main)/history');
   }, [router, stopAndCleanup]);
 
   // ✅ 마운트 시 자동 재생

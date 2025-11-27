@@ -129,7 +129,7 @@ export default function LoginScreen() {
             {/* 하단 링크 (유지) */}
             <View className="mt-8">
               <Pressable
-                onPress={() => router.push('/signup')}
+                onPress={() => router.replace('/signup')}
                 disabled={loginMutation.isPending}
                 android_ripple={{
                   color: 'rgba(255,255,255,0.25)',
