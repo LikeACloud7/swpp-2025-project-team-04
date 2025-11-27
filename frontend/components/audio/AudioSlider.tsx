@@ -14,7 +14,7 @@ export default function AudioSlider() {
   const { position, duration } = useProgress(100);
 
   return (
-    <View className="mt-1">
+    <View className="px-4 pb-3">
       {/* 슬라이더 */}
       <Slider
         style={{ width: '100%', height: 36 }}
@@ -30,12 +30,12 @@ export default function AudioSlider() {
         disabled={!duration}
       />
 
-      {/* 시간: 슬라이더 바로 아래쪽, 양쪽 끝에서 살짝 안쪽으로 */}
-      <View className="-mt-2 flex-row justify-between px-[15px]">
-        <Text className="text-[12px] font-semibold text-white/70">
+      {/* 시간 (M:S) */}
+      <View className="-mt-2 flex-row justify-between px-5">
+        <Text className="font-semibold text-white/70">
           {formatTime(position)}
         </Text>
-        <Text className="text-[12px] font-semibold text-white/70">
+        <Text className="font-semibold text-white/70">
           {formatTime(duration)}
         </Text>
       </View>
