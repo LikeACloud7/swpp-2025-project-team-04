@@ -297,30 +297,71 @@ const VocabPreview = ({ action }: { action: Animated.Value }) => {
         길게 눌러 단어장에 추가
       </Text>
       <View className="mt-5 flex-1 rounded-3xl bg-white p-4">
-        <View className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
-          <Text className="text-xs uppercase tracking-[3px] text-slate-400">
-            스크립트
+        <LinearGradient
+          colors={['#0A4D94', '#0A72C6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="rounded-3xl border border-slate-100 p-4"
+        >
+          <Text className="text-xs uppercase tracking-[3px] text-white/70">
+            세션 스크립트
           </Text>
-          <Text className="mt-3 text-[13px] leading-6 text-slate-600">
+          <Text className="mt-3 text-[13px] leading-6 text-white/90">
             When the{' '}
             <Animated.Text
               style={{ transform: [{ scale: highlightScale }] }}
-              className="rounded-lg bg-sky-100 px-1 text-[13px] font-semibold text-sky-700"
+              className="rounded-lg bg-white/30 px-1 text-[13px] font-semibold text-white"
             >
               jar
             </Animated.Text>{' '}
             is full, you have saved a nice amount.
           </Text>
-          <Text className="mt-2 text-[12px] text-slate-400">
+          <Text className="mt-2 text-[12px] text-white/70">
             단어를 길게 눌러 단어장에 저장하세요.
           </Text>
           <Animated.View
             style={{ transform: [{ translateY: pointerTranslate }] }}
-            className="pointer-events-none mt-4 self-end rounded-full border-2 border-sky-300 bg-white/80 p-2"
+            className="pointer-events-none mt-4 self-start rounded-full border-2 border-white/50 bg-white/80 p-2"
           >
             <Ionicons name="hand-left-outline" size={18} color="#0EA5E9" />
           </Animated.View>
-        </View>
+          <Animated.View
+            style={{
+              opacity: action.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [0, 1, 0],
+              }),
+              transform: [
+                {
+                  translateY: action.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0, -10, 0],
+                  }),
+                },
+              ],
+            }}
+            className="pointer-events-none absolute left-10 top-16 rounded-2xl bg-white px-3 py-2 shadow"
+          >
+            <Text className="text-xs font-semibold text-slate-900">jar</Text>
+            <Text className="text-[11px] text-slate-500">단지</Text>
+          </Animated.View>
+        </LinearGradient>
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateY: action.interpolate({
+                  inputRange: [0, 0.5, 1],
+                  outputRange: [0, 10, 0],
+                }),
+              },
+            ],
+          }}
+          className="mt-4 items-center"
+        >
+          <Ionicons name="arrow-down-circle" size={28} color="#0EA5E9" />
+          <Text className="mt-1 text-xs text-slate-500">단어장으로 저장</Text>
+        </Animated.View>
         <Animated.View
           style={{
             transform: [{ translateY: cardTranslate }],
