@@ -82,7 +82,7 @@ describe('useUserQueries', () => {
         nickname: 'Test User',
       };
 
-      queryClient.setQueryData(USER_QUERY_KEY, mockUser);
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
 
       const { result } = renderHook(() => useUser(), {
         wrapper: createWrapper(),

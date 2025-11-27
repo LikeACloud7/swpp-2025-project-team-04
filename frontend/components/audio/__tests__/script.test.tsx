@@ -16,6 +16,13 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
 }));
 
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn((callback) => {
+    const cleanup = callback();
+    return cleanup;
+  }),
+}));
+
 jest.mock('../Word', () => {
   const { Text, Pressable } = require('react-native');
   return function MockWord({ text, onPress, onLongPress }: any) {

@@ -89,7 +89,7 @@ describe('useAuthMutations', () => {
   describe('useChangePassword', () => {
     it('비밀번호 변경 성공 시 사용자 캐시 유지', async () => {
       const mockUser = { id: 1, username: 'testuser' } as User;
-      queryClient.setQueryData(USER_QUERY_KEY, mockUser);
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
 
       const mockResponse = { message: 'Password changed successfully' };
       (authAPI.changePassword as jest.Mock).mockResolvedValue(mockResponse);
@@ -111,12 +111,12 @@ describe('useAuthMutations', () => {
       expect((authAPI.changePassword as jest.Mock).mock.calls[0][0]).toEqual(
         passwordData,
       );
-      expect(queryClient.getQueryData(USER_QUERY_KEY)).toEqual(mockUser);
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
     });
 
     it('비밀번호 변경 실패 시 사용자 캐시 복원', async () => {
       const mockUser = { id: 1, username: 'testuser' } as User;
-      queryClient.setQueryData(USER_QUERY_KEY, mockUser);
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
 
       const error = new Error('Current password is incorrect');
       (authAPI.changePassword as jest.Mock).mockRejectedValue(error);
@@ -132,14 +132,14 @@ describe('useAuthMutations', () => {
 
       await waitFor(() => expect(result.current.isError).toBe(true));
 
-      expect(queryClient.getQueryData(USER_QUERY_KEY)).toEqual(mockUser);
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
     });
   });
 
   describe('useDeleteAccount', () => {
     it('계정 삭제 성공 시 사용자 캐시 제거', async () => {
       const mockUser = { id: 1, username: 'testuser' } as User;
-      queryClient.setQueryData(USER_QUERY_KEY, mockUser);
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
 
       const mockResponse = { message: 'Account deleted successfully' };
       (authAPI.deleteAccount as jest.Mock).mockResolvedValue(mockResponse);
@@ -153,7 +153,7 @@ describe('useAuthMutations', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(authAPI.deleteAccount).toHaveBeenCalled();
-      expect(queryClient.getQueryData(USER_QUERY_KEY)).toBeNull();
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toBeNull();
     });
 
     it('계정 삭제 실패 시 에러 처리', async () => {

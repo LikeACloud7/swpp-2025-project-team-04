@@ -194,6 +194,8 @@ export default function Script({
       width: Number.isFinite(layout.width) ? layout.width : 0,
       height: Number.isFinite(layout.height) ? layout.height : 0,
     });
+
+    onVocabLookup?.();
   };
 
   // 4. 단어장에 추가할 단어 관리
@@ -255,7 +257,8 @@ export default function Script({
   }: ListRenderItemInfo<Sentence>) => {
     const isHighlighted = lineIndex === currentLineIndex;
     const startTime = Number.parseFloat(item.start_time) || 0;
-    const words = item.text?.trim()?.split(/\s+/) ?? ['...'];
+    const trimmedText = item.text?.trim();
+    const words = trimmedText && trimmedText.length > 0 ? trimmedText.split(/\s+/) : ['...'];
 
     return (
       <Pressable

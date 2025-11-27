@@ -55,7 +55,7 @@ describe('useVocabMutations', () => {
     it('단어 추가 성공 시 통계 쿼리 무효화', async () => {
       (vocabAPI.addVocab as jest.Mock).mockResolvedValue(undefined);
 
-      queryClient.setQueryData(STATS_QUERY_KEY, {
+      queryClient.setQueryData([STATS_QUERY_KEY], {
         totalWords: 10,
         studiedToday: 5,
       });
@@ -75,7 +75,7 @@ describe('useVocabMutations', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: STATS_QUERY_KEY,
+        queryKey: [STATS_QUERY_KEY],
       });
     });
 
