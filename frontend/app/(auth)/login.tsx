@@ -1,4 +1,3 @@
-// screens/LoginScreen.tsx
 import { useLogin } from '@/hooks/mutations/useAuthMutations';
 import { validatePassword, validateUsername } from '@/utils/authValidation';
 import { useRouter } from 'expo-router';
