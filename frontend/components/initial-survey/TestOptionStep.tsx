@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 interface TestOptionStepProps {
   onSelect: (skipTest: boolean) => void;
@@ -14,56 +16,139 @@ export default function TestOptionStep({ onSelect }: TestOptionStepProps) {
   };
 
   return (
-    <View className="flex-1 justify-center px-6 pb-8">
-      <View className="items-center mb-8">
-        <Text className="text-3xl font-bold text-[#2E5077] mb-4 text-center">
-          듣기 테스트를 진행할까요?
-        </Text>
-        <Text className="text-base text-[#4A5568] text-center leading-6">
-          더 정확한 레벨 측정을 위해 짧은 듣기 테스트를 권장합니다.{'\n'}
-          (약 5분 소요)
-        </Text>
-      </View>
+    <View className="px-4">
+      <View className="items-center mb-10">
+        <View className="mb-6 items-center">
+          <View className="bg-sky-50 rounded-full p-4 mb-4 border border-sky-100">
+            <Ionicons name="headset" size={48} color="#0EA5E9" />
+          </View>
+          <Text className="text-[34px] font-black text-slate-900 text-center leading-[42px] tracking-tight">
+            듣기 테스트를{'\n'}진행할까요?
+          </Text>
+        </View>
 
-      <View className="w-full gap-4">
+        <View className="flex-row items-center justify-center rounded-xl py-2 px-3">
+          <Ionicons name="time-outline" size={16} color="#0EA5E9" />
+          <Text className="text-sm text-sky-700 font-semibold ml-1.5">
+            약 3분 소요
+          </Text>
+        </View>
+      </View>
+      <View className="w-full gap-4 px-2">
         <TouchableOpacity
           onPress={() => handleSelect(false)}
-          className={`w-full py-4 rounded-2xl shadow-sm active:opacity-80 ${
-            selected === false
-              ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
-              : 'bg-white border-2 border-[#D1D5DB]'
-          }`}
+          activeOpacity={0.8}
+          className="overflow-hidden rounded-3xl shadow-lg"
         >
-          <Text
-            className={`text-lg font-semibold text-center ${
-              selected === false ? 'text-white' : 'text-[#4A5568]'
-            }`}
-          >
-            테스트 진행하기
-          </Text>
+          {selected === false ? (
+            <LinearGradient
+              colors={['#0EA5E9', '#38BDF8'] as const}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-6 py-6"
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="bg-white/20 rounded-full p-2 mr-3">
+                    <Ionicons name="play-circle" size={32} color="#fff" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xl font-black text-white mb-0.5">
+                      테스트 진행하기
+                    </Text>
+                    <Text className="text-sm text-sky-50 font-medium">
+                      정확한 실력 측정
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#fff" />
+              </View>
+            </LinearGradient>
+          ) : (
+            <View className="px-6 py-6 bg-white border-2 border-slate-200 rounded-3xl">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="bg-slate-100 rounded-full p-2 mr-3">
+                    <Ionicons
+                      name="play-circle-outline"
+                      size={32}
+                      color="#64748b"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xl font-black text-slate-800 mb-0.5">
+                      테스트 진행하기
+                    </Text>
+                    <Text className="text-sm text-slate-500 font-medium">
+                      정확한 실력 측정
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#cbd5e1" />
+              </View>
+            </View>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => handleSelect(true)}
-          className={`w-full py-4 rounded-2xl shadow-sm active:opacity-80 ${
-            selected === true
-              ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
-              : 'bg-white border-2 border-[#D1D5DB]'
-          }`}
+          activeOpacity={0.8}
+          className="overflow-hidden rounded-3xl shadow-lg"
         >
-          <Text
-            className={`text-lg font-semibold text-center ${
-              selected === true ? 'text-white' : 'text-[#4A5568]'
-            }`}
-          >
-            건너뛰기
-          </Text>
+          {selected === true ? (
+            <LinearGradient
+              colors={['#0EA5E9', '#38BDF8'] as const}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="px-6 py-6"
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="bg-white/20 rounded-full p-2 mr-3">
+                    <Ionicons
+                      name="arrow-forward-circle"
+                      size={32}
+                      color="#fff"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xl font-black text-white mb-0.5">
+                      건너뛰기
+                    </Text>
+                    <Text className="text-sm text-sky-50 font-medium">
+                      바로 시작하기
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#fff" />
+              </View>
+            </LinearGradient>
+          ) : (
+            <View className="px-6 py-6 bg-white border-2 border-slate-200 rounded-3xl">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center flex-1">
+                  <View className="bg-slate-100 rounded-full p-2 mr-3">
+                    <Ionicons
+                      name="arrow-forward-circle-outline"
+                      size={32}
+                      color="#64748b"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xl font-black text-slate-800 mb-0.5">
+                      건너뛰기
+                    </Text>
+                    <Text className="text-sm text-slate-500 font-medium">
+                      바로 시작하기
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#cbd5e1" />
+              </View>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
-
-      <Text className="text-sm text-[#718096] mt-6 text-center">
-        테스트를 건너뛰면 선택한 레벨을 기준으로 시작합니다.
-      </Text>
     </View>
   );
 }
