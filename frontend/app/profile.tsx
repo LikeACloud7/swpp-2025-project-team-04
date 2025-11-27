@@ -359,7 +359,7 @@ export default function ProfileScreen() {
           visible
           title={content.title}
           onClose={closeModal}
-          primaryLabel="OK"
+          primaryLabel="확인"
           onPrimary={closeModal}
         >
           {content.body.map((paragraph, index) => (
@@ -523,7 +523,7 @@ export default function ProfileScreen() {
           onClose={closeModal}
           primaryLabel="로그아웃"
           onPrimary={handleLogoutConfirm}
-          secondaryLabel="Cancel"
+          secondaryLabel="취소"
           onSecondary={closeModal}
           isPrimaryLoading={isLogoutProcessing}
           isSecondaryDisabled={isLogoutProcessing}
@@ -547,7 +547,7 @@ export default function ProfileScreen() {
           onPrimary={handleDeleteAccountConfirm}
           primaryVariant="danger"
           isPrimaryLoading={deleteAccountMutation.isPending}
-          secondaryLabel="Cancel"
+          secondaryLabel="취소"
           onSecondary={closeModal}
           isSecondaryDisabled={deleteAccountMutation.isPending}
           disableBackdropClose={deleteAccountMutation.isPending}
@@ -613,7 +613,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Account
+            계정
           </Text>
           <ActionRow
             className="mb-3"
@@ -643,7 +643,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Privacy & Security
+            개인정보 및 보안
           </Text>
           <ActionRow
             iconName="shield-checkmark-outline"
@@ -655,7 +655,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Help & Support
+            도움말 및 지원
           </Text>
           <ActionRow
             iconName="chatbubbles-outline"
@@ -667,7 +667,7 @@ export default function ProfileScreen() {
 
         <View>
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            About
+            정보
           </Text>
           <ActionRow
             iconName="information-circle-outline"
