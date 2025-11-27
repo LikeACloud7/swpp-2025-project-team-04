@@ -23,6 +23,7 @@ import { THEME_OPTIONS } from '@/constants/homeOptions';
 import {
   useSubmitLevelTest,
   useSubmitManualLevel,
+  useUpdateInterests,
 } from '@/hooks/mutations/useInitialSurveyMutations';
 
 export default function InitialSurveyScreen() {
@@ -42,8 +43,11 @@ export default function InitialSurveyScreen() {
     useSubmitLevelTest();
   const { mutate: submitManualLevel, isPending: isManualLevelPending } =
     useSubmitManualLevel();
+  const { mutate: updateInterests, isPending: isUpdateInterestsPending } =
+    useUpdateInterests();
 
-  const isSubmitting = isLevelTestPending || isManualLevelPending;
+  const isSubmitting =
+    isLevelTestPending || isManualLevelPending || isUpdateInterestsPending;
 
   const handleNext = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) {
@@ -60,7 +64,8 @@ export default function InitialSurveyScreen() {
       submitManualLevel(
         { levelId: userInput.proficiencyLevel },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            console.log('Manual level submitted successfully:', data);
             setCurrentStep(currentStep + 1);
           },
           onError: () => {
@@ -97,9 +102,32 @@ export default function InitialSurveyScreen() {
   const handleSubmit = () => {
     if (isSubmitting) return;
 
+    const submitInterestsAndNavigate = () => {
+      if (userInput.selectedTopics.length > 0) {
+        updateInterests(
+          { interests: userInput.selectedTopics },
+          {
+            onSuccess: (data) => {
+              console.log('Interests updated successfully:', data);
+              router.replace('/(main)');
+            },
+            onError: () => {
+              Alert.alert(
+                '제출 실패',
+                '관심사 저장에 실패했습니다. 다시 시도해주세요.',
+                [{ text: '확인' }],
+              );
+            },
+          },
+        );
+      } else {
+        router.replace('/(main)');
+      }
+    };
+
     if (skipTest === true) {
-      // 레벨은 이미 Step 1에서 제출했으므로, 바로 메인 화면으로 이동
-      router.replace('/(main)');
+      // 레벨은 이미 Step 1에서 제출했으므로, 관심사만 저장
+      submitInterestsAndNavigate();
     } else {
       // 레벨 테스트 제출
       submitLevelTest(
@@ -114,7 +142,10 @@ export default function InitialSurveyScreen() {
           ],
         },
         {
-          onSuccess: () => router.replace('/(main)'),
+          onSuccess: (data) => {
+            console.log('Level test submitted successfully:', data);
+            submitInterestsAndNavigate();
+          },
           onError: () =>
             Alert.alert(
               '제출 실패',
@@ -206,7 +237,18 @@ export default function InitialSurveyScreen() {
           />
         );
       case 2:
-        return <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />;
+        return (
+          <TestOptionStep
+            onSelect={(skip) => {
+              setSkipTest(skip);
+              if (skip) {
+                setCurrentStep(8);
+              } else {
+                setCurrentStep(currentStep + 1);
+              }
+            }}
+          />
+        );
       case 3:
         return (
           <>
@@ -310,9 +352,12 @@ export default function InitialSurveyScreen() {
   const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
 
   return (
-    <View className="flex-1 bg-[#EBF4FB]">
+    <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
       {isLastPage ? (
-        <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-6 pb-4 pt-12"
+        >
           {currentStep > 0 && (
             <ProgressBar
               currentStep={currentStep}
@@ -322,22 +367,29 @@ export default function InitialSurveyScreen() {
           {renderStep()}
         </ScrollView>
       ) : (
-        <View className="flex-1 p-6 pt-16">
+        <>
+          <View className="flex-1 px-6 justify-center">{renderStep()}</View>
           {currentStep > 0 && (
-            <ProgressBar
-              currentStep={currentStep}
-              totalPages={TOTAL_SURVEY_PAGES}
-            />
+            <View
+              className="absolute top-0 left-0 right-0 px-6 pt-12"
+              style={{ pointerEvents: 'box-none' }}
+            >
+              <ProgressBar
+                currentStep={currentStep}
+                totalPages={TOTAL_SURVEY_PAGES}
+              />
+            </View>
           )}
-          {renderStep()}
-        </View>
+        </>
       )}
+
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
         showBackButton={currentStep > 0}
         canProceed={canProceed()}
+        hideNextButton={currentStep === 2}
       />
     </View>
   );

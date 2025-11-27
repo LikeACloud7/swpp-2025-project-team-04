@@ -4,6 +4,8 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { getAudioUrl } from '@/api/initialSurvey';
 import { getAccessToken } from '@/utils/tokenManager';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type ListeningAudioButtonProps = {
   level: string;
@@ -145,92 +147,126 @@ export default function ListeningAudioButton({
     currentTime >= duration * 0.95;
 
   return (
-    <View className="items-center mt-8 mb-4 w-full px-4">
-      <View className="w-full max-w-[320px] bg-white rounded-2xl p-6 shadow-md">
-        <Text className="text-gray-800 text-[16px] font-bold text-center mb-4">
+    <View className="items-center w-full mb-6">
+      <View className="items-center mb-8">
+        <Text className="text-[32px] font-black text-slate-900 text-center leading-[40px] tracking-tight mb-2">
           오디오 {questionNumber}
         </Text>
+        <Text className="text-[15px] text-slate-600 text-center">
+          오디오를 듣고 이해도를 평가하세요
+        </Text>
+      </View>
 
+      <View className="w-full bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden px-6 py-6">
         {/* Play/Pause Button(s) */}
         {status?.playing || isLoading ? (
           <Pressable
             onPress={handlePlayPause}
-            className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
-            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-            android_ripple={{ color: '#4D7BAA' }}
+            className="overflow-hidden rounded-2xl mb-6"
+            style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
             disabled={isLoading}
           >
-            <Text className="text-white text-[18px] font-bold text-center">
-              {'❚❚ 일시정지'}
-              {/* {isLoading ? '로딩 중...' : '❚❚ 일시정지'} */}
-            </Text>
+            <LinearGradient
+              colors={['#0EA5E9', '#38BDF8'] as const}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="py-4 flex-row items-center justify-center rounded-2xl"
+            >
+              <Ionicons name="pause-circle" size={24} color="#fff" />
+              <Text className="text-white text-base font-bold ml-2">
+                일시정지
+              </Text>
+            </LinearGradient>
           </Pressable>
         ) : downloadedUri ? (
           hasFinished ? (
             <Pressable
               onPress={handleRestart}
-              className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
-              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-              android_ripple={{ color: '#4D7BAA' }}
+              className="overflow-hidden rounded-2xl mb-6"
+              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
             >
-              <Text className="text-white text-[18px] font-bold text-center">
-                ⏮ 처음부터
-              </Text>
+              <LinearGradient
+                colors={['#0EA5E9', '#38BDF8'] as const}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="py-4 flex-row items-center justify-center rounded-2xl"
+              >
+                <Ionicons name="refresh-circle" size={24} color="#fff" />
+                <Text className="text-white text-base font-bold ml-2">
+                  다시 듣기
+                </Text>
+              </LinearGradient>
             </Pressable>
           ) : (
-            <View className="flex-row gap-2 mb-4">
-              <Pressable
-                onPress={handleRestart}
-                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
-                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                android_ripple={{ color: '#4D7BAA' }}
+            <Pressable
+              onPress={handlePlayPause}
+              className="overflow-hidden rounded-2xl mb-6"
+              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+            >
+              <LinearGradient
+                colors={['#0EA5E9', '#38BDF8'] as const}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                className="py-4 flex-row items-center justify-center"
               >
-                <Text className="text-white text-[16px] font-bold text-center">
-                  ⏮ 처음부터
+                <Ionicons name="play" size={24} color="#fff" />
+                <Text className="text-white text-base font-bold ml-2">
+                  재생
                 </Text>
-              </Pressable>
-              <Pressable
-                onPress={handlePlayPause}
-                className="flex-1 py-4 rounded-xl bg-[#6FA4D7]"
-                style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                android_ripple={{ color: '#4D7BAA' }}
-              >
-                <Text className="text-white text-[16px] font-bold text-center">
-                  ▶ 재생
-                </Text>
-              </Pressable>
-            </View>
+              </LinearGradient>
+            </Pressable>
           )
         ) : (
           <Pressable
             onPress={handlePlayPause}
-            className="py-4 rounded-xl bg-[#6FA4D7] mb-4"
-            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-            android_ripple={{ color: '#4D7BAA' }}
+            className="overflow-hidden rounded-2xl mb-6"
+            style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
             disabled={isLoading}
           >
-            <Text className="text-white text-[18px] font-bold text-center">
-              {isLoading ? '로딩 중...' : '▶ 재생'}
-            </Text>
+            <LinearGradient
+              colors={['#0EA5E9', '#38BDF8'] as const}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="py-4 flex-row items-center justify-center rounded-2xl"
+            >
+              {isLoading ? (
+                <>
+                  <Ionicons name="hourglass" size={24} color="#fff" />
+                  <Text className="text-white text-base font-bold ml-2">
+                    로딩 중...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="play-circle" size={24} color="#fff" />
+                  <Text className="text-white text-base font-bold ml-2">
+                    재생하기
+                  </Text>
+                </>
+              )}
+            </LinearGradient>
           </Pressable>
         )}
 
         {/* Progress Bar */}
-        <View className="mb-2">
-          <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <View className="mb-3">
+          <View className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <View
-              className="h-full bg-[#6FA4D7] rounded-full"
-              style={{ width: `${progress * 100}%` }}
+              className="h-full rounded-full"
+              style={{
+                width: `${progress * 100}%`,
+                backgroundColor: '#0EA5E9',
+              }}
             />
           </View>
         </View>
 
         {/* Time Display */}
         <View className="flex-row justify-between">
-          <Text className="text-gray-600 text-[12px]">
+          <Text className="text-sm font-semibold text-slate-500">
             {formatTime(currentTime)}
           </Text>
-          <Text className="text-gray-600 text-[12px]">
+          <Text className="text-sm font-semibold text-slate-500">
             {formatTime(duration)}
           </Text>
         </View>
