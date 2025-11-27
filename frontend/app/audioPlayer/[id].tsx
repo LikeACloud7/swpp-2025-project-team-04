@@ -10,6 +10,7 @@ import Script from '@/components/audio/Script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBehaviorLogs } from '@/hooks/useBehaviorLogs';
+import { PendingVocab, useAddVocab } from '@/hooks/mutations/useVocabMutations';
 
 export default function AudioPlayer() {
   const router = useRouter();
@@ -37,6 +38,44 @@ export default function AudioPlayer() {
     }
   };
 
+  // 단어장
+  const addVocabMutation = useAddVocab();
+  const [selectedVocabs, setSelectedVocabs] = useState<PendingVocab[]>([]);
+
+  // 토글 (추가/삭제)
+  const toggleVocab = (sentenceIndex: number, word: string) => {
+    setSelectedVocabs((prev) => {
+      const exists = prev.some(
+        (v) => v.sentenceIndex === sentenceIndex && v.word === word,
+      );
+
+      if (exists) {
+        // 제거
+        return prev.filter(
+          (v) => !(v.sentenceIndex === sentenceIndex && v.word === word),
+        );
+      }
+
+      // 추가
+      return [...prev, { sentenceIndex, word }];
+    });
+  };
+
+  const saveAllSelectedVocabs = async () => {
+    if (!selectedVocabs.length) return;
+
+    await Promise.all(
+      selectedVocabs.map((vocab) =>
+        addVocabMutation.mutateAsync({
+          generatedContentId: data!.generated_content_id,
+          pendingVocab: vocab,
+        }),
+      ),
+    );
+
+    incrementLog('vocabSaveCount', selectedVocabs.length); // 단어장 저장 카운트
+  };
+
   const stopAndCleanup = useCallback(async () => {
     try {
       await TrackPlayer.stop();
@@ -46,6 +85,7 @@ export default function AudioPlayer() {
 
   const endSessionWithFeedback = useCallback(async () => {
     await stopAndCleanup();
+    await saveAllSelectedVocabs();
 
     // 행동 로그와 generated_content_id를 피드백 페이지로 전달
     const params = {
@@ -61,6 +101,7 @@ export default function AudioPlayer() {
 
   const handleExitWithoutFeedback = async () => {
     await stopAndCleanup();
+    await saveAllSelectedVocabs();
     router.replace('/');
   };
 
@@ -78,7 +119,6 @@ export default function AudioPlayer() {
     };
   }, []);
 
-  // 컴포넌트 상단에
   const { position, duration } = useProgress(100);
 
   const didFinishRef = useRef(false);
@@ -133,6 +173,7 @@ export default function AudioPlayer() {
   }
 
   return (
+    // 배경
     <LinearGradient
       colors={['#0C4A6E', '#0369A1', '#7DB7E8']}
       start={{ x: 0, y: 0 }}
@@ -144,8 +185,9 @@ export default function AudioPlayer() {
         generatedContentId={data.generated_content_id}
         scripts={data.sentences}
         onVocabLookup={() => incrementLog('vocabLookupCount')}
-        onVocabSave={() => incrementLog('vocabSaveCount')}
         onRewind={() => incrementLog('rewindCount')}
+        selectedVocabs={selectedVocabs}
+        onToggleVocab={toggleVocab}
       />
 
       {/* 슬라이더 */}

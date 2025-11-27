@@ -17,7 +17,7 @@ export const useVocab = (generatedContentId: number) => {
     retry: 1,
   });
 };
-// 🔹 내 단어장 전체
+
 export const useMyVocab = () => {
   return useQuery<MyVocab[], ApiError>({
     queryKey: [MY_VOCAB_QUERY_KEY],

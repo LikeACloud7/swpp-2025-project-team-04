@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -19,16 +13,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Sentence } from '@/api/audio';
 import Word, { WordLayout } from './Word';
 import { useVocab } from '@/hooks/queries/useVocabQueries';
-import { useAddVocab } from '@/hooks/mutations/useVocabMutations';
-import { useFocusEffect } from 'expo-router';
+import { PendingVocab } from '@/hooks/mutations/useVocabMutations';
 
 // =================== Props & Local Types ===================
 export type ScriptProps = {
   generatedContentId: number;
   scripts: Sentence[];
   onVocabLookup?: () => void; // 단어 검색 콜백
-  onVocabSave?: () => void; // 단어 저장 콜백
   onRewind?: () => void; // 되감기 콜백
+  selectedVocabs?: PendingVocab[]; // 현재 선택된 단어장 단어들
+  onToggleVocab?: (sentenceIndex: number, word: string) => void; // 단어장 토글 콜백
 };
 
 // Word popup 위치, 크기 관리
@@ -40,12 +34,6 @@ type WordPopupState = {
   width: number;
   height: number;
 } | null;
-
-// 단어장에 추가 대기중인 단어 정보
-type PendingVocab = {
-  sentenceIndex: number;
-  word: string;
-};
 
 // =================== Helper functions ==========
 // 단어 정규화
@@ -73,13 +61,13 @@ export default function Script({
   scripts,
   generatedContentId,
   onVocabLookup,
-  onVocabSave,
   onRewind,
+  selectedVocabs = [],
+  onToggleVocab,
 }: ScriptProps) {
   const { data: vocabData } = useVocab(generatedContentId);
   const [wordPopup, setWordPopup] = useState<WordPopupState>(null);
   const [isUserTouching, setIsUserTouching] = useState(false); // 사용자 터치 상태 관리
-  const addVocabMutation = useAddVocab();
 
   // ============================================
   // 1. 단어장 데이터 가져오기 및 캐싱
@@ -222,54 +210,6 @@ export default function Script({
   // ============================================
   // 4. 단어장에 추가할 단어 관리
   // ============================================
-  const [pendingVocabs, setPendingVocabs] = useState<Map<string, PendingVocab>>(
-    () => new Map(),
-  );
-
-  const pendingVocabsRef = useRef<Map<string, PendingVocab>>(new Map());
-
-  // 4-1. 단어장 추가 대기 토글
-  const togglePendingVocab = (word: string, sentenceIndex: number) => {
-    const key = makeVocabKey(sentenceIndex, word);
-
-    setPendingVocabs((prev) => {
-      const next = new Map(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.set(key, { sentenceIndex, word });
-      }
-
-      pendingVocabsRef.current = next; // 최신값 캐시
-      return next;
-    });
-  };
-
-  // 4-2. 단어장에 추가 처리 함수 (화면 나갈 때 호출)
-  const flushPendingVocabs = useCallback(() => {
-    const finalMap = pendingVocabsRef.current;
-    if (!finalMap.size) return;
-
-    finalMap.forEach(({ sentenceIndex, word }) => {
-      const key = makeVocabKey(sentenceIndex, word);
-      const entry = vocabMap.get(key);
-      const wordToSave = entry?.word ?? word;
-
-      addVocabMutation.mutate({
-        generatedContentId,
-        index: sentenceIndex,
-        word: wordToSave,
-      });
-    });
-  }, [vocabMap, generatedContentId, addVocabMutation]);
-
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        flushPendingVocabs();
-      };
-    }, [flushPendingVocabs]),
-  );
 
   // ============================================
   // 5. 각 라인 렌더
@@ -313,7 +253,7 @@ export default function Script({
   // 6. 렌더
   // ============================================
   return (
-    <SafeAreaView className="flex-1 bg-transparent">
+    <SafeAreaView className="flex-1 bg-transparent relative">
       <View className="flex-1">
         {/* 가사 부분 */}
         <FlatList
@@ -370,7 +310,11 @@ export default function Script({
               const key = makeVocabKey(wordPopup.sentenceIndex, wordPopup.word);
               const entry = vocabMap.get(key);
 
-              const isQueued = pendingVocabs.has(key); // 이 단어가 현재 선택(북마크)된 상태인지
+              const isBookmarked = selectedVocabs.some(
+                (v) =>
+                  v.sentenceIndex === wordPopup.sentenceIndex &&
+                  v.word === wordPopup.word,
+              );
 
               return (
                 <View className="absolute" style={{ top, left }}>
@@ -407,15 +351,15 @@ export default function Script({
 
                       <Pressable
                         onPress={() =>
-                          togglePendingVocab(
-                            entry?.word ?? wordPopup.word,
+                          onToggleVocab?.(
                             wordPopup.sentenceIndex,
+                            entry?.word ?? wordPopup.word,
                           )
                         }
                         className="pl-2 active:opacity-70"
                         hitSlop={8}
                       >
-                        {isQueued ? (
+                        {isBookmarked ? (
                           <Ionicons name="bookmark" size={16} color="#0EA5E9" />
                         ) : (
                           <Ionicons

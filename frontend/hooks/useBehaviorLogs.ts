@@ -17,13 +17,16 @@ export function useBehaviorLogs() {
     vocabSaveCount: 0,
   });
 
-  const incrementLog = useCallback((key: BehaviorLogKey) => {
-    setBehaviorLogs((prev) => {
-      const updated = { ...prev, [key]: prev[key] + 1 };
-      console.log(`📊 [behavior log] ${key}: ${updated[key]}`);
-      return updated;
-    });
-  }, []);
+  const incrementLog = useCallback(
+    (key: BehaviorLogKey, amount: number = 1) => {
+      setBehaviorLogs((prev) => {
+        const updated = { ...prev, [key]: prev[key] + amount };
+        console.log(`📊 [behavior log] ${key}: ${updated[key]}`);
+        return updated;
+      });
+    },
+    [],
+  );
 
   const resetLogs = useCallback(() => {
     setBehaviorLogs({
