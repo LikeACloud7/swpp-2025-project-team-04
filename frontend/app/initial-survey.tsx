@@ -99,6 +99,10 @@ export default function InitialSurveyScreen() {
     }
   };
 
+  const goToWalkthrough = () => {
+    router.replace('/walkthrough');
+  };
+
   const handleSubmit = () => {
     if (isSubmitting) return;
 
@@ -109,7 +113,7 @@ export default function InitialSurveyScreen() {
           {
             onSuccess: (data) => {
               console.log('Interests updated successfully:', data);
-              router.replace('/(main)');
+              goToWalkthrough();
             },
             onError: () => {
               Alert.alert(
@@ -121,12 +125,12 @@ export default function InitialSurveyScreen() {
           },
         );
       } else {
-        router.replace('/(main)');
+        goToWalkthrough();
       }
     };
 
     if (skipTest === true) {
-      // 레벨은 이미 Step 1에서 제출했으므로, 관심사만 저장
+      // 레벨은 이미 Step 1에서 제출했으므로, 관심사만 저장 후 워크스루 이동
       submitInterestsAndNavigate();
     } else {
       // 레벨 테스트 제출
