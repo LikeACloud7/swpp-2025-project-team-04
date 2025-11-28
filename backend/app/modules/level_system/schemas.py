@@ -36,8 +36,16 @@ class LevelTestRequest(BaseModel):
     tests: List[LevelTestItem]
 
 
+class LevelScore(BaseModel):
+    cefr_level: str
+    score: float
+
+
 class LevelTestResponse(BaseModel):
-    success: bool = True
+    lexical: LevelScore
+    syntactic: LevelScore
+    auditory: LevelScore
+    overall: LevelScore
 
 
 # manual level request/response
@@ -46,5 +54,8 @@ class ManualLevelRequest(BaseModel):
 
 
 class ManualLevelResponse(BaseModel):
-    success: bool = True
+    lexical: LevelScore
+    syntactic: LevelScore
+    auditory: LevelScore
+    overall: LevelScore
 
