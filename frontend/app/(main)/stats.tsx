@@ -64,14 +64,17 @@ export default function StatsScreen() {
 
   console.log('=== WEEKLY ACTIVITY DEBUG ===');
   console.log('Today:', formatLocalDate(today));
-  console.log('Last 7 days:', last7Days.map(d => formatLocalDate(d)));
+  console.log(
+    'Last 7 days:',
+    last7Days.map((d) => formatLocalDate(d)),
+  );
   console.log(
     'API daily_minutes data:',
     JSON.stringify(stats.streak.daily_minutes, null, 2),
   );
 
   const dailyMinutesMap = new Map(
-    stats.streak.daily_minutes.map(day => [day.date, day.minutes])
+    stats.streak.daily_minutes.map((day) => [day.date, day.minutes]),
   );
 
   const weeklyActivity = last7Days.map((date) => {
@@ -79,7 +82,10 @@ export default function StatsScreen() {
     return dailyMinutesMap.get(dateString) || 0;
   });
 
-  const actualWeeklyTotal = weeklyActivity.reduce((sum, minutes) => sum + minutes, 0);
+  const actualWeeklyTotal = weeklyActivity.reduce(
+    (sum, minutes) => sum + minutes,
+    0,
+  );
   const maxMinutes = Math.max(...weeklyActivity, 1);
 
   const totalStudyDays = stats.streak.daily_minutes.filter(
@@ -118,17 +124,17 @@ export default function StatsScreen() {
 
   const getBadgeIcon = (code: string) => {
     const iconMap: Record<string, string> = {
-      'FIRST_SESSION': '🌱',
+      FIRST_SESSION: '🌱',
 
-      'STREAK_3': '🔥',
-      'STREAK_7': '⚡',
-      'STREAK_30': '💎',
+      STREAK_3: '🔥',
+      STREAK_7: '⚡',
+      STREAK_30: '💎',
 
-      'TOTAL_60': '⏱️',
-      'TOTAL_300': '⏰',
-      'TOTAL_600': '⭐',
-      'TOTAL_1200': '⌛',
-      'TOTAL_3000': '👑',
+      TOTAL_60: '⏱️',
+      TOTAL_300: '⏰',
+      TOTAL_600: '⭐',
+      TOTAL_1200: '⌛',
+      TOTAL_3000: '👑',
     };
     return iconMap[code] || '🏆';
   };
@@ -318,7 +324,8 @@ export default function StatsScreen() {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
                 const dayDate = last7Days[index];
-                const isToday = formatLocalDate(dayDate) === formatLocalDate(today);
+                const isToday =
+                  formatLocalDate(dayDate) === formatLocalDate(today);
 
                 const dayOfWeek = dayDate.getDay();
                 const dayLabel = weekDays[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
@@ -466,7 +473,9 @@ export default function StatsScreen() {
                   >
                     <Text
                       className="text-5xl"
-                      style={{ opacity: selectedAchievement.achieved ? 1 : 0.3 }}
+                      style={{
+                        opacity: selectedAchievement.achieved ? 1 : 0.3,
+                      }}
                     >
                       {getBadgeIcon(selectedAchievement.code)}
                     </Text>

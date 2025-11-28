@@ -112,7 +112,8 @@ function RootNavigation() {
     };
   }, [router]);
 
-  const [isSplashAnimationFinished, setIsSplashAnimationFinished] = useState(false);
+  const [isSplashAnimationFinished, setIsSplashAnimationFinished] =
+    useState(false);
 
   const showSplash = isAuthLoading || !isSplashAnimationFinished;
 

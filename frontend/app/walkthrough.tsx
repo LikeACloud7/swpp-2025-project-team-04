@@ -265,9 +265,7 @@ const SessionPreview = ({ action }: { action: Animated.Value }) => {
           />
           {scriptLines.map((line) => (
             <View key={line} className="px-2 py-2">
-              <Text className="text-[12px] leading-5 text-white">
-                {line}
-              </Text>
+              <Text className="text-[12px] leading-5 text-white">{line}</Text>
             </View>
           ))}
         </View>
