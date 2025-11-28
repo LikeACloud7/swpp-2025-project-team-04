@@ -96,7 +96,11 @@ class TestLevelSystemEndpoints:
         print(f"[manual-level] Response: {response.json()}")
         
         assert response.status_code == 200
-        assert response.json()["success"] is True
+        data = response.json()
+        assert "lexical" in data
+        assert "syntactic" in data
+        assert "auditory" in data
+        assert "overall" in data
 
     def test_02_evaluate_level_test(self, auth_headers):
         """POST /level-system/level-test - 레벨 테스트 평가"""
@@ -119,7 +123,11 @@ class TestLevelSystemEndpoints:
         print(f"[level-test] Response: {response.json()}")
         
         assert response.status_code == 200
-        assert response.json()["success"] is True
+        data = response.json()
+        assert "lexical" in data
+        assert "syntactic" in data
+        assert "auditory" in data
+        assert "overall" in data
 
     def test_03_submit_session_feedback(self, auth_headers, generated_content):
         """POST /level-system/session-feedback - 세션 피드백 제출"""
