@@ -16,6 +16,8 @@ type LevelDetail = {
   next_level: CEFRLevel | null; // 다음 CEFR 레벨 (C2면 null)
   remaining_to_next: number; // 다음 레벨까지 남은 점수
   progress_in_current: number; // 현재 레벨 내 진행도 (0-100%)
+  current_start: number; // 현재 레벨 시작 점수
+  current_end: number; // 현재 레벨 끝 점수
 };
 
 // 피드백 응답 타입
@@ -99,6 +101,8 @@ function calculateLevelDetail(score: number, delta: number): LevelDetail {
     next_level: nextInfo?.nextLevel || null,
     remaining_to_next: Math.max(0, remainingToNext),
     progress_in_current: Math.max(0, Math.min(100, progressInCurrent)),
+    current_start: currentStart,
+    current_end: currentEnd,
   };
 }
 
@@ -153,39 +157,33 @@ function LevelCard({ title, icon, detail, color }: LevelCardProps) {
         </View>
       </View>
 
-      {/* 현재 스코어 */}
+      {/* 현재 스코어 (구간 기준) */}
       <View className="mb-3">
         <Text className="text-2xl font-bold" style={{ color }}>
           {detail.current_level.toFixed(1)}
-          <Text className="text-sm text-gray-400"> / {MAX_SCORE}</Text>
+          <Text className="text-sm text-gray-400">
+            {' '}
+            / {detail.current_end}
+          </Text>
         </Text>
       </View>
 
-      {/* 다음 레벨까지 프로그레스 바 */}
-      {detail.next_level && (
-        <View>
-          <Text className="text-xs text-gray-500 mb-1.5">
-            다음 레벨: {detail.next_level} (남은 점수:{' '}
-            {detail.remaining_to_next.toFixed(0)})
-          </Text>
-          <View className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <View
-              className="h-full rounded-full"
-              style={{
-                width: `${detail.progress_in_current}%`,
-                backgroundColor: color,
-              }}
-            />
-          </View>
+      {/* 프로그레스 바 */}
+      <View>
+        <View className="flex-row justify-between mb-1.5">
+          <Text className="text-xs text-gray-400">{detail.current_start}</Text>
+          <Text className="text-xs text-gray-400">{detail.current_end}</Text>
         </View>
-      )}
-      {!detail.next_level && (
-        <View>
-          <Text className="text-xs font-semibold text-purple-600">
-            🎉 최고 레벨!
-          </Text>
+        <View className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <View
+            className="h-full rounded-full"
+            style={{
+              width: `${detail.progress_in_current}%`,
+              backgroundColor: color,
+            }}
+          />
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -234,11 +232,12 @@ export default function LevelResultScreen() {
   // ============ 평균 계산 ============
   const averageLevel = (lexicalLevel + syntacticLevel + speedLevel) / 3;
   const averageDelta = (lexicalDelta + syntacticDelta + speedDelta) / 3;
+  const averageCefr = getCEFRLevel(averageLevel);
 
   // ============ 로깅 (개발용) ============
   useEffect(() => {
     console.log('📊 [레벨 결과 페이지] 계산된 데이터:', {
-      average: { level: averageLevel, delta: averageDelta },
+      average: { level: averageLevel, delta: averageDelta, cefr: averageCefr },
       lexical: lexicalDetail,
       syntactic: syntacticDetail,
       auditory: auditoryDetail,
@@ -253,8 +252,11 @@ export default function LevelResultScreen() {
       <View className="flex-1 px-6 pt-16 pb-6">
         {/* 전체 평균 */}
         <View className="bg-[#6FA4D7] rounded-3xl p-8 mb-4 shadow-md items-center">
-          <Text className="text-white text-xl font-semibold mb-3">
+          <Text className="text-white text-xl font-semibold mb-1">
             평균 레벨
+          </Text>
+          <Text className="text-white/80 text-lg font-medium mb-3">
+            {averageCefr}
           </Text>
           <Text className="text-white text-6xl font-bold mb-3">
             {averageLevel.toFixed(1)}
