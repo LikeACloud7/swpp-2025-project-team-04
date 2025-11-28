@@ -52,7 +52,7 @@ export default function MainHeader({ title }: MainHeaderProps) {
             </View>
           )}
           <Pressable
-            onPress={() => router.replace('/profile')}
+            onPress={() => router.push('/profile')}
             className="h-9 w-9 items-center justify-center rounded-full bg-primary active:bg-primary/80"
           >
             <Ionicons name="person" size={20} color="#ffffff" />
