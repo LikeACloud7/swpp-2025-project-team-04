@@ -77,6 +77,10 @@ export default function StatsScreen() {
   const actualWeeklyTotal = weeklyActivity.reduce((sum, minutes) => sum + minutes, 0);
   const maxMinutes = Math.max(...weeklyActivity, 1);
 
+  const totalStudyDays = stats.streak.daily_minutes.filter(
+    (day) => day.minutes > 0,
+  ).length;
+
   // Helper function to calculate progress within current level
   const calculateLevelProgress = (score: number, cefr_level: string) => {
     const levelRanges = {
@@ -91,7 +95,8 @@ export default function StatsScreen() {
     const range = levelRanges[cefr_level as keyof typeof levelRanges];
     if (!range) return { progress: 0, current: 0, total: 0 };
 
-    const current = Math.max(0, score - range.min);
+    const clampedScore = Math.min(Math.max(score, range.min), range.max);
+    const current = clampedScore - range.min;
     const total = range.max - range.min;
     const progress = Math.min(100, (current / total) * 100);
 
@@ -227,8 +232,6 @@ export default function StatsScreen() {
     setModalVisible(true);
   };
 
-  // 주간 활동 하이라이트를 위해 '오늘 요일 인덱스' 계산
-  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   console.log('stats data:', stats);
 
   return (
@@ -238,152 +241,148 @@ export default function StatsScreen() {
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ----- 현재 레벨 ----- */}
-        <View className="bg-primary px-6 py-6">
-          <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
-            <View className="mb-3">
-              <Text className="text-base font-bold text-neutral-700">
-                현재 레벨
+        <View className="bg-[#EBF4FB] px-6 pb-6 pt-12">
+          <View className="mb-6 items-center">
+            <View className="h-32 w-32 items-center justify-center rounded-3xl bg-primary shadow-lg">
+              <Text className="text-5xl font-black text-white">
+                {stats.current_level.overall_cefr_level.cefr_level}
               </Text>
             </View>
-            <View className="items-center py-4">
-              <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-sm">
-                <Text className="text-4xl font-black text-white">
-                  {stats.current_level.overall_cefr_level.cefr_level}
+          </View>
+
+          <View className="mb-6 rounded-2xl bg-white p-4 shadow-sm">
+            <View className="mb-4">
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text className="text-xs font-semibold text-neutral-600">
+                  어휘력 ({stats.current_level.lexical.cefr_level})
+                </Text>
+                <Text className="text-sm font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.lexical.score,
+                      stats.current_level.lexical.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.lexical.score,
+                      stats.current_level.lexical.cefr_level,
+                    ).total
+                  }
                 </Text>
               </View>
-              <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
-                종합 레벨
-              </Text>
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
+                    backgroundColor: '#3b82f6',
+                  }}
+                />
+              </View>
+            </View>
 
-              <View className="mt-2 w-full space-y-2">
-                <View className="rounded-xl bg-neutral-50 p-3">
-                  <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="text-xs font-semibold text-neutral-600">
-                      어휘력 ({stats.current_level.lexical.cefr_level})
-                    </Text>
-                    <Text className="text-sm font-bold text-primary">
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.lexical.score,
-                          stats.current_level.lexical.cefr_level,
-                        ).current
-                      }
-                      /
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.lexical.score,
-                          stats.current_level.lexical.cefr_level,
-                        ).total
-                      }
-                    </Text>
-                  </View>
-                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                    <View
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
-                        backgroundColor: '#3b82f6',
-                      }}
-                    />
-                  </View>
-                </View>
+            <View className="mb-4">
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text className="text-xs font-semibold text-neutral-600">
+                  문법 ({stats.current_level.syntactic.cefr_level})
+                </Text>
+                <Text className="text-sm font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.syntactic.score,
+                      stats.current_level.syntactic.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.syntactic.score,
+                      stats.current_level.syntactic.cefr_level,
+                    ).total
+                  }
+                </Text>
+              </View>
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
+                    backgroundColor: '#7c3aed',
+                  }}
+                />
+              </View>
+            </View>
 
-                <View className="rounded-xl bg-neutral-50 p-3">
-                  <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="text-xs font-semibold text-neutral-600">
-                      문법 ({stats.current_level.syntactic.cefr_level})
-                    </Text>
-                    <Text className="text-sm font-bold text-primary">
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.syntactic.score,
-                          stats.current_level.syntactic.cefr_level,
-                        ).current
-                      }
-                      /
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.syntactic.score,
-                          stats.current_level.syntactic.cefr_level,
-                        ).total
-                      }
-                    </Text>
-                  </View>
-                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                    <View
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
-                        backgroundColor: '#7c3aed',
-                      }}
-                    />
-                  </View>
-                </View>
-
-                <View className="rounded-xl bg-neutral-50 p-3">
-                  <View className="mb-2 flex-row items-center justify-between">
-                    <Text className="text-xs font-semibold text-neutral-600">
-                      청취력 ({stats.current_level.auditory.cefr_level})
-                    </Text>
-                    <Text className="text-sm font-bold text-primary">
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.auditory.score,
-                          stats.current_level.auditory.cefr_level,
-                        ).current
-                      }
-                      /
-                      {
-                        calculateLevelProgress(
-                          stats.current_level.auditory.score,
-                          stats.current_level.auditory.cefr_level,
-                        ).total
-                      }
-                    </Text>
-                  </View>
-                  <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                    <View
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
-                        backgroundColor: '#10b981',
-                      }}
-                    />
-                  </View>
-                </View>
+            <View>
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text className="text-xs font-semibold text-neutral-600">
+                  청취력 ({stats.current_level.auditory.cefr_level})
+                </Text>
+                <Text className="text-sm font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.auditory.score,
+                      stats.current_level.auditory.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.auditory.score,
+                      stats.current_level.auditory.cefr_level,
+                    ).total
+                  }
+                </Text>
+              </View>
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
+                    backgroundColor: '#10b981',
+                  }}
+                />
               </View>
             </View>
           </View>
 
-          {/* ----- 연속 학습 & 총 학습 시간 ----- */}
-          <View className="flex-row gap-3">
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-sm">
-              <View className="mb-2 flex-row items-center gap-2">
-                <Ionicons name="flame" size={20} color="#EF4444" />
-                <Text className="text-xs font-bold text-neutral-600">
-                  연속 학습
+          <View className="flex-row justify-between gap-2">
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="time-outline" size={16} color="#8B5CF6" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  총 학습시간
                 </Text>
               </View>
-              <Text className="text-3xl font-black text-neutral-900">
-                {stats.streak.consecutive_days}
-              </Text>
-              <Text className="text-xs font-semibold text-neutral-400">
-                일 연속
+              <Text className="text-2xl font-black text-neutral-900">
+                {stats.total_time_spent_minutes}m
               </Text>
             </View>
 
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-sm">
-              <View className="mb-2 flex-row items-center gap-2">
-                <Ionicons name="time" size={20} color="#8B5CF6" />
-                <Text className="text-xs font-bold text-neutral-600">
-                  총 학습 시간
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="flame" size={16} color="#EF4444" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  연속 학습일
                 </Text>
               </View>
-              <Text className="text-3xl font-black text-neutral-900">
-                {stats.total_time_spent_minutes}
+              <Text className="text-2xl font-black text-neutral-900">
+                {stats.streak.consecutive_days}d
               </Text>
-              <Text className="text-xs font-semibold text-neutral-400">분</Text>
+            </View>
+
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="trophy-outline" size={16} color="#F59E0B" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  누적 학습일
+                </Text>
+              </View>
+              <Text className="text-2xl font-black text-neutral-900">
+                {totalStudyDays}d
+              </Text>
             </View>
           </View>
         </View>
