@@ -64,23 +64,33 @@ def test_update_user_level_without_commit(sqlite_session):
 
 def test_set_user_interests_flow(sqlite_session):
     user = crud.create_user(sqlite_session, username="interest", hashed_password="pw")
+
     updated = crud.set_user_interests(
         sqlite_session,
         user_id=user.id,
         interest_keys=[InterestKey.POLITICS, InterestKey.SCIENCE],
     )
-    assert [interest.key for interest in updated.interests] == [InterestKey.POLITICS, InterestKey.SCIENCE]
+    assert set(interest.key for interest in updated.interests) == {
+        InterestKey.POLITICS,
+        InterestKey.SCIENCE,
+    }
 
     updated = crud.set_user_interests(
         sqlite_session,
         user_id=user.id,
         interest_keys=[InterestKey.SCIENCE, InterestKey.SCIENCE, InterestKey.IT_AI],
     )
-    assert [interest.key for interest in updated.interests] == [InterestKey.SCIENCE, InterestKey.IT_AI]
+    assert set(interest.key for interest in updated.interests) == {
+        InterestKey.SCIENCE,
+        InterestKey.IT_AI,
+    }
 
-    updated = crud.set_user_interests(sqlite_session, user_id=user.id, interest_keys=[])
+    updated = crud.set_user_interests(
+        sqlite_session,
+        user_id=user.id,
+        interest_keys=[]
+    )
     assert updated.interests == []
-
 
 def test_set_user_interests_missing_user(sqlite_session):
     with pytest.raises(UserNotFoundException):

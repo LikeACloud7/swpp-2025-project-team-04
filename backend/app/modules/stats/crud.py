@@ -43,7 +43,7 @@ def get_total_study_minutes(db: Session, *, user_id: int) -> int:
 def get_study_dates_descending(
     db: Session,
     *,
-    user_id: int,
+    user_id: int,   
     limit: int,
 ) -> Sequence[date]:
     rows = (
