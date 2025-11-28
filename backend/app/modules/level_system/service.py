@@ -222,6 +222,7 @@ class LevelSystemService:
         db.refresh(user)
 
         return {
+            "success": True,
             "lexical": {
                 "cefr_level": manual_level_payload.level,
                 "score": float(user.lexical_level)
@@ -346,6 +347,7 @@ class LevelSystemService:
         overall_score = (lexical_score + syntactic_score + speed_score) / 3.0
         
         return {
+            "success": True,
             "lexical": {
                 "cefr_level": get_cefr_level_from_score(lexical_score).value,
                 "score": lexical_score

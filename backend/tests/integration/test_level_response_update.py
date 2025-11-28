@@ -62,6 +62,7 @@ def test_manual_level_response_structure(auth_headers):
     data = response.json()
     
     # Check top level keys
+    assert data["success"] is True
     assert "lexical" in data
     assert "syntactic" in data
     assert "auditory" in data
@@ -105,6 +106,7 @@ def test_level_test_response_structure(auth_headers):
     data = response.json()
     
     # Check top level keys
+    assert data["success"] is True
     assert "lexical" in data
     assert "syntactic" in data
     assert "auditory" in data

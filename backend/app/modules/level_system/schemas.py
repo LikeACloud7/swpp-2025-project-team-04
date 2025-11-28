@@ -42,6 +42,7 @@ class LevelScore(BaseModel):
 
 
 class LevelTestResponse(BaseModel):
+    success: bool = True
     lexical: LevelScore
     syntactic: LevelScore
     auditory: LevelScore
@@ -54,6 +55,7 @@ class ManualLevelRequest(BaseModel):
 
 
 class ManualLevelResponse(BaseModel):
+    success: bool = True
     lexical: LevelScore
     syntactic: LevelScore
     auditory: LevelScore

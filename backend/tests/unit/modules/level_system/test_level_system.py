@@ -387,6 +387,8 @@ class TestLevelSystemService:
         
         result = service.set_manual_level(mock_db, mock_user, payload)
         
+        assert result["success"] is True
+        assert result["success"] is True
         assert result["lexical"]["score"] == 100.0
         assert result["syntactic"]["score"] == 100.0
         assert result["auditory"]["score"] == 100.0
@@ -423,6 +425,7 @@ class TestLevelSystemService:
         
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
+        assert result["success"] is True
         assert "lexical" in result
         assert "syntactic" in result
         assert "auditory" in result
@@ -440,6 +443,7 @@ class TestLevelSystemService:
         
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
+        assert result["success"] is True
         assert "lexical" in result
         assert "syntactic" in result
         assert "auditory" in result
@@ -457,6 +461,7 @@ class TestLevelSystemService:
         
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
+        assert result["success"] is True
         assert "lexical" in result
         assert "syntactic" in result
         assert "auditory" in result

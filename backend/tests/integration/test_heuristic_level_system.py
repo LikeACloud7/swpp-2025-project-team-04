@@ -97,6 +97,7 @@ class TestLevelSystemEndpoints:
         
         assert response.status_code == 200
         data = response.json()
+        assert data["success"] is True
         assert "lexical" in data
         assert "syntactic" in data
         assert "auditory" in data
@@ -124,6 +125,7 @@ class TestLevelSystemEndpoints:
         
         assert response.status_code == 200
         data = response.json()
+        assert data["success"] is True
         assert "lexical" in data
         assert "syntactic" in data
         assert "auditory" in data
