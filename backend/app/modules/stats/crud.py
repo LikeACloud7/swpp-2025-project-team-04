@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import Iterable, Mapping, Sequence
 
 from sqlalchemy import func
+from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session
 
 from .models import Achievement, StudySession, UserAchievement
@@ -64,29 +65,24 @@ def ensure_achievements(
     if not definitions:
         return
 
-    codes = [item["code"] for item in definitions]
-    if not codes:
+    # Convert iterable to list if it isn't already, to be safe for multiple iterations if needed
+    # though here we just pass it to values()
+    values_list = list(definitions)
+    if not values_list:
         return
 
-    existing_codes = {
-        code
-        for (code,) in db.query(Achievement.code).filter(Achievement.code.in_(codes)).all()
-    }
-    created = False
-    for item in definitions:
-        if item["code"] in existing_codes:
-            continue
-        record = Achievement(
-            code=item["code"],
-            name=item["name"],
-            description=item.get("description"),
-            category=item.get("category"),
-        )
-        db.add(record)
-        created = True
-
-    if created:
-        db.commit()
+    stmt = insert(Achievement).values(values_list)
+    
+    # Update fields if the record already exists (idempotent upsert)
+    # This prevents race conditions where multiple processes try to insert the same achievement
+    stmt = stmt.on_duplicate_key_update(
+        name=stmt.inserted.name,
+        description=stmt.inserted.description,
+        category=stmt.inserted.category,
+    )
+    
+    db.execute(stmt)
+    db.commit()
 
 
 def list_achievements(db: Session) -> Sequence[Achievement]:

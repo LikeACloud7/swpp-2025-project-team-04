@@ -158,4 +158,3 @@ def test_get_me_response_schema():
     response = client.get(f"{API_VERSION}/user/me", headers=headers)
     
     assert response.status_code == 200
-    

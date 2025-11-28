@@ -209,7 +209,7 @@ class AudioService:
 
     @staticmethod
     async def _generate_script(
-        mood: str, 
+        style: str, 
         theme: str, 
         user: User,
         selected_voice: dict,
@@ -232,12 +232,12 @@ class AudioService:
         target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_cefr_str, 15.0) # Default to B1-ish if key missing
 
         prompt = f"""
-        You are a scriptwriter. Generate a script for an audio narration.
+        You are a scriptwriter. Generate a script for an audio narration in the style of {style}.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
 
         Theme: {theme}
-        Mood: {mood}
+        Style: {style}
 
         User's Current English Profile:
         - Lexical Level: {lexical_cefr_str} (for vocabulary)
@@ -445,7 +445,7 @@ class AudioService:
         )
         
         title, script = await cls._generate_script(
-            mood=request.mood,
+            style=request.style,
             theme=request.theme,
             user=user,
             selected_voice=selected_voice
