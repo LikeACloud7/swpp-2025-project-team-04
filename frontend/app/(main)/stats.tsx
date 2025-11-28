@@ -114,6 +114,13 @@ export default function StatsScreen() {
     return { progress, current: Math.round(current), total };
   };
 
+  const getNextLevel = (currentLevel: string): string | null => {
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const currentIndex = levels.indexOf(currentLevel);
+    if (currentIndex === -1 || currentIndex === levels.length - 1) return null;
+    return levels[currentIndex + 1];
+  };
+
   const achievements = stats.achievements;
   const achievedCount = achievements.filter((a) => a.achieved).length;
   const totalAchievements = achievements.length;
@@ -165,10 +172,17 @@ export default function StatsScreen() {
           <View className="mb-6 rounded-2xl bg-white p-4 shadow-sm">
             <View className="mb-4">
               <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-semibold text-neutral-600">
-                  어휘력 ({stats.current_level.lexical.cefr_level})
-                </Text>
-                <Text className="text-sm font-bold text-primary">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    어휘력
+                  </Text>
+                  <View className="rounded-full bg-blue-500 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.lexical.cefr_level}
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-base font-bold text-primary">
                   {
                     calculateLevelProgress(
                       stats.current_level.lexical.score,
@@ -193,14 +207,31 @@ export default function StatsScreen() {
                   }}
                 />
               </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.lexical.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.lexical.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.lexical.cefr_level)}
+                  </Text>
+                )}
+              </View>
             </View>
 
             <View className="mb-4">
               <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-semibold text-neutral-600">
-                  문법 ({stats.current_level.syntactic.cefr_level})
-                </Text>
-                <Text className="text-sm font-bold text-primary">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    문법
+                  </Text>
+                  <View className="rounded-full bg-purple-600 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.syntactic.cefr_level}
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-base font-bold text-primary">
                   {
                     calculateLevelProgress(
                       stats.current_level.syntactic.score,
@@ -225,14 +256,31 @@ export default function StatsScreen() {
                   }}
                 />
               </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.syntactic.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.syntactic.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.syntactic.cefr_level)}
+                  </Text>
+                )}
+              </View>
             </View>
 
             <View>
               <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-semibold text-neutral-600">
-                  청취력 ({stats.current_level.auditory.cefr_level})
-                </Text>
-                <Text className="text-sm font-bold text-primary">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    청취력
+                  </Text>
+                  <View className="rounded-full bg-green-600 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.auditory.cefr_level}
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-base font-bold text-primary">
                   {
                     calculateLevelProgress(
                       stats.current_level.auditory.score,
@@ -256,6 +304,16 @@ export default function StatsScreen() {
                     backgroundColor: '#10b981',
                   }}
                 />
+              </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.auditory.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.auditory.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.auditory.cefr_level)}
+                  </Text>
+                )}
               </View>
             </View>
           </View>
@@ -341,7 +399,7 @@ export default function StatsScreen() {
                       )}
                       <View
                         className={`w-full rounded-t-lg ${
-                          isToday ? 'bg-primary' : 'bg-sky-200'
+                          isToday ? 'bg-primary' : 'bg-primary/60'
                         }`}
                         style={{
                           height: `${Math.max(barHeight, minutes > 0 ? 10 : 0)}%`,
