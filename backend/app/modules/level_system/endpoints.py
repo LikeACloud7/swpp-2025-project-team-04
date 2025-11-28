@@ -79,8 +79,7 @@ def set_manual_level(
 ):
     """수동으로 CEFR 레벨을 설정하는 엔드포인트.
     """
-    context.set_manual_level(db=db, user=current_user, payload=payload)
-    return schemas.ManualLevelResponse(success=True)
+    return context.set_manual_level(db=db, user=current_user, payload=payload)
 
 
 
