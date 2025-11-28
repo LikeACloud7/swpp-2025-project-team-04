@@ -108,128 +108,29 @@ export default function StatsScreen() {
     return { progress, current: Math.round(current), total };
   };
 
-  //Mock
-  const mockAchievements = [
-    {
-      code: 'first_step',
-      name: '첫 걸음',
-      description: '첫 번째 레슨 완료',
-      category: 'beginner',
-      achieved: true,
-      achieved_at: '2025-10-28T10:00:00Z',
-    },
-    {
-      code: 'week_warrior',
-      name: '일주일 전사',
-      description: '7일 연속 학습',
-      category: 'streak',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'early_bird',
-      name: '아침형 인간',
-      description: '오전 9시 이전 학습 5회',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'night_owl',
-      name: '올빼미',
-      description: '밤 10시 이후 학습 10회',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'hour_master',
-      name: '한 시간의 마법',
-      description: '총 학습 시간 1시간 달성',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'ten_hour_hero',
-      name: '10시간 영웅',
-      description: '총 학습 시간 10시간 달성',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'month_master',
-      name: '꾸준함',
-      description: '30일 연속 학습',
-      category: 'streak',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'level_up',
-      name: '레벨업',
-      description: '최초 레벨에서 레벨업',
-      category: 'level',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: '100_hours',
-      name: '100 시간',
-      description: '총 학습시간 6000분 달성',
-      category: 'mastery',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'vocab_rookie',
-      name: '단어 초보',
-      description: '단어 100개 학습',
-      category: 'vocabulary',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'vocab_expert',
-      name: '단어 전문가',
-      description: '단어 500개 학습',
-      category: 'vocabulary',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'speed_demon',
-      name: '스피드 러너',
-      description: '하루에 5개 레슨 완료',
-      category: 'special',
-      achieved: false,
-      achieved_at: null,
-    },
-  ];
-
-  const achievements = mockAchievements;
+  const achievements = stats.achievements;
   const achievedCount = achievements.filter((a) => a.achieved).length;
   const totalAchievements = achievements.length;
 
-  const getAchievementEmoji = (category: string) => {
-    // API의 카테고리 값에 맞게 수정
-    const emojiMap: Record<string, string> = {
-      milestone: '🌱', // 'FIRST_SESSION'
-      progress: '🏆', // 'level_a2' 등
-      consistency: '🔥', // 'streak_7'
-      streak: '🔥', // 'STREAK_3'
-      dedication: '⭐', // 'total_10_hours'
-      time: '⏰', // 'TOTAL_300'
-      exploration: '✨', // 'variety_master'
-      // (기존 mock 데이터 기준)
-      beginner: '🌱',
-      level: '🏆',
-      mastery: '⭐',
-      vocabulary: '📚',
-      special: '✨',
+  console.log('=== ACHIEVEMENTS DEBUG ===');
+  console.log('Total achievements:', totalAchievements);
+  console.log('Achievements:', JSON.stringify(achievements, null, 2));
+
+  const getBadgeIcon = (code: string) => {
+    const iconMap: Record<string, string> = {
+      'FIRST_SESSION': '🌱',
+
+      'STREAK_3': '🔥',
+      'STREAK_7': '⚡',
+      'STREAK_30': '💎',
+
+      'TOTAL_60': '⏱️',
+      'TOTAL_300': '⏰',
+      'TOTAL_600': '⭐',
+      'TOTAL_1200': '⌛',
+      'TOTAL_3000': '👑',
     };
-    return emojiMap[category] || '🏆'; // 모르는 카테고리는 기본값
+    return iconMap[code] || '🏆';
   };
 
   const handleAchievementPress = (achievement: Achievement) => {
@@ -504,7 +405,7 @@ export default function StatsScreen() {
                         className="text-3xl"
                         style={{ opacity: achievement.achieved ? 1 : 0.3 }}
                       >
-                        {getAchievementEmoji(achievement.category)}
+                        {getBadgeIcon(achievement.code)}
                       </Text>
                     </View>
                     <Text
@@ -565,11 +466,9 @@ export default function StatsScreen() {
                   >
                     <Text
                       className="text-5xl"
-                      style={{
-                        opacity: selectedAchievement.achieved ? 1 : 0.3,
-                      }}
+                      style={{ opacity: selectedAchievement.achieved ? 1 : 0.3 }}
                     >
-                      {getAchievementEmoji(selectedAchievement.category)}
+                      {getBadgeIcon(selectedAchievement.code)}
                     </Text>
                   </View>
 
