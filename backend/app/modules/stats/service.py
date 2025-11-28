@@ -35,6 +35,12 @@ _DEFAULT_ACHIEVEMENTS: tuple[Dict[str, str], ...] = (
         "category": "streak",
     },
     {
+        "code": "TOTAL_60",
+        "name": "누적 1시간 학습",
+        "description": "누적 60분 이상 학습했습니다.",
+        "category": "time",
+    },
+    {
         "code": "TOTAL_300",
         "name": "누적 5시간 학습",
         "description": "누적 300분 이상 학습했습니다.",
@@ -57,30 +63,6 @@ _DEFAULT_ACHIEVEMENTS: tuple[Dict[str, str], ...] = (
         "name": "누적 50시간 학습",
         "description": "누적 3,000분 이상 학습했습니다.",
         "category": "time",
-    },
-    {
-        "code": "LEXICAL_MASTERY",
-        "name": "어휘 레벨 B2 달성",
-        "description": "어휘 역량이 B2 이상으로 상승했습니다.",
-        "category": "skill",
-    },
-    {
-        "code": "SYNTACTIC_MASTERY",
-        "name": "문법 레벨 B2 달성",
-        "description": "문장 구성 능력이 B2 이상에 도달했습니다.",
-        "category": "skill",
-    },
-    {
-        "code": "AUDITORY_MASTERY",
-        "name": "청취 속도 레벨 B2 달성",
-        "description": "발화 속도 이해도가 B2 이상에 도달했습니다.",
-        "category": "skill",
-    },
-    {
-        "code": "POLYGLOT_MASTERY",
-        "name": "균형 잡힌 레벨업",
-        "description": "세 가지 지표 모두 B2 이상을 달성했습니다.",
-        "category": "skill",
     },
 )
 
@@ -162,6 +144,8 @@ class StatsService:
             unlock_candidates.add("STREAK_7")
         if consecutive_days >= 30:
             unlock_candidates.add("STREAK_30")
+        if total_time_spent >= 60:
+            unlock_candidates.add("TOTAL_60")
         if total_time_spent >= 300:
             unlock_candidates.add("TOTAL_300")
         if total_time_spent >= 600:
@@ -170,14 +154,6 @@ class StatsService:
             unlock_candidates.add("TOTAL_1200")
         if total_time_spent >= 3_000:
             unlock_candidates.add("TOTAL_3000")
-        if skill_levels["lexical"].cefr_level in _ADVANCED_CEFR_LEVELS:
-            unlock_candidates.add("LEXICAL_MASTERY")
-        if skill_levels["syntactic"].cefr_level in _ADVANCED_CEFR_LEVELS:
-            unlock_candidates.add("SYNTACTIC_MASTERY")
-        if skill_levels["auditory"].cefr_level in _ADVANCED_CEFR_LEVELS:
-            unlock_candidates.add("AUDITORY_MASTERY")
-        if all(skill_levels[key].cefr_level in _ADVANCED_CEFR_LEVELS for key in skill_levels):
-            unlock_candidates.add("POLYGLOT_MASTERY")
 
         for code in unlock_candidates:
             if code in definition_codes:
@@ -239,7 +215,9 @@ class StatsService:
     def _load_achievement_definitions(self, db: Session) -> Sequence:
         if _DEFAULT_ACHIEVEMENTS:
             crud.ensure_achievements(db, definitions=_DEFAULT_ACHIEVEMENTS)
-        return crud.list_achievements(db)
+        # Return achievements in the order defined in _DEFAULT_ACHIEVEMENTS
+        all_achievements = {a.code: a for a in crud.list_achievements(db)}
+        return [all_achievements[item["code"]] for item in _DEFAULT_ACHIEVEMENTS if item["code"] in all_achievements]
 
     @staticmethod
     def _start_of_day(target: date) -> datetime:

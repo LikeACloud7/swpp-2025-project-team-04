@@ -141,6 +141,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     assert set(awarded.keys()) == {
         "FIRST_SESSION",
         "STREAK_3",
+        "TOTAL_60",
         "TOTAL_300",
         "TOTAL_600",
     }
@@ -158,10 +159,11 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     achieved = {item.code: item.achieved for item in stats.achievements}
     assert achieved["FIRST_SESSION"] is True
     assert achieved["STREAK_3"] is True
+    assert achieved["TOTAL_60"] is True
     assert achieved["TOTAL_300"] is True
     assert achieved["TOTAL_600"] is True
     assert achieved["TOTAL_1200"] is False
-    assert achieved["POLYGLOT_MASTERY"] is False
+    assert achieved["STREAK_30"] is False
 
     first_achievement = next(item for item in stats.achievements if item.code == "FIRST_SESSION")
     assert first_achievement.achieved_at is not None
