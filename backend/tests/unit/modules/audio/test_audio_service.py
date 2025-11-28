@@ -273,7 +273,7 @@ def test_generate_full_audio_streaming(monkeypatch, sqlite_session, fake_user):
 
 def test_generate_full_audio_handles_background_failures(monkeypatch, sqlite_session, fake_user):
     _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="focus", theme="forest")
+    request = AudioGenerateRequest(style="focus", theme="forest")
 
     def fail_insert(*args, **kwargs):
         raise RuntimeError("db down")
@@ -301,7 +301,7 @@ def test_generate_full_audio_handles_background_failures(monkeypatch, sqlite_ses
 
 def test_generate_full_audio_handles_update_failure(monkeypatch, sqlite_session, fake_user):
     _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="calm", theme="rain")
+    request = AudioGenerateRequest(style="calm", theme="rain")
 
     def fail_update(*args, **kwargs):
         raise RuntimeError("update failed")
@@ -314,7 +314,7 @@ def test_generate_full_audio_handles_update_failure(monkeypatch, sqlite_session,
 
 def test_generate_full_audio_streaming_insert_failure(monkeypatch, sqlite_session, fake_user):
     _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="serious", theme="city")
+    request = AudioGenerateRequest(style="serious", theme="city")
     ws = DummyWebSocket()
 
     def fail_insert(*args, **kwargs):
@@ -328,7 +328,7 @@ def test_generate_full_audio_streaming_insert_failure(monkeypatch, sqlite_sessio
 
 def test_generate_full_audio_streaming_general_error(monkeypatch, sqlite_session, fake_user):
     _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="mystery", theme="labyrinth")
+    request = AudioGenerateRequest(style="mystery", theme="labyrinth")
     ws = DummyWebSocket()
 
     async def fail_script(*args, **kwargs):
@@ -343,7 +343,7 @@ def test_generate_full_audio_streaming_general_error(monkeypatch, sqlite_session
 
 def test_generate_full_audio_streaming_handles_soft_failures(monkeypatch, sqlite_session, fake_user):
     _patch_audio_pipeline(monkeypatch, sqlite_session)
-    request = AudioGenerateRequest(mood="steady", theme="mountain")
+    request = AudioGenerateRequest(style="steady", theme="mountain")
     ws = DummyWebSocket()
 
     def fail_task(coro):
@@ -390,7 +390,7 @@ def test_generate_script_retries_until_min_length(monkeypatch, fake_user):
     }
 
     title, script = asyncio.run(AudioService._generate_script(
-        mood="hopeful",
+        style="hopeful",
         theme="voyage",
         user=fake_user,
         selected_voice=selected_voice,
@@ -415,7 +415,7 @@ def test_generate_script_raises_after_max_attempts(monkeypatch, fake_user):
 
     with pytest.raises(HTTPException):
         asyncio.run(AudioService._generate_script(
-            mood="grim",
+            style="grim",
             theme="adventure",
             user=fake_user,
             selected_voice=selected_voice,
@@ -447,7 +447,7 @@ def test_generate_script_recovers_from_exception(monkeypatch, fake_user):
     }
 
     title, script = asyncio.run(AudioService._generate_script(
-        mood="joyful",
+        style="joyful",
         theme="comeback",
         user=fake_user,
         selected_voice=selected_voice,
@@ -473,7 +473,7 @@ def test_generate_audio_script_coordinates_components(monkeypatch, fake_user):
 
     monkeypatch.setattr(AudioService, "_generate_script", staticmethod(fake_generate_script))
 
-    result = asyncio.run(AudioService.generate_audio_script(AudioGenerateRequest(mood="relaxed", theme="sea"), fake_user))
+    result = asyncio.run(AudioService.generate_audio_script(AudioGenerateRequest(style="relaxed", theme="sea"), fake_user))
     assert result[0] == "Title"
     assert result[2]["voice_id"] == "v-1"
 
