@@ -1,4 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export type Level = {
   id: string;
@@ -17,32 +19,46 @@ export default function LevelSelector({
   onSelect,
 }: LevelSelectorProps) {
   return (
-    <View className="mb-8 py-4">
-      <Text className="text-[28px] font-bold text-gray-900 mb-4 text-center leading-[36px]">
-        영어 듣기 실력은 어느 정도인가요?
-      </Text>
-      <Text className="text-base text-gray-500 mb-10 text-center leading-[24px] px-4">
-        가장 정확하다고 생각하는 레벨을 하나 선택해 주세요.
-      </Text>
-      <View className="gap-4">
+    <View>
+      <View className="mb-6">
+        <Text className="text-[32px] font-black text-slate-900 mb-3 text-center leading-[40px] tracking-tight">
+          영어 듣기 실력은{'\n'}어느 정도인가요?
+        </Text>
+        <Text className="text-[15px] text-slate-600 mb-2 text-center leading-[22px] px-4">
+          가장 정확하다고 생각하는 레벨을 선택해 주세요
+        </Text>
+      </View>
+
+      <View className="gap-3">
         {levels.map((level) => {
           const isSelected = selectedLevel === level.id;
           return (
             <TouchableOpacity
               key={level.id}
-              className={`p-4 rounded-2xl items-center shadow-sm ${
-                isSelected
-                  ? 'bg-[#6FA4D7] border-2 border-[#6FA4D7]'
-                  : 'bg-white border-2 border-gray-200'
-              }`}
               onPress={() => onSelect(level.id)}
               activeOpacity={0.7}
+              className="overflow-hidden rounded-2xl"
             >
-              <Text
-                className={`text-[18px] font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}
-              >
-                {level.title}
-              </Text>
+              {isSelected ? (
+                <LinearGradient
+                  colors={['#0EA5E9', '#38BDF8'] as const}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="flex-row items-center justify-between px-5 py-4 shadow-md"
+                >
+                  <Text className="text-[17px] font-bold text-white flex-1">
+                    {level.title}
+                  </Text>
+                  <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                </LinearGradient>
+              ) : (
+                <View className="flex-row items-center justify-between px-5 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                  <Text className="text-[17px] font-semibold text-slate-700 flex-1">
+                    {level.title}
+                  </Text>
+                  <View className="w-6 h-6 rounded-full border-2 border-slate-300" />
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}

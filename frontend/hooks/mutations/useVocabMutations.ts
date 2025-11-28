@@ -7,20 +7,28 @@ import {
   VOCAB_QUERY_KEY,
 } from '@/constants/queryKeys';
 
-// ✅ addVocab 함수에 맞게 word 필드 추가
-type AddVocabVariables = {
-  generatedContentId: number;
-  index: number;
+// 단어장에 추가 대기중인 단어 정보
+export type PendingVocab = {
+  sentenceIndex: number;
   word: string;
+};
+
+type AddVocabPayload = {
+  generatedContentId: number;
+  pendingVocab: PendingVocab;
 };
 
 export const useAddVocab = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, ApiError, AddVocabVariables>({
+  return useMutation<void, ApiError, AddVocabPayload>({
     // ✅ word까지 전달
-    mutationFn: ({ generatedContentId, index, word }) =>
-      addVocab(generatedContentId, index, word),
+    mutationFn: ({ generatedContentId, pendingVocab }) =>
+      addVocab(
+        generatedContentId,
+        pendingVocab.sentenceIndex,
+        pendingVocab.word,
+      ),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [VOCAB_QUERY_KEY] });

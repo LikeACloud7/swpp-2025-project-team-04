@@ -163,12 +163,12 @@ export default function HomeScreen() {
   // 오디오 생성 핸들러
   const handleGenerateAudio = () => {
     if (!selectedTheme || !selectedMood) {
-      console.warn('테마와 분위기를 모두 선택하세요.');
+      console.warn('테마와 스타일을 모두 선택하세요.');
       return;
     }
 
     audioMutate(
-      { mood: selectedMood, theme: selectedTheme },
+      { style: selectedMood, theme: selectedTheme },
       {
         onSuccess: async (data) => {
           try {

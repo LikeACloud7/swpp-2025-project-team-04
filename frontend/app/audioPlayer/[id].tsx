@@ -1,29 +1,22 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Text, View, Modal, Pressable, BackHandler } from 'react-native';
-import TrackPlayer, { Event, useProgress } from 'react-native-track-player';
+import TrackPlayer, { useProgress } from 'react-native-track-player';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AudioGenerationResponse } from '@/api/audio';
 import PlayerControls from '@/components/audio/PlayerControls';
-import Script from '@/components/audio/script';
+import Script from '@/components/audio/Script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
-
-// ========== 행동 로그 타입 ==========
-export type BehaviorLogs = {
-  pauseCount: number;
-  rewindCount: number;
-  vocabLookupCount: number;
-  vocabSaveCount: number;
-};
+import { useBehaviorLogs } from '@/hooks/useBehaviorLogs';
+import { PendingVocab, useAddVocab } from '@/hooks/mutations/useVocabMutations';
 
 export default function AudioPlayer() {
   const { id: idParam, fromHistory } = useLocalSearchParams();
-  const qc = useQueryClient();
   const router = useRouter();
-  const navigation = useNavigation();
 
+  const qc = useQueryClient();
   const id = Array.isArray(idParam) ? idParam[0] : (idParam ?? null);
   const isFromHistory = fromHistory === 'true';
   const data = id
@@ -31,24 +24,9 @@ export default function AudioPlayer() {
     : undefined;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // ========== 행동 로그 상태 ==========
-  const [behaviorLogs, setBehaviorLogs] = useState<BehaviorLogs>({
-    pauseCount: 0,
-    rewindCount: 0,
-    vocabLookupCount: 0,
-    vocabSaveCount: 0,
-  });
-
-  // 행동 로그 증가 헬퍼
-  const incrementLog = useCallback((type: keyof BehaviorLogs) => {
-    setBehaviorLogs((prev) => {
-      const updated = { ...prev, [type]: prev[type] + 1 };
-      console.log(`📊 [행동 로그] ${type}: ${updated[type]}`);
-      return updated;
-    });
-  }, []);
+  const { behaviorLogs, incrementLog } = useBehaviorLogs();
 
   const togglePlayback = async () => {
     if (isPlaying) {
@@ -61,6 +39,44 @@ export default function AudioPlayer() {
     }
   };
 
+  // 단어장
+  const addVocabMutation = useAddVocab();
+  const [selectedVocabs, setSelectedVocabs] = useState<PendingVocab[]>([]);
+
+  // 토글 (추가/삭제)
+  const toggleVocab = (sentenceIndex: number, word: string) => {
+    setSelectedVocabs((prev) => {
+      const exists = prev.some(
+        (v) => v.sentenceIndex === sentenceIndex && v.word === word,
+      );
+
+      if (exists) {
+        // 제거
+        return prev.filter(
+          (v) => !(v.sentenceIndex === sentenceIndex && v.word === word),
+        );
+      }
+
+      // 추가
+      return [...prev, { sentenceIndex, word }];
+    });
+  };
+
+  const saveAllSelectedVocabs = async () => {
+    if (!selectedVocabs.length) return;
+
+    await Promise.all(
+      selectedVocabs.map((vocab) =>
+        addVocabMutation.mutateAsync({
+          generatedContentId: data!.generated_content_id,
+          pendingVocab: vocab,
+        }),
+      ),
+    );
+
+    incrementLog('vocabSaveCount', selectedVocabs.length); // 단어장 저장 카운트
+  };
+
   const stopAndCleanup = useCallback(async () => {
     try {
       await TrackPlayer.stop();
@@ -68,8 +84,9 @@ export default function AudioPlayer() {
     } catch {}
   }, []);
 
-  const goFeedback = useCallback(async () => {
+  const endSessionWithFeedback = useCallback(async () => {
     await stopAndCleanup();
+    await saveAllSelectedVocabs();
 
     // 행동 로그와 generated_content_id를 피드백 페이지로 전달
     const params = {
@@ -81,12 +98,19 @@ export default function AudioPlayer() {
     };
 
     router.replace({ pathname: '/feedback', params });
-  }, [router, stopAndCleanup, data, behaviorLogs]);
+  }, [router, stopAndCleanup, data, behaviorLogs, saveAllSelectedVocabs]);
 
   const goBackToHistory = useCallback(async () => {
     await stopAndCleanup();
+    await saveAllSelectedVocabs();
     router.replace('/(main)/history');
-  }, [router, stopAndCleanup]);
+  }, [router, stopAndCleanup, saveAllSelectedVocabs]);
+
+  const handleExitWithoutFeedback = async () => {
+    await stopAndCleanup();
+    await saveAllSelectedVocabs();
+    router.replace('/');
+  };
 
   // ✅ 마운트 시 자동 재생
   useEffect(() => {
@@ -102,8 +126,7 @@ export default function AudioPlayer() {
     };
   }, []);
 
-  // 컴포넌트 상단에
-  const { position, duration } = useProgress(250); // 250ms 간격 (원하는 주기로)
+  const { position, duration } = useProgress(100);
 
   const didFinishRef = useRef(false);
 
@@ -113,18 +136,18 @@ export default function AudioPlayer() {
     if (!duration || duration <= 0) return;
 
     // 끝으로부터 epsilon(여유) 안으로 들어오면 완료 처리
-    const EPSILON = 0.4; // 초 단위 여유 (원하는 값으로 조절)
+    const EPSILON = 0.1; // 초 단위 여유 (원하는 값으로 조절)
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
         if (isFromHistory) {
           await goBackToHistory();
         } else {
-          await goFeedback();
+          await endSessionWithFeedback();
         }
       })();
     }
-  }, [position, duration, goFeedback, goBackToHistory, isFromHistory]);
+  }, [position, duration, endSessionWithFeedback, goBackToHistory, isFromHistory]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -143,29 +166,15 @@ export default function AudioPlayer() {
         goBackToHistory();
         return true;
       }
-      if (modalVisible) {
-        setModalVisible(false);
+      if (isModalVisible) {
+        setIsModalVisible(false);
         return true;
       }
-      setModalVisible(true);
+      setIsModalVisible(true);
       return true;
     });
     return () => sub.remove();
-  }, [data, modalVisible, isFromHistory, goBackToHistory]);
-
-  useEffect(() => {
-    const beforeRemove = navigation.addListener('beforeRemove', (e) => {
-      if (!data) return;
-      if (isFromHistory) {
-        goBackToHistory();
-        return;
-      }
-      if (modalVisible) return;
-      e.preventDefault();
-      setModalVisible(true);
-    });
-    return beforeRemove;
-  }, [navigation, data, modalVisible, isFromHistory, goBackToHistory]);
+  }, [data, isModalVisible, isFromHistory, goBackToHistory]);
 
   if (!data) {
     return (
@@ -179,80 +188,88 @@ export default function AudioPlayer() {
   }
 
   return (
+    // 배경
     <LinearGradient
       colors={['#0C4A6E', '#0369A1', '#7DB7E8']}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       className="flex-1"
     >
-      {/* 상단 스크립트 */}
-      <View className="flex-1 relative">
-        <Script
-          generatedContentId={data.generated_content_id}
-          scripts={data.sentences}
-          onVocabLookup={isFromHistory ? () => {} : () => incrementLog('vocabLookupCount')}
-          onVocabSave={isFromHistory ? () => {} : () => incrementLog('vocabSaveCount')}
-          onRewind={isFromHistory ? () => {} : () => incrementLog('rewindCount')}
-        />
-      </View>
+      {/* 스크립트 */}
+      <Script
+        generatedContentId={data.generated_content_id}
+        scripts={data.sentences}
+        onVocabLookup={isFromHistory ? () => {} : () => incrementLog('vocabLookupCount')}
+        onRewind={isFromHistory ? () => {} : () => incrementLog('rewindCount')}
+        selectedVocabs={selectedVocabs}
+        onToggleVocab={isFromHistory ? () => {} : toggleVocab}
+      />
 
       {/* 슬라이더 */}
-      <View className="px-4 pb-3">
-        <AudioSlider />
-      </View>
+      <AudioSlider />
 
       {/* 컨트롤 */}
       <PlayerControls
         isPlaying={isPlaying}
         onTogglePlay={togglePlayback}
-        onFinish={isFromHistory ? goBackToHistory : () => setModalVisible(true)}
+        onFinish={isFromHistory ? goBackToHistory : () => setIsModalVisible(true)}
         finishButtonText={isFromHistory ? '복습 끝내기' : '학습 끝내기'}
       />
 
       {/* 종료 모달 */}
-      <Modal
-        transparent
-        animationType="fade" // ✅ 기본 fade 사용
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/40">
-          <Pressable
-            onPress={() => setModalVisible(false)}
-            className="absolute inset-0"
-          />
-          <View className="w-80 rounded-2xl bg-white p-5">
-            <View className="flex-row items-center">
-              <View className="mr-3 rounded-full bg-sky-100 p-2">
-                <Ionicons name="information-circle" size={20} color="#0EA5E9" />
+      {isModalVisible && (
+        <Modal
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsModalVisible(false)}
+        >
+          <View className="flex-1 items-center justify-center bg-black/40">
+            <Pressable
+              onPress={() => setIsModalVisible(false)}
+              className="absolute inset-0"
+            />
+            <View className="w-80 rounded-2xl bg-white p-5">
+              <View className="flex-row items-center">
+                <View className="mr-3 rounded-full bg-sky-100 p-2">
+                  <Ionicons
+                    name="warning-outline"
+                    size={20}
+                    color="#f97316" // 주황 느낌 경고
+                  />
+                </View>
+                <Text className="text-lg font-bold text-slate-900">
+                  학습을 종료할까요?
+                </Text>
               </View>
-              <Text className="text-lg font-bold text-slate-900">
-                학습을 종료할까요?
+
+              <Text className="mt-3 text-slate-600">
+                지금 화면을 떠나면 이번 학습의 진행 상태와 행동 기록이 저장되지
+                않습니다. 그래도 종료할까요?
               </Text>
-            </View>
 
-            <Text className="mt-3 text-slate-600">
-              지금까지의 진행 상태가 저장되고 피드백 화면으로 이동합니다.
-            </Text>
+              <View className="mt-5 flex-row justify-end gap-2">
+                <Pressable
+                  onPress={() => setIsModalVisible(false)}
+                  className="rounded-full bg-slate-100 px-4 py-2 active:opacity-80"
+                >
+                  <Text className="font-semibold text-slate-700">
+                    계속 학습
+                  </Text>
+                </Pressable>
 
-            <View className="mt-5 flex-row justify-end gap-2">
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                className="rounded-full bg-slate-100 px-4 py-2 active:opacity-80"
-              >
-                <Text className="font-semibold text-slate-700">계속 학습</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={goFeedback}
-                className="rounded-full bg-red-500 px-4 py-2 active:opacity-90"
-              >
-                <Text className="font-semibold text-white">종료</Text>
-              </Pressable>
+                <Pressable
+                  onPress={handleExitWithoutFeedback}
+                  className="rounded-full bg-red-500 px-4 py-2 active:opacity-90"
+                >
+                  <Text className="font-semibold text-white">
+                    종료하고 나가기
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </LinearGradient>
   );
 }
