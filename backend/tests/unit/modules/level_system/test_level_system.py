@@ -387,9 +387,11 @@ class TestLevelSystemService:
         
         result = service.set_manual_level(mock_db, mock_user, payload)
         
-        assert result["lexical_level"] == 100.0
-        assert result["syntactic_level"] == 100.0
-        assert result["speed_level"] == 100.0
+        assert result["success"] is True
+        assert result["success"] is True
+        assert result["lexical"]["score"] == 100.0
+        assert result["syntactic"]["score"] == 100.0
+        assert result["auditory"]["score"] == 100.0
         assert mock_user.lexical_level == 100.0
 
     def test_set_manual_level_invalid(self, service, mock_db, mock_user):
@@ -424,6 +426,10 @@ class TestLevelSystemService:
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
         assert result["success"] is True
+        assert "lexical" in result
+        assert "syntactic" in result
+        assert "auditory" in result
+        assert "overall" in result
         # avg_understanding = 80, diff = 0 → base_score(50)에서 변화 없음
         assert float(mock_user.lexical_level) == 50.0
 
@@ -438,6 +444,10 @@ class TestLevelSystemService:
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
         assert result["success"] is True
+        assert "lexical" in result
+        assert "syntactic" in result
+        assert "auditory" in result
+        assert "overall" in result
         # avg = 100, diff = 20 → B1(50)에서 B2(100) 중간(75)으로
         assert float(mock_user.lexical_level) == 75.0
 
@@ -452,6 +462,10 @@ class TestLevelSystemService:
         result = service.evaluate_level_test(mock_db, mock_user, payload)
         
         assert result["success"] is True
+        assert "lexical" in result
+        assert "syntactic" in result
+        assert "auditory" in result
+        assert "overall" in result
         # avg = 20, diff = -60 → B1(50)에서 A2(25) 방향으로 이동
         expected = 50.0 + (25.0 - 50.0) * (60.0 / 80.0)  # 31.25
         assert abs(float(mock_user.lexical_level) - expected) < 0.1

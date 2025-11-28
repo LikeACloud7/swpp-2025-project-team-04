@@ -12,6 +12,7 @@ from .utils import (
     normalize_interaction_factor,
     normalize_speed_factor,
     normalize_understanding_factor,
+    get_cefr_level_from_score,
 )
 from typing import Optional, List, Dict
 from .builders.normalized_builder import NormalizedInputVectorBuilder
@@ -221,9 +222,23 @@ class LevelSystemService:
         db.refresh(user)
 
         return {
-            "lexical_level": float(user.lexical_level),
-            "syntactic_level": float(user.syntactic_level),
-            "speed_level": float(user.speed_level),
+            "success": True,
+            "lexical": {
+                "cefr_level": manual_level_payload.level,
+                "score": float(user.lexical_level)
+            },
+            "syntactic": {
+                "cefr_level": manual_level_payload.level,
+                "score": float(user.syntactic_level)
+            },
+            "auditory": {
+                "cefr_level": manual_level_payload.level,
+                "score": float(user.speed_level)
+            },
+            "overall": {
+                "cefr_level": manual_level_payload.level,
+                "score": float(user.lexical_level) # All are same
+            }
         }
 
     def evaluate_level_test(
@@ -324,4 +339,29 @@ class LevelSystemService:
         db.commit()
         db.refresh(user)
 
-        return {"success": True}
+        # 7) Response 구성
+        lexical_score = float(user.lexical_level)
+        syntactic_score = float(user.syntactic_level)
+        speed_score = float(user.speed_level)
+        
+        overall_score = (lexical_score + syntactic_score + speed_score) / 3.0
+        
+        return {
+            "success": True,
+            "lexical": {
+                "cefr_level": get_cefr_level_from_score(lexical_score).value,
+                "score": lexical_score
+            },
+            "syntactic": {
+                "cefr_level": get_cefr_level_from_score(syntactic_score).value,
+                "score": syntactic_score
+            },
+            "auditory": {
+                "cefr_level": get_cefr_level_from_score(speed_score).value,
+                "score": speed_score
+            },
+            "overall": {
+                "cefr_level": get_cefr_level_from_score(overall_score).value,
+                "score": overall_score
+            }
+        }
