@@ -55,23 +55,28 @@ export default function StatsScreen() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const currentDayOfWeek = today.getDay();
-  const daysSinceMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
-  const mondayDate = new Date(today);
-  mondayDate.setDate(today.getDate() - daysSinceMonday);
-  mondayDate.setHours(0, 0, 0, 0);
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (6 - i));
+    return date;
+  });
 
   console.log('=== WEEKLY ACTIVITY DEBUG ===');
   console.log('Today:', formatLocalDate(today));
-  console.log('Monday of this week:', formatLocalDate(mondayDate));
+  console.log('Last 7 days:', last7Days.map(d => formatLocalDate(d)));
   console.log(
     'API daily_minutes data:',
     JSON.stringify(stats.streak.daily_minutes, null, 2),
   );
 
-  const weeklyActivity = weekDays.map((_, index) => {
-    const dayData = stats.streak.daily_minutes[index];
-    return dayData ? dayData.minutes : 0;
+  const dailyMinutesMap = new Map(
+    stats.streak.daily_minutes.map(day => [day.date, day.minutes])
+  );
+
+  const weeklyActivity = last7Days.map((date) => {
+    const dateString = formatLocalDate(date);
+    return dailyMinutesMap.get(dateString) || 0;
   });
 
   const actualWeeklyTotal = weeklyActivity.reduce((sum, minutes) => sum + minutes, 0);
@@ -408,16 +413,14 @@ export default function StatsScreen() {
               className="flex-row items-end justify-between gap-2"
               style={{ height: 140 }}
             >
-              {/* weeklyActivity 배열은 이제 [월, 화, 수 ... 일] 순서가 보장됨 */}
               {weeklyActivity.map((minutes, index) => {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
-                const isToday =
-                  index ===
-                  (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
-                
-                const dayDate = new Date(mondayDate);
-                dayDate.setDate(mondayDate.getDate() + index);
+                const dayDate = last7Days[index];
+                const isToday = formatLocalDate(dayDate) === formatLocalDate(today);
+
+                const dayOfWeek = dayDate.getDay();
+                const dayLabel = weekDays[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
                 const dateString = dayDate.getDate().toString();
 
                 return (
@@ -443,7 +446,7 @@ export default function StatsScreen() {
                         isToday ? 'text-primary' : 'text-neutral-400'
                       }`}
                     >
-                      {weekDays[index]}
+                      {dayLabel}
                     </Text>
                     <Text
                       className={`text-[10px] font-semibold ${
