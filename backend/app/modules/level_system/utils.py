@@ -253,20 +253,18 @@ def normalize_speed_factor(speed_difficulty: int) -> float:
 def get_speed_from_level_score(level_score: float) -> float:
 
     if level_score <= MIN_SCORE:
-        return 0.75
+        return 0.70
     
-    if level_score >= 250:
-        return 1.13
-    elif level_score >= 200:
-        return 1.12
+    if level_score >= 200:
+        return 1.15
 
     # (start_score, end_score, start_speed, end_speed)
     LEVEL_RANGES = [
-        (0,   25,  0.75, 0.80),  # A1
+        (0,   25,  0.70, 0.80),  # A1
         (25,  50,  0.80, 0.90),  # A2
         (50,  100, 0.90, 1.00),  # B1
-        (100, 150, 1.00, 1.08),  # B2
-        (150, 200, 1.08, 1.12),  # C1
+        (100, 150, 1.00, 1.1),  # B2
+        (150, 200, 1.1, 1.15),  # C1
     ]
 
 
