@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import '@/global.css';
-import CustomSplashScreen from '@/components/SplashScreen';
+import CustomSplashScreen from './splashScreen';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Stack, useRouter } from 'expo-router';
