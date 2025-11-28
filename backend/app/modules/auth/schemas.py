@@ -1,11 +1,25 @@
 from pydantic import BaseModel, Field, field_validator
 import re
-from ...core.exceptions import InvalidPasswordFormatException
+from ...core.exceptions import InvalidPasswordFormatException, InvalidUsernameFormatException
 
 
 class UserCredentials(BaseModel):
     username: str
     password: str
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v):
+        if not (3 <= len(v) <= 30):
+            raise InvalidUsernameFormatException()
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if not (3 <= len(v) <= 30):
+            raise InvalidPasswordFormatException()
+        return v
 
 class UserInfo(BaseModel):
     id: int
@@ -45,9 +59,7 @@ class ChangePasswordRequest(BaseModel):
     @field_validator("current_password", "new_password")
     @classmethod
     def validate_password(cls, v):
-        if not (8 <= len(v) <= 32):
-            raise InvalidPasswordFormatException()
-        if not re.search(r"[a-zA-Z]", v) or not re.search(r"[0-9]", v):
+        if not (3 <= len(v) <= 30):
             raise InvalidPasswordFormatException()
         return v
 
