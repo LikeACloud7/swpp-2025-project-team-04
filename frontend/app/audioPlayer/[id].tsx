@@ -10,7 +10,7 @@ import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBehaviorLogs } from '@/hooks/useBehaviorLogs';
 import { PendingVocab, useAddVocab } from '@/hooks/mutations/useVocabMutations';
-import Script from '@/components/audio/Script';
+import Script from '@/components/audio/script';
 
 export default function AudioPlayer() {
   const { id: idParam, fromHistory } = useLocalSearchParams();

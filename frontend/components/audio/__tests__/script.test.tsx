@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import Script from '../Script';
+import Script from '../script';
 import { Sentence } from '@/api/audio';
 
 // Mock

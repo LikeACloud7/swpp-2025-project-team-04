@@ -136,7 +136,7 @@ export default function Script({
       animated: true,
       viewPosition: 0.5,
     });
-  }, [currentLineIndex, wordPopup, isUserTouching]);
+  }, [currentLineIndex]);
 
   // 2-3. 라인 누르면 해당 위치로 이동
   const onLinePress = (time: number, lineIndex: number) => {
