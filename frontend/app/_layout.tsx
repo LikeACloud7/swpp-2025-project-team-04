@@ -1,10 +1,11 @@
 // app/_layout.tsx
 import '@/global.css';
+import CustomSplashScreen from './splashScreen';
 import { useUser } from '@/hooks/queries/useUserQueries';
 import { QueryProvider } from '@/lib/QueryProvider';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import 'react-native-reanimated';
 export { ErrorBoundary } from 'expo-router';
@@ -90,7 +91,7 @@ function RootNavigation() {
         try {
           const activeTrack = await TrackPlayer.getActiveTrack();
           if (activeTrack?.id) {
-            router.push(`/audioPlayer/${activeTrack.id}`);
+            router.replace(`/audioPlayer/${activeTrack.id}`);
           }
         } catch (error) {
           console.error('Error getting active track:', error);
@@ -111,28 +112,18 @@ function RootNavigation() {
     };
   }, [router]);
 
-  useEffect(() => {
-    let didHide = false;
-    if (!isAuthLoading) {
-      const start = Date.now();
-      const hide = async () => {
-        const elapsed = Date.now() - start;
-        const remaining = Math.max(0, 1000 - elapsed);
-        setTimeout(async () => {
-          if (!didHide) {
-            await SplashScreen.hideAsync();
-            didHide = true;
-          }
-        }, remaining);
-      };
-      hide();
-    }
-    return () => {
-      didHide = true;
-    };
-  }, [isAuthLoading]);
+  const [isSplashAnimationFinished, setIsSplashAnimationFinished] = useState(false);
 
-  if (isAuthLoading) return null;
+  const showSplash = isAuthLoading || !isSplashAnimationFinished;
+
+  if (showSplash) {
+    return (
+      <CustomSplashScreen
+        isReady={!isAuthLoading}
+        onAnimationComplete={() => setIsSplashAnimationFinished(true)}
+      />
+    );
+  }
 
   return (
     <Stack>
@@ -144,11 +135,19 @@ function RootNavigation() {
         />
         <Stack.Screen name="feedback" options={{ headerShown: false }} />
         <Stack.Screen name="level-result" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="profile"
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Screen name="initial-survey" options={{ headerShown: false }} />
+      <Stack.Screen name="walkthrough" options={{ headerShown: false }} />
     </Stack>
   );
 }

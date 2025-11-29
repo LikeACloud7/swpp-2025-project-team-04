@@ -3,13 +3,13 @@ import { customFetch } from './client';
 // --- Types ---
 
 export type AudioGenerationPayload = {
-  mood: string;
+  style: string;
   theme: string;
 };
 
 export type Sentence = {
-  id: string;
-  start_time: string;
+  id: number;
+  start_time: number;
   text: string;
 };
 

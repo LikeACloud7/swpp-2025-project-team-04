@@ -1,4 +1,3 @@
-// screens/SignUpScreen.tsx
 import { useSignup } from '@/hooks/mutations/useAuthMutations';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';

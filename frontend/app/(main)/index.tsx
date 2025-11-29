@@ -163,12 +163,12 @@ export default function HomeScreen() {
   // 오디오 생성 핸들러
   const handleGenerateAudio = () => {
     if (!selectedTheme || !selectedMood) {
-      console.warn('테마와 분위기를 모두 선택하세요.');
+      console.warn('테마와 스타일을 모두 선택하세요.');
       return;
     }
 
     audioMutate(
-      { mood: selectedMood, theme: selectedTheme },
+      { style: selectedMood, theme: selectedTheme },
       {
         onSuccess: async (data) => {
           try {
@@ -196,7 +196,7 @@ export default function HomeScreen() {
             qc.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
             // 플레이어 화면으로 라우팅 (id만 전달)
-            router.push(`/audioPlayer/${data.generated_content_id}`);
+            router.replace(`/audioPlayer/${data.generated_content_id}`);
           } catch (e) {
             4;
             console.error('TrackPlayer 처리 중 오류:', e);

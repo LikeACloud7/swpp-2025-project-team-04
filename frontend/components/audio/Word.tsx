@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 export type WordLayout = {
   x: number;
@@ -25,8 +26,10 @@ export default function Word({
 }: WordProps) {
   const touchableRef = useRef<View>(null);
 
-  // ⬇️ 위치 측정 로직만 수정
   const handleLongPress = () => {
+    // 롱프레스 인식 시 아주 약한 진동
+    Haptics.selectionAsync().catch(() => {});
+
     const node = touchableRef.current as unknown as {
       measureInWindow?: (
         cb: (x: number, y: number, w: number, h: number) => void,
@@ -61,6 +64,12 @@ export default function Word({
       ref={touchableRef}
       onPress={onPress}
       onLongPress={handleLongPress}
+      // 손 올려져 있을 때 살짝 어두워지게
+      style={({ pressed }) => [
+        {
+          opacity: pressed ? 0.7 : 1, // 눌렀을 때만 살짝 어둡게
+        },
+      ]}
     >
       <Text
         suppressHighlighting
