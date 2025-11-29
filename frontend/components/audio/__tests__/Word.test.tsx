@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
+import { Pressable } from 'react-native';
 import Word from '../Word';
+import * as Haptics from 'expo-haptics';
 
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),
