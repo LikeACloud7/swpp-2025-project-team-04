@@ -38,9 +38,10 @@ describe('LevelSelector', () => {
       />,
     );
 
-    expect(screen.getByText('영어 듣기 실력은 어느 정도인가요?')).toBeTruthy();
+    expect(screen.getByText(/영어 듣기 실력은/)).toBeTruthy();
+    expect(screen.getByText(/어느 정도인가요?/)).toBeTruthy();
     expect(
-      screen.getByText('가장 정확하다고 생각하는 레벨을 하나 선택해 주세요.'),
+      screen.getByText('가장 정확하다고 생각하는 레벨을 선택해 주세요'),
     ).toBeTruthy();
   });
 

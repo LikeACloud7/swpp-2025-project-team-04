@@ -36,8 +36,9 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('가장 관심 있는 주제를 선택해주세요')).toBeTruthy();
-    expect(screen.getByText('최대 3개까지 선택할 수 있습니다')).toBeTruthy();
+    expect(screen.getByText(/관심 있는 주제를/)).toBeTruthy();
+    expect(screen.getByText(/선택해주세요/)).toBeTruthy();
+    expect(screen.getByText('최대 3개까지 선택 가능')).toBeTruthy();
   });
 
   it('renders all categories', () => {
@@ -182,7 +183,7 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('가장 관심 있는 주제를 선택해주세요')).toBeTruthy();
+    expect(screen.getByText(/관심 있는 주제를/)).toBeTruthy();
     expect(screen.getByText('0 / 3 선택됨')).toBeTruthy();
   });
 
@@ -196,7 +197,7 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('최대 5개까지 선택할 수 있습니다')).toBeTruthy();
+    expect(screen.getByText('최대 5개까지 선택 가능')).toBeTruthy();
     expect(screen.getByText('0 / 5 선택됨')).toBeTruthy();
   });
 });

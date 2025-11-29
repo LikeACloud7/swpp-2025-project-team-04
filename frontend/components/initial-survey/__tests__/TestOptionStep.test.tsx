@@ -12,12 +12,9 @@ describe('TestOptionStep', () => {
   it('renders title and description', () => {
     render(<TestOptionStep onSelect={mockOnSelect} />);
 
-    expect(screen.getByText('듣기 테스트를 진행할까요?')).toBeTruthy();
-    expect(
-      screen.getByText(
-        /더 정확한 레벨 측정을 위해 짧은 듣기 테스트를 권장합니다/,
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText(/듣기 테스트를/)).toBeTruthy();
+    expect(screen.getByText(/진행할까요?/)).toBeTruthy();
+    expect(screen.getByText('약 3분 소요')).toBeTruthy();
   });
 
   it('renders both option buttons', () => {
@@ -48,9 +45,8 @@ describe('TestOptionStep', () => {
   it('renders helper text', () => {
     render(<TestOptionStep onSelect={mockOnSelect} />);
 
-    expect(
-      screen.getByText('테스트를 건너뛰면 선택한 레벨을 기준으로 시작합니다.'),
-    ).toBeTruthy();
+    expect(screen.getByText('정확한 실력 측정')).toBeTruthy();
+    expect(screen.getByText('바로 시작하기')).toBeTruthy();
   });
 
   it('allows selecting test option', () => {
