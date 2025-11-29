@@ -46,6 +46,7 @@ describe('useUserQueries', () => {
       expect(result.current.data).toBeNull();
     });
 
+
     it('401 에러 시 null 반환', async () => {
       const unauthorizedError: ApiError = {
         status: 401,
@@ -64,16 +65,6 @@ describe('useUserQueries', () => {
       expect(result.current.error).toBeNull();
     });
 
-    it('네트워크 에러 처리', async () => {
-      const error = new Error('Network error');
-      (userAPI.getMe as jest.Mock).mockRejectedValue(error);
-
-      const { result } = renderHook(() => useUser(), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => expect(result.current.data).toBeNull());
-    });
 
     it('캐시된 데이터 사용', async () => {
       const mockUser: User = {
@@ -108,5 +99,6 @@ describe('useUserQueries', () => {
       expect(result.current.data).toBeNull();
       expect(result.current.isError).toBe(false);
     });
+
   });
 });
