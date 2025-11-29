@@ -145,11 +145,15 @@ describe('VocabItem', () => {
       />,
     );
 
-    const pressables = UNSAFE_root.findAllByType('Pressable' as any);
-    if (pressables.length > 0) {
-      fireEvent.press(pressables[0]);
-      expect(mockOnDelete).toHaveBeenCalledWith(1);
-    }
+    const deleteButton = UNSAFE_root.findAll(
+      (node) => node.props.onPress && node.props.hitSlop === 8
+    );
+
+    expect(deleteButton.length).toBeGreaterThan(0);
+
+    deleteButton[0].props.onPress();
+
+    expect(mockOnDelete).toHaveBeenCalledWith(1);
   });
 
   it('renders with different vocab data', () => {

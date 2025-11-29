@@ -15,13 +15,12 @@ import type { User } from '@/types/type';
 
 jest.mock('@/api/auth');
 jest.mock('@/utils/tokenManager');
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: jest.fn(() => ({
-    replace: jest.fn(),
+    replace: mockReplace,
   })),
 }));
-
-const mockRouter = require('expo-router').useRouter();
 
 describe('useAuthMutations', () => {
   let queryClient: QueryClient;
@@ -48,6 +47,34 @@ describe('useAuthMutations', () => {
   });
 
   describe('useSignup', () => {
+    it('회원가입 성공 시 토큰 저장 및 라우팅', async () => {
+      const mockUser = { id: 1, username: 'newuser', nickname: 'New User' } as User;
+      const mockResponse = {
+        user: mockUser,
+        access_token: 'access-token-123',
+        refresh_token: 'refresh-token-456',
+      };
+
+      (authAPI.signup as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(() => useSignup(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({
+        username: 'newuser',
+        password: 'password123',
+        nickname: 'New User',
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(tokenManager.setAccessToken).toHaveBeenCalledWith('access-token-123');
+      expect(tokenManager.saveRefreshToken).toHaveBeenCalledWith('refresh-token-456');
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
+      expect(mockReplace).toHaveBeenCalledWith('/initial-survey');
+    });
+
     it('회원가입 실패 시 에러 처리', async () => {
       const error = new Error('Username already exists');
       (authAPI.signup as jest.Mock).mockRejectedValue(error);
@@ -68,6 +95,33 @@ describe('useAuthMutations', () => {
   });
 
   describe('useLogin', () => {
+    it('로그인 성공 시 토큰 저장 및 라우팅', async () => {
+      const mockUser = { id: 1, username: 'testuser', nickname: 'Test' } as User;
+      const mockResponse = {
+        user: mockUser,
+        access_token: 'access-123',
+        refresh_token: 'refresh-456',
+      };
+
+      (authAPI.login as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(() => useLogin(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({
+        username: 'testuser',
+        password: 'password123',
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(tokenManager.setAccessToken).toHaveBeenCalledWith('access-123');
+      expect(tokenManager.saveRefreshToken).toHaveBeenCalledWith('refresh-456');
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
+      expect(mockReplace).toHaveBeenCalledWith('/');
+    });
+
     it('로그인 실패 시 에러 처리', async () => {
       const error = new Error('Invalid credentials');
       (authAPI.login as jest.Mock).mockRejectedValue(error);
@@ -83,6 +137,23 @@ describe('useAuthMutations', () => {
 
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(result.current.error).toEqual(error);
+    });
+  });
+
+  describe('useLogout', () => {
+    it('로그아웃 시 토큰 삭제 및 캐시 클리어', async () => {
+      const mockUser = { id: 1, username: 'testuser' } as User;
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
+
+      const { result } = renderHook(() => useLogout(), {
+        wrapper: createWrapper(),
+      });
+
+      await result.current();
+
+      expect(tokenManager.setAccessToken).toHaveBeenCalledWith(null);
+      expect(tokenManager.deleteRefreshToken).toHaveBeenCalled();
+      expect(queryClient.getQueryData([USER_QUERY_KEY])).toBeUndefined();
     });
   });
 
