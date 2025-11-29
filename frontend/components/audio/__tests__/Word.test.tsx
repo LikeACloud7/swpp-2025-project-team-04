@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import Word from '../Word';
 
+jest.mock('expo-haptics', () => ({
+  selectionAsync: jest.fn(() => Promise.resolve()),
+}));
+
 describe('Word', () => {
   const mockOnPress = jest.fn();
   const mockOnLongPress = jest.fn();

@@ -41,8 +41,10 @@ describe('useVocabMutations', () => {
 
       const vocabData = {
         generatedContentId: 123,
-        index: 0,
-        word: 'hello',
+        pendingVocab: {
+          sentenceIndex: 0,
+          word: 'hello',
+        },
       };
 
       result.current.mutate(vocabData);
@@ -68,8 +70,10 @@ describe('useVocabMutations', () => {
 
       result.current.mutate({
         generatedContentId: 123,
-        index: 0,
-        word: 'world',
+        pendingVocab: {
+          sentenceIndex: 0,
+          word: 'world',
+        },
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -89,8 +93,10 @@ describe('useVocabMutations', () => {
 
       result.current.mutate({
         generatedContentId: 123,
-        index: 0,
-        word: 'test',
+        pendingVocab: {
+          sentenceIndex: 0,
+          word: 'test',
+        },
       });
 
       await waitFor(() => expect(result.current.isError).toBe(true));
@@ -101,9 +107,9 @@ describe('useVocabMutations', () => {
       (vocabAPI.addVocab as jest.Mock).mockResolvedValue(undefined);
 
       const words = [
-        { generatedContentId: 100, index: 0, word: 'apple' },
-        { generatedContentId: 101, index: 1, word: 'banana' },
-        { generatedContentId: 102, index: 2, word: 'cherry' },
+        { generatedContentId: 100, sentenceIndex: 0, word: 'apple' },
+        { generatedContentId: 101, sentenceIndex: 1, word: 'banana' },
+        { generatedContentId: 102, sentenceIndex: 2, word: 'cherry' },
       ];
 
       for (const wordData of words) {
@@ -111,13 +117,19 @@ describe('useVocabMutations', () => {
           wrapper: createWrapper(),
         });
 
-        result.current.mutate(wordData);
+        result.current.mutate({
+          generatedContentId: wordData.generatedContentId,
+          pendingVocab: {
+            sentenceIndex: wordData.sentenceIndex,
+            word: wordData.word,
+          },
+        });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
         expect(vocabAPI.addVocab).toHaveBeenCalledWith(
           wordData.generatedContentId,
-          wordData.index,
+          wordData.sentenceIndex,
           wordData.word,
         );
 
@@ -138,8 +150,10 @@ describe('useVocabMutations', () => {
       for (let i = 0; i < words.length; i++) {
         result.current.mutate({
           generatedContentId: contentId,
-          index: i,
-          word: words[i],
+          pendingVocab: {
+            sentenceIndex: i,
+            word: words[i],
+          },
         });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -164,8 +178,10 @@ describe('useVocabMutations', () => {
 
       result.current.mutate({
         generatedContentId: 123,
-        index: 0,
-        word: 'loading',
+        pendingVocab: {
+          sentenceIndex: 0,
+          word: 'loading',
+        },
       });
 
       await waitFor(() => expect(result.current.isPending).toBe(true));
@@ -194,8 +210,10 @@ describe('useVocabMutations', () => {
       for (let i = 0; i < specialWords.length; i++) {
         result.current.mutate({
           generatedContentId: 300,
-          index: i,
-          word: specialWords[i],
+          pendingVocab: {
+            sentenceIndex: i,
+            word: specialWords[i],
+          },
         });
 
         await waitFor(() => expect(result.current.isSuccess).toBe(true));
