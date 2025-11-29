@@ -34,20 +34,20 @@ const infoModalCopy: Record<
   { title: string; body: string[] }
 > = {
   privacy: {
-    title: 'Privacy & Security',
+    title: '개인정보 보호',
     body: [
       'LingoFit은 서비스 제공에 꼭 필요한 정보만 수집하며, 모든 유저 데이터를 안전하게 보관하고 있습니다.',
     ],
   },
   help: {
-    title: 'Help & Support',
+    title: '도움말 및 지원',
     body: [
       '사용 중 궁금한 점이나 문제가 발생하면 언제든 step215@snu.ac.kr 으로 문의해주세요.',
       '버그 제보나 기능 개선 제안 등 모든 피드백을 환영합니다. 여러분의 의견이 LingoFit을 더 나은 서비스로 만듭니다.',
     ],
   },
   about: {
-    title: 'About',
+    title: 'LingoFit 소개',
     body: [
       'LingoFit은 AI 기반 맞춤형 영어 리스닝 학습 애플리케이션으로, 사용자의 수준과 관심사에 맞춘 오디오 콘텐츠를 제공합니다.',
       '매일 짧은 시간 동안 부담 없이 들으며 청취 이해력을 향상시키는 것을 목표로 하고 있습니다.',
@@ -359,7 +359,7 @@ export default function ProfileScreen() {
           visible
           title={content.title}
           onClose={closeModal}
-          primaryLabel="OK"
+          primaryLabel="확인"
           onPrimary={closeModal}
         >
           {content.body.map((paragraph, index) => (
@@ -523,7 +523,7 @@ export default function ProfileScreen() {
           onClose={closeModal}
           primaryLabel="로그아웃"
           onPrimary={handleLogoutConfirm}
-          secondaryLabel="Cancel"
+          secondaryLabel="취소"
           onSecondary={closeModal}
           isPrimaryLoading={isLogoutProcessing}
           isSecondaryDisabled={isLogoutProcessing}
@@ -547,7 +547,7 @@ export default function ProfileScreen() {
           onPrimary={handleDeleteAccountConfirm}
           primaryVariant="danger"
           isPrimaryLoading={deleteAccountMutation.isPending}
-          secondaryLabel="Cancel"
+          secondaryLabel="취소"
           onSecondary={closeModal}
           isSecondaryDisabled={deleteAccountMutation.isPending}
           disableBackdropClose={deleteAccountMutation.isPending}
@@ -571,6 +571,17 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
+      <View className="border-b border-slate-200 bg-white px-6 pb-3 pt-12">
+        <View className="flex-row items-center">
+          <Pressable
+            onPress={() => router.back()}
+            className="mr-3 h-9 w-9 items-center justify-center rounded-full active:bg-neutral-100"
+          >
+            <Ionicons name="close" size={24} color="#1e293b" />
+          </Pressable>
+          <Text className="text-xl font-extrabold text-slate-900">프로필</Text>
+        </View>
+      </View>
       <ScrollView
         className="flex-1 px-6"
         contentContainerStyle={{ paddingBottom: 32 }}
@@ -602,7 +613,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Account
+            계정
           </Text>
           <ActionRow
             className="mb-3"
@@ -632,7 +643,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Privacy & Security
+            개인정보 및 보안
           </Text>
           <ActionRow
             iconName="shield-checkmark-outline"
@@ -644,7 +655,7 @@ export default function ProfileScreen() {
 
         <View className="mb-8">
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            Help & Support
+            도움말 및 지원
           </Text>
           <ActionRow
             iconName="chatbubbles-outline"
@@ -656,7 +667,7 @@ export default function ProfileScreen() {
 
         <View>
           <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            About
+            정보
           </Text>
           <ActionRow
             iconName="information-circle-outline"

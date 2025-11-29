@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Image, Animated, Dimensions, StyleSheet } from 'react-native';
+import { View, Image, Animated, Dimensions } from 'react-native';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 
 const { width, height } = Dimensions.get('window');
@@ -81,7 +81,7 @@ export default function SplashScreen({ isReady, onAnimationComplete }: SplashScr
     }, [isReady, isMinTimeElapsed, containerOpacity, onAnimationComplete]); // Added containerOpacity and onAnimationComplete as dependencies
 
     return (
-        <Animated.View style={[styles.container, { opacity: containerOpacity }]}>
+        <Animated.View className="flex-1 bg-[#001F3B] items-center justify-center" style={{ opacity: containerOpacity }}>
             {/* 
         Image matches Native Splash:
         - Background: #001F3B (set in container)
@@ -90,8 +90,8 @@ export default function SplashScreen({ isReady, onAnimationComplete }: SplashScr
       */}
             <Animated.Image
                 source={require('@/assets/splash.png')}
+                className="w-[205px] h-[205px]"
                 style={[
-                    styles.image,
                     {
                         transform: [{ scale: scaleAnim }],
                         opacity: containerOpacity // Bind opacity directly to image too
@@ -102,16 +102,3 @@ export default function SplashScreen({ isReady, onAnimationComplete }: SplashScr
         </Animated.View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#001F3B', // Matches app.json splash.backgroundColor
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    image: {
-        width: 205, // Reduced from 288 to match observed native size
-        height: 205,
-    },
-});

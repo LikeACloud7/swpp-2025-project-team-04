@@ -199,7 +199,7 @@ export default function HomeScreen() {
             qc.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
             // 플레이어 화면으로 라우팅 (id만 전달)
-            router.push(`/audioPlayer/${data.generated_content_id}`);
+            router.replace(`/audioPlayer/${data.generated_content_id}`);
           } catch (e) {
             4;
             console.error('TrackPlayer 처리 중 오류:', e);
