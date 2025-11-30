@@ -117,12 +117,12 @@ class InvalidCredentialsException(AppException):
 
 class InvalidUsernameFormatException(AppException):
     def __init__(self):
-        super().__init__(422, "INVALID_USERNAME_FORMAT", "아이디는 영문자와 숫자로 이루어진 6~16자여야 합니다.")
+        super().__init__(422, "INVALID_USERNAME_FORMAT", "아이디는 3~30자여야 합니다.")
 
 
 class InvalidPasswordFormatException(AppException):
     def __init__(self):
-        super().__init__(422, "INVALID_PASSWORD_FORMAT",  "비밀번호는 영문자와 숫자를 모두 포함한 8~32자여야 합니다.")
+        super().__init__(422, "INVALID_PASSWORD_FORMAT",  "비밀번호는 3~30자여야 합니다.")
 
 
 class UsernameExistsException(AppException):

@@ -285,3 +285,262 @@ def test_delete_account_invalid_token():
     
     delete_response_data = delete_response.json()
     assert delete_response_data["custom_code"] == "INVALID_TOKEN"
+
+
+# ========== Validation Tests ==========
+
+def test_signup_username_too_short():
+    ''' Username이 3자 미만일 때 실패 테스트 '''
+    signup_data = {
+        "username": "ab",  # 2자
+        "password": "validpass123"
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_USERNAME_FORMAT"
+    assert "3~30자" in response_data["detail"]
+
+
+def test_signup_username_too_long():
+    ''' Username이 30자 초과일 때 실패 테스트 '''
+    signup_data = {
+        "username": "a" * 31,  # 31자
+        "password": "validpass123"
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_USERNAME_FORMAT"
+    assert "3~30자" in response_data["detail"]
+
+
+def test_signup_username_exactly_3_chars():
+    ''' Username이 정확히 3자일 때 성공 테스트 '''
+    signup_data = {
+        "username": "abc",  # 3자
+        "password": "validpass123"
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "access_token" in response_data
+    
+    # Clean up
+    headers = {"Authorization": f"Bearer {response_data['access_token']}"}
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_signup_username_exactly_30_chars():
+    ''' Username이 정확히 30자일 때 성공 테스트 '''
+    signup_data = {
+        "username": "a" * 30,  # 30자
+        "password": "validpass123"
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "access_token" in response_data
+    
+    # Clean up
+    headers = {"Authorization": f"Bearer {response_data['access_token']}"}
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_signup_password_too_short():
+    ''' Password가 3자 미만일 때 실패 테스트 '''
+    signup_data = {
+        "username": "validuser123",
+        "password": "ab"  # 2자
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+    assert "3~30자" in response_data["detail"]
+
+
+def test_signup_password_too_long():
+    ''' Password가 30자 초과일 때 실패 테스트 '''
+    signup_data = {
+        "username": "validuser123",
+        "password": "a" * 31  # 31자
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+    assert "3~30자" in response_data["detail"]
+
+
+def test_signup_password_exactly_3_chars():
+    ''' Password가 정확히 3자일 때 성공 테스트 '''
+    signup_data = {
+        "username": "pwdtest3char",
+        "password": "abc"  # 3자
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "access_token" in response_data
+    
+    # Clean up
+    headers = {"Authorization": f"Bearer {response_data['access_token']}"}
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_signup_password_exactly_30_chars():
+    ''' Password가 정확히 30자일 때 성공 테스트 '''
+    signup_data = {
+        "username": "pwdtest30char",
+        "password": "a" * 30  # 30자
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    
+    assert response.status_code == 201
+    response_data = response.json()
+    assert "access_token" in response_data
+    
+    # Clean up
+    headers = {"Authorization": f"Bearer {response_data['access_token']}"}
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_login_username_too_short():
+    ''' 로그인 시 Username이 3자 미만일 때 실패 테스트 '''
+    login_data = {
+        "username": "ab",  # 2자
+        "password": "validpass123"
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/login", json=login_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_USERNAME_FORMAT"
+
+
+def test_login_password_too_short():
+    ''' 로그인 시 Password가 3자 미만일 때 실패 테스트 '''
+    login_data = {
+        "username": "validuser123",
+        "password": "ab"  # 2자
+    }
+    
+    response = client.post(f"{API_VERSION}/auth/login", json=login_data)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+
+
+def test_change_password_new_password_too_short():
+    ''' 비밀번호 변경 시 새 비밀번호가 3자 미만일 때 실패 테스트 '''
+    username = f"chgpwd{uuid4().hex[:9]}"
+    original_password = "ValidPass123"
+    
+    # 계정 생성
+    signup_data = {
+        "username": username,
+        "password": original_password
+    }
+    signup_response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    assert signup_response.status_code == 201
+    
+    signup_response_data = signup_response.json()
+    access_token = signup_response_data["access_token"]
+    
+    # 비밀번호 변경 시도 (새 비밀번호 2자)
+    headers = {"Authorization": f"Bearer {access_token}"}
+    change_password_data = {
+        "current_password": original_password,
+        "new_password": "ab"  # 2자
+    }
+    response = client.post(f"{API_VERSION}/auth/change-password", json=change_password_data, headers=headers)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+    
+    # Clean up
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_change_password_new_password_too_long():
+    ''' 비밀번호 변경 시 새 비밀번호가 30자 초과일 때 실패 테스트 '''
+    username = f"chgpwd{uuid4().hex[:9]}"
+    original_password = "ValidPass123"
+    
+    # 계정 생성
+    signup_data = {
+        "username": username,
+        "password": original_password
+    }
+    signup_response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    assert signup_response.status_code == 201
+    
+    signup_response_data = signup_response.json()
+    access_token = signup_response_data["access_token"]
+    
+    # 비밀번호 변경 시도 (새 비밀번호 31자)
+    headers = {"Authorization": f"Bearer {access_token}"}
+    change_password_data = {
+        "current_password": original_password,
+        "new_password": "a" * 31  # 31자
+    }
+    response = client.post(f"{API_VERSION}/auth/change-password", json=change_password_data, headers=headers)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+    
+    # Clean up
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
+
+def test_change_password_current_password_too_short():
+    ''' 비밀번호 변경 시 현재 비밀번호가 3자 미만일 때 실패 테스트 '''
+    username = f"chgpwd{uuid4().hex[:9]}"
+    original_password = "ValidPass123"
+    
+    # 계정 생성
+    signup_data = {
+        "username": username,
+        "password": original_password
+    }
+    signup_response = client.post(f"{API_VERSION}/auth/signup", json=signup_data)
+    assert signup_response.status_code == 201
+    
+    signup_response_data = signup_response.json()
+    access_token = signup_response_data["access_token"]
+    
+    # 비밀번호 변경 시도 (현재 비밀번호 2자)
+    headers = {"Authorization": f"Bearer {access_token}"}
+    change_password_data = {
+        "current_password": "ab",  # 2자
+        "new_password": "ValidNewPass456"
+    }
+    response = client.post(f"{API_VERSION}/auth/change-password", json=change_password_data, headers=headers)
+    
+    assert response.status_code == 422
+    response_data = response.json()
+    assert response_data["custom_code"] == "INVALID_PASSWORD_FORMAT"
+    
+    # Clean up
+    client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
+
