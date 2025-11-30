@@ -147,7 +147,13 @@ export default function AudioPlayer() {
         }
       })();
     }
-  }, [position, duration, endSessionWithFeedback, goBackToHistory, isFromHistory]);
+  }, [
+    position,
+    duration,
+    endSessionWithFeedback,
+    goBackToHistory,
+    isFromHistory,
+  ]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -199,7 +205,9 @@ export default function AudioPlayer() {
       <Script
         generatedContentId={data.generated_content_id}
         scripts={data.sentences}
-        onVocabLookup={isFromHistory ? () => {} : () => incrementLog('vocabLookupCount')}
+        onVocabLookup={
+          isFromHistory ? () => {} : () => incrementLog('vocabLookupCount')
+        }
         onRewind={isFromHistory ? () => {} : () => incrementLog('rewindCount')}
         selectedVocabs={selectedVocabs}
         onToggleVocab={isFromHistory ? () => {} : toggleVocab}
@@ -212,7 +220,9 @@ export default function AudioPlayer() {
       <PlayerControls
         isPlaying={isPlaying}
         onTogglePlay={togglePlayback}
-        onFinish={isFromHistory ? goBackToHistory : () => setIsModalVisible(true)}
+        onFinish={
+          isFromHistory ? goBackToHistory : () => setIsModalVisible(true)
+        }
         finishButtonText={isFromHistory ? '복습 끝내기' : '학습 끝내기'}
       />
 

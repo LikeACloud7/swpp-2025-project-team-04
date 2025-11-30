@@ -1,5 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MainHeader from '../MainHeader';
 import { STATS_QUERY_KEY } from '@/constants/queryKeys';
@@ -28,7 +33,7 @@ describe('MainHeader', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         {component}
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   };
 
@@ -59,7 +64,7 @@ describe('MainHeader', () => {
     rerender(
       <QueryClientProvider client={queryClient}>
         <MainHeader title="통계" />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
     expect(screen.getByText('통계')).toBeTruthy();
   });

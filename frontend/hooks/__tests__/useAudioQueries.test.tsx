@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as audioHistoryAPI from '@/api/audioHistory';
 import { useAudioHistory } from '../queries/useAudioQueries';
 import { AUDIO_HISTORY_QUERY_KEY } from '@/constants/queryKeys';
-import type { AudioHistoryResponse, AudioHistoryItem } from '@/api/audioHistory';
+import type {
+  AudioHistoryResponse,
+  AudioHistoryItem,
+} from '@/api/audioHistory';
 import type { ApiError } from '@/api/client';
 
 jest.mock('@/api/audioHistory');
@@ -56,7 +59,9 @@ describe('useAudioQueries', () => {
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result } = renderHook(() => useAudioHistory(20), {
         wrapper: createWrapper(),
@@ -80,7 +85,9 @@ describe('useAudioQueries', () => {
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result } = renderHook(() => useAudioHistory(), {
         wrapper: createWrapper(),
@@ -102,7 +109,9 @@ describe('useAudioQueries', () => {
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result } = renderHook(() => useAudioHistory(10), {
         wrapper: createWrapper(),
@@ -118,22 +127,26 @@ describe('useAudioQueries', () => {
 
     it('무한 스크롤 - 다음 페이지 로드 성공', async () => {
       const mockPage1: AudioHistoryResponse = {
-        items: Array(20).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: idx + 1,
-          title: `Audio ${idx + 1}`,
-        })),
+        items: Array(20)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: idx + 1,
+            title: `Audio ${idx + 1}`,
+          })),
         total: 50,
         limit: 20,
         offset: 0,
       };
 
       const mockPage2: AudioHistoryResponse = {
-        items: Array(20).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: idx + 21,
-          title: `Audio ${idx + 21}`,
-        })),
+        items: Array(20)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: idx + 21,
+            title: `Audio ${idx + 21}`,
+          })),
         total: 50,
         limit: 20,
         offset: 20,
@@ -168,16 +181,20 @@ describe('useAudioQueries', () => {
 
     it('모든 데이터 로드 완료 시 hasNextPage가 false', async () => {
       const mockResponse: AudioHistoryResponse = {
-        items: Array(15).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: idx + 1,
-        })),
+        items: Array(15)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: idx + 1,
+          })),
         total: 15,
         limit: 20,
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result } = renderHook(() => useAudioHistory(20), {
         wrapper: createWrapper(),
@@ -190,20 +207,24 @@ describe('useAudioQueries', () => {
 
     it('마지막 페이지가 limit보다 적을 때 hasNextPage가 false', async () => {
       const mockPage1: AudioHistoryResponse = {
-        items: Array(20).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: idx + 1,
-        })),
+        items: Array(20)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: idx + 1,
+          })),
         total: 25,
         limit: 20,
         offset: 0,
       };
 
       const mockPage2: AudioHistoryResponse = {
-        items: Array(5).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: idx + 21,
-        })),
+        items: Array(5)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: idx + 21,
+          })),
         total: 25,
         limit: 20,
         offset: 20,
@@ -234,7 +255,9 @@ describe('useAudioQueries', () => {
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result } = renderHook(() => useAudioHistory(), {
         wrapper: createWrapper(),
@@ -273,7 +296,6 @@ describe('useAudioQueries', () => {
       expect(result.current.isPending).toBe(false);
     });
 
-
     it('staleTime 설정 확인 (5분)', async () => {
       const mockResponse: AudioHistoryResponse = {
         items: [mockAudioItem],
@@ -282,7 +304,9 @@ describe('useAudioQueries', () => {
         offset: 0,
       };
 
-      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(mockResponse);
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockResolvedValue(
+        mockResponse,
+      );
 
       const { result, rerender } = renderHook(() => useAudioHistory(20), {
         wrapper: createWrapper(),
@@ -298,11 +322,16 @@ describe('useAudioQueries', () => {
     });
 
     it('여러 페이지의 offset 계산이 정확함', async () => {
-      const createMockPage = (offset: number, count: number): AudioHistoryResponse => ({
-        items: Array(count).fill(null).map((_, idx) => ({
-          ...mockAudioItem,
-          generated_content_id: offset + idx + 1,
-        })),
+      const createMockPage = (
+        offset: number,
+        count: number,
+      ): AudioHistoryResponse => ({
+        items: Array(count)
+          .fill(null)
+          .map((_, idx) => ({
+            ...mockAudioItem,
+            generated_content_id: offset + idx + 1,
+          })),
         total: 100,
         limit: 20,
         offset,
@@ -320,7 +349,9 @@ describe('useAudioQueries', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       await result.current.fetchNextPage();
-      await waitFor(() => expect(result.current.isFetchingNextPage).toBe(false));
+      await waitFor(() =>
+        expect(result.current.isFetchingNextPage).toBe(false),
+      );
 
       await result.current.fetchNextPage();
       await waitFor(() => expect(result.current.data?.pages).toHaveLength(3));
@@ -354,12 +385,16 @@ describe('useAudioQueries', () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(result.current.data?.pages[0].items[0].generated_content_id).toBe(1);
+      expect(result.current.data?.pages[0].items[0].generated_content_id).toBe(
+        1,
+      );
 
       await result.current.refetch();
 
       await waitFor(() =>
-        expect(result.current.data?.pages[0].items[0].generated_content_id).toBe(2)
+        expect(
+          result.current.data?.pages[0].items[0].generated_content_id,
+        ).toBe(2),
       );
     });
 

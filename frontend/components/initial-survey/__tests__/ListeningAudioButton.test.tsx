@@ -353,7 +353,6 @@ describe('ListeningAudioButton', () => {
 
       expect(screen.getByText('재생하기')).toBeTruthy();
     });
-
   });
 
   describe('완료 상태', () => {

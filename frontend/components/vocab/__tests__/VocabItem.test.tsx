@@ -146,7 +146,7 @@ describe('VocabItem', () => {
     );
 
     const deleteButton = UNSAFE_root.findAll(
-      (node) => node.props.onPress && node.props.hitSlop === 8
+      (node) => node.props.onPress && node.props.hitSlop === 8,
     );
 
     expect(deleteButton.length).toBeGreaterThan(0);

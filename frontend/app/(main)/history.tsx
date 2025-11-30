@@ -63,9 +63,14 @@ export default function HistoryScreen() {
           sentences: item.sentences,
         };
 
-        qc.setQueryData(['audio', String(item.generated_content_id)], audioData);
+        qc.setQueryData(
+          ['audio', String(item.generated_content_id)],
+          audioData,
+        );
 
-        router.replace(`/audioPlayer/${item.generated_content_id}?fromHistory=true`);
+        router.replace(
+          `/audioPlayer/${item.generated_content_id}?fromHistory=true`,
+        );
       } catch (error) {
         alert('오디오를 재생할 수 없습니다.');
       }
@@ -142,10 +147,7 @@ export default function HistoryScreen() {
         <Text className="mb-4 text-center text-xs text-slate-500">
           {(error as any)?.message ?? '알 수 없는 오류'}
         </Text>
-        <Text
-          className="font-semibold text-sky-600"
-          onPress={() => refetch()}
-        >
+        <Text className="font-semibold text-sky-600" onPress={() => refetch()}>
           다시 시도하기
         </Text>
       </View>
@@ -175,7 +177,11 @@ export default function HistoryScreen() {
         data={items}
         renderItem={renderItem}
         keyExtractor={(item) => item.generated_content_id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 32,
+        }}
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}

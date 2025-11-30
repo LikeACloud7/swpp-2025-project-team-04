@@ -37,9 +37,12 @@ describe('audioHistory API', () => {
 
       const result = await getAudioHistory();
 
-      expect(mockCustomFetch).toHaveBeenCalledWith('/audio/history?limit=20&offset=0', {
-        method: 'GET',
-      });
+      expect(mockCustomFetch).toHaveBeenCalledWith(
+        '/audio/history?limit=20&offset=0',
+        {
+          method: 'GET',
+        },
+      );
       expect(result).toEqual(mockResponse);
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(1);
@@ -57,9 +60,12 @@ describe('audioHistory API', () => {
 
       const result = await getAudioHistory({ limit: 10 });
 
-      expect(mockCustomFetch).toHaveBeenCalledWith('/audio/history?limit=10&offset=0', {
-        method: 'GET',
-      });
+      expect(mockCustomFetch).toHaveBeenCalledWith(
+        '/audio/history?limit=10&offset=0',
+        {
+          method: 'GET',
+        },
+      );
       expect(result.limit).toBe(10);
     });
 
@@ -86,9 +92,12 @@ describe('audioHistory API', () => {
 
       const result = await getAudioHistory({ offset: 20 });
 
-      expect(mockCustomFetch).toHaveBeenCalledWith('/audio/history?limit=20&offset=20', {
-        method: 'GET',
-      });
+      expect(mockCustomFetch).toHaveBeenCalledWith(
+        '/audio/history?limit=20&offset=20',
+        {
+          method: 'GET',
+        },
+      );
       expect(result.offset).toBe(20);
     });
 
@@ -104,9 +113,12 @@ describe('audioHistory API', () => {
 
       const result = await getAudioHistory({ limit: 5, offset: 50 });
 
-      expect(mockCustomFetch).toHaveBeenCalledWith('/audio/history?limit=5&offset=50', {
-        method: 'GET',
-      });
+      expect(mockCustomFetch).toHaveBeenCalledWith(
+        '/audio/history?limit=5&offset=50',
+        {
+          method: 'GET',
+        },
+      );
       expect(result.limit).toBe(5);
       expect(result.offset).toBe(50);
     });
@@ -181,7 +193,9 @@ describe('audioHistory API', () => {
       const error = new Error('Failed to fetch audio history');
       mockCustomFetch.mockRejectedValue(error);
 
-      await expect(getAudioHistory()).rejects.toThrow('Failed to fetch audio history');
+      await expect(getAudioHistory()).rejects.toThrow(
+        'Failed to fetch audio history',
+      );
     });
   });
 });

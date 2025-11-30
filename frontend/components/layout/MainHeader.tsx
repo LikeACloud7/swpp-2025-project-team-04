@@ -40,7 +40,10 @@ export default function MainHeader({ title }: MainHeaderProps) {
               </Pressable>
 
               {showStreakTooltip && (
-                <View className="absolute right-0 top-10 z-50" style={{ minWidth: 140 }}>
+                <View
+                  className="absolute right-0 top-10 z-50"
+                  style={{ minWidth: 140 }}
+                >
                   <View className="absolute -top-1.5 right-4 h-3 w-3 rotate-45 bg-slate-800" />
                   <View className="rounded-lg bg-slate-800 px-3 py-2 shadow-lg">
                     <Text className="text-sm font-medium text-white">

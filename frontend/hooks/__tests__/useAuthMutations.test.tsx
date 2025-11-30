@@ -48,7 +48,11 @@ describe('useAuthMutations', () => {
 
   describe('useSignup', () => {
     it('회원가입 성공 시 토큰 저장 및 라우팅', async () => {
-      const mockUser = { id: 1, username: 'newuser', nickname: 'New User' } as User;
+      const mockUser = {
+        id: 1,
+        username: 'newuser',
+        nickname: 'New User',
+      } as User;
       const mockResponse = {
         user: mockUser,
         access_token: 'access-token-123',
@@ -69,8 +73,12 @@ describe('useAuthMutations', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(tokenManager.setAccessToken).toHaveBeenCalledWith('access-token-123');
-      expect(tokenManager.saveRefreshToken).toHaveBeenCalledWith('refresh-token-456');
+      expect(tokenManager.setAccessToken).toHaveBeenCalledWith(
+        'access-token-123',
+      );
+      expect(tokenManager.saveRefreshToken).toHaveBeenCalledWith(
+        'refresh-token-456',
+      );
       expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
       expect(mockReplace).toHaveBeenCalledWith('/initial-survey');
     });
@@ -96,7 +104,11 @@ describe('useAuthMutations', () => {
 
   describe('useLogin', () => {
     it('로그인 성공 시 토큰 저장 및 라우팅', async () => {
-      const mockUser = { id: 1, username: 'testuser', nickname: 'Test' } as User;
+      const mockUser = {
+        id: 1,
+        username: 'testuser',
+        nickname: 'Test',
+      } as User;
       const mockResponse = {
         user: mockUser,
         access_token: 'access-123',

@@ -129,7 +129,7 @@ describe('AuthInput', () => {
     expect(input.props.secureTextEntry).toBe(true);
 
     const toggleButton = UNSAFE_root.findAll(
-      (node) => node.props.hitSlop === 8 && node.props.onPress
+      (node) => node.props.hitSlop === 8 && node.props.onPress,
     )[0];
 
     fireEvent.press(toggleButton);

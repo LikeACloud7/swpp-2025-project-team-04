@@ -188,7 +188,11 @@ describe('useBehaviorLogs', () => {
       result.current.incrementLog('vocabLookupCount', 2);
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('📊 [behavior log] vocabLookupCount: 3');
-    expect(consoleSpy).toHaveBeenCalledWith('📊 [behavior log] vocabLookupCount: 5');
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '📊 [behavior log] vocabLookupCount: 3',
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '📊 [behavior log] vocabLookupCount: 5',
+    );
   });
 });

@@ -46,7 +46,6 @@ describe('useUserQueries', () => {
       expect(result.current.data).toBeNull();
     });
 
-
     it('401 에러 시 null 반환', async () => {
       const unauthorizedError: ApiError = {
         status: 401,
@@ -64,7 +63,6 @@ describe('useUserQueries', () => {
       expect(result.current.data).toBeNull();
       expect(result.current.error).toBeNull();
     });
-
 
     it('캐시된 데이터 사용', async () => {
       const mockUser: User = {
@@ -156,6 +154,5 @@ describe('useUserQueries', () => {
 
       expect(result.current.error).toEqual(networkError);
     });
-
   });
 });

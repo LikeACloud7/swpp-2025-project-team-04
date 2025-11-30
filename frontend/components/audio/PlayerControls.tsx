@@ -46,13 +46,18 @@ export default function PlayerControls({
           onPress={onFinish}
           accessibilityRole="button"
           accessibilityLabel={finishButtonText}
-          android_ripple={{ color: 'rgba(255,255,255,0.15)', borderless: false }}
+          android_ripple={{
+            color: 'rgba(255,255,255,0.15)',
+            borderless: false,
+          }}
           className="mt-5 px-5 py-2.5 rounded-full bg-white/10"
           style={({ pressed }) => ({
             opacity: pressed ? 0.85 : 1,
           })}
         >
-          <Text className="text-sm font-semibold text-white/85">{finishButtonText}</Text>
+          <Text className="text-sm font-semibold text-white/85">
+            {finishButtonText}
+          </Text>
         </Pressable>
       )}
     </View>
