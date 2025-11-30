@@ -42,6 +42,18 @@ describe('AudioSlider', () => {
       expect(slider.props.value).toBe(45);
       expect(slider.props.maximumValue).toBe(180);
     });
+
+    it('renders slider with maximumValue 0 when duration is 0', () => {
+      mockUseProgress.mockReturnValue({ position: 0, duration: 0 });
+
+      const { UNSAFE_getByType } = render(<AudioSlider />);
+      const slider = UNSAFE_getByType(
+        require('@react-native-community/slider').default,
+      );
+
+      expect(slider.props.maximumValue).toBe(0);
+      expect(slider.props.disabled).toBe(true);
+    });
   });
 
   describe('시간 표시', () => {
@@ -84,6 +96,22 @@ describe('AudioSlider', () => {
 
       expect(screen.getByText('0:45')).toBeTruthy();
       expect(screen.getByText('3:00')).toBeTruthy();
+    });
+
+    it('handles non-finite values (Infinity)', () => {
+      mockUseProgress.mockReturnValue({ position: Infinity, duration: 100 });
+
+      render(<AudioSlider />);
+
+      expect(screen.getByText('0:00')).toBeTruthy();
+    });
+
+    it('handles non-finite values (NaN)', () => {
+      mockUseProgress.mockReturnValue({ position: NaN, duration: 100 });
+
+      render(<AudioSlider />);
+
+      expect(screen.getByText('0:00')).toBeTruthy();
     });
   });
 

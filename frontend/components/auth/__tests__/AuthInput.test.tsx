@@ -101,7 +101,7 @@ describe('AuthInput', () => {
       <AuthInput
         ref={ref}
         label="이메일"
-        value=""
+        value="test"
         onChangeText={mockOnChangeText}
       />,
     );
@@ -109,6 +109,37 @@ describe('AuthInput', () => {
     expect(ref.current?.focus).toBeDefined();
     expect(ref.current?.blur).toBeDefined();
     expect(ref.current?.clear).toBeDefined();
+
+    ref.current?.focus();
+    ref.current?.blur();
+    ref.current?.clear();
+  });
+
+  it('toggles secure text entry when pressing eye icon', () => {
+    const { UNSAFE_root, rerender } = render(
+      <AuthInput
+        label="비밀번호"
+        value="password123"
+        onChangeText={mockOnChangeText}
+        secureTextEntry
+      />,
+    );
+
+    let input = screen.getByDisplayValue('password123');
+    expect(input.props.secureTextEntry).toBe(true);
+
+    const toggleButton = UNSAFE_root.findAll(
+      (node) => node.props.hitSlop === 8 && node.props.onPress
+    )[0];
+
+    fireEvent.press(toggleButton);
+
+    input = screen.getByDisplayValue('password123');
+    expect(input.props.secureTextEntry).toBe(false);
+
+    fireEvent.press(toggleButton);
+    input = screen.getByDisplayValue('password123');
+    expect(input.props.secureTextEntry).toBe(true);
   });
 
   it('applies custom containerClassName', () => {

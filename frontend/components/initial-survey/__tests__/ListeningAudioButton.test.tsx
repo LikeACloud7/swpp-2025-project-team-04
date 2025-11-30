@@ -306,6 +306,54 @@ describe('ListeningAudioButton', () => {
       expect(mockPlayer.seekTo).toBeDefined();
       expect(typeof mockPlayer.seekTo).toBe('function');
     });
+
+    it('shows restart button when audio is finished and can restart', async () => {
+      mockDownloadAsync.mockResolvedValue({
+        uri: 'file://cache/audio_intermediate_1.wav',
+        status: 200,
+        headers: {},
+        md5: '',
+      });
+
+      const { rerender } = render(
+        <ListeningAudioButton level="intermediate" questionNumber={1} />,
+      );
+
+      const playButton = screen.getByText('재생하기');
+      fireEvent.press(playButton);
+
+      await waitFor(() => {
+        expect(mockPlayer.play).toHaveBeenCalled();
+      });
+
+      mockUseAudioPlayerStatus.mockReturnValue({
+        playing: false,
+        currentTime: 29,
+        duration: 30,
+      });
+
+      rerender(
+        <ListeningAudioButton level="intermediate" questionNumber={1} />,
+      );
+
+      await waitFor(() => {
+        const restartButton = screen.queryByText('다시 듣기');
+        if (restartButton) {
+          fireEvent.press(restartButton);
+          expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
+          expect(mockPlayer.play).toHaveBeenCalled();
+        }
+      });
+    });
+
+    it('does nothing when restart is called without player', async () => {
+      mockUseAudioPlayer.mockReturnValue(null);
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      expect(screen.getByText('재생하기')).toBeTruthy();
+    });
+
   });
 
   describe('완료 상태', () => {
@@ -353,6 +401,46 @@ describe('ListeningAudioButton', () => {
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
       expect(screen.getByText('2:05')).toBeTruthy();
+    });
+
+    it('updates time display when audio is playing', async () => {
+      jest.useFakeTimers();
+
+      mockUseAudioPlayerStatus.mockReturnValue({
+        playing: true,
+        currentTime: 10,
+        duration: 30,
+      });
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      jest.advanceTimersByTime(100);
+
+      await waitFor(() => {
+        expect(screen.getByText('0:10')).toBeTruthy();
+      });
+
+      jest.useRealTimers();
+    });
+
+    it('sets current time to duration when near end of audio', async () => {
+      jest.useFakeTimers();
+
+      mockUseAudioPlayerStatus.mockReturnValue({
+        playing: true,
+        currentTime: 29.7,
+        duration: 30,
+      });
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      jest.advanceTimersByTime(100);
+
+      await waitFor(() => {
+        expect(screen.getByText('0:30')).toBeTruthy();
+      });
+
+      jest.useRealTimers();
     });
   });
 

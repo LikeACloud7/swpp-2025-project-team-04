@@ -141,5 +141,21 @@ describe('useUserQueries', () => {
       expect(result.current.error).toEqual(serverError);
     });
 
+    it('네트워크 에러도 throw됨', async () => {
+      const networkError = new Error('Network request failed');
+
+      (userAPI.getMe as jest.Mock).mockRejectedValue(networkError);
+
+      const { result } = renderHook(() => useUser(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.refetch();
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      expect(result.current.error).toEqual(networkError);
+    });
+
   });
 });

@@ -205,6 +205,38 @@ describe('useAuthMutations', () => {
 
       expect(queryClient.getQueryData([USER_QUERY_KEY])).toEqual(mockUser);
     });
+
+    it('context가 undefined일 때 onError 안전하게 처리', async () => {
+      const error = new Error('Some error');
+      (authAPI.changePassword as jest.Mock).mockRejectedValue(error);
+
+      const { result } = renderHook(() => useChangePassword(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({
+        currentPassword: 'oldpass123',
+        newPassword: 'newpass456',
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+    });
+
+    it('context가 undefined일 때 onSuccess 안전하게 처리', async () => {
+      const mockResponse = { message: 'Password changed successfully' };
+      (authAPI.changePassword as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(() => useChangePassword(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({
+        currentPassword: 'oldpass123',
+        newPassword: 'newpass456',
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
   });
 
   describe('useDeleteAccount', () => {

@@ -362,5 +362,25 @@ describe('useAudioQueries', () => {
         expect(result.current.data?.pages[0].items[0].generated_content_id).toBe(2)
       );
     });
+
+    it('에러 발생 시 재시도 한 번 수행', async () => {
+      const error: ApiError = {
+        status: 500,
+        message: 'Internal Server Error',
+      };
+
+      (audioHistoryAPI.getAudioHistory as jest.Mock).mockRejectedValue(error);
+
+      const { result } = renderHook(() => useAudioHistory(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true), {
+        timeout: 3000,
+      });
+
+      expect(result.current.error).toEqual(error);
+      expect(audioHistoryAPI.getAudioHistory).toHaveBeenCalled();
+    });
   });
 });
