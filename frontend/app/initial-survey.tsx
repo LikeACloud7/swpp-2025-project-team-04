@@ -400,12 +400,12 @@ export default function InitialSurveyScreen() {
     }
   };
 
-  // 마지막 페이지만 스크롤 가능
-  const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
+  // Result Page(8)와 Topic Selection(9)은 스크롤 가능해야 함
+  const isScrollableStep = currentStep >= 8;
 
   return (
     <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
-      {isLastPage ? (
+      {isScrollableStep ? (
         <ScrollView
           className="flex-1"
           contentContainerClassName="px-6 pb-4 pt-12"
