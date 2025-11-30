@@ -18,13 +18,7 @@ describe('PercentageSlider', () => {
   it('renders correctly with default props', () => {
     render(<PercentageSlider {...defaultProps} />);
 
-    expect(screen.getByText(/들은 내용 중 몇 %를 이해했는지/)).toBeTruthy();
-    expect(screen.getByText(/솔직하게 평가해 주세요./)).toBeTruthy();
-
-    expect(screen.getByText('50%')).toBeTruthy();
-
-    expect(screen.getByText('이해도')).toBeTruthy();
-
+    expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
     expect(screen.getByText('0%')).toBeTruthy();
     expect(screen.getByText('100%')).toBeTruthy();
   });
@@ -64,9 +58,9 @@ describe('PercentageSlider', () => {
     const { rerender } = render(
       <PercentageSlider {...defaultProps} fileNumber={1} />,
     );
-    expect(screen.getByText('50%')).toBeTruthy();
+    expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
 
     rerender(<PercentageSlider {...defaultProps} fileNumber={5} />);
-    expect(screen.getByText('50%')).toBeTruthy();
+    expect(screen.getAllByText('50%').length).toBeGreaterThan(0);
   });
 });

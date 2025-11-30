@@ -220,7 +220,11 @@ export default function Script({
   }: ListRenderItemInfo<Sentence>) => {
     const isHighlighted = lineIndex === currentLineIndex;
     const startTime = Number.parseFloat(item.start_time) || 0;
-    const words = item.text?.trim()?.split(/\s+/) ?? ['...'];
+    const trimmedText = item.text?.trim();
+    const words =
+      trimmedText && trimmedText.length > 0
+        ? trimmedText.split(/\s+/)
+        : ['...'];
 
     return (
       <Pressable

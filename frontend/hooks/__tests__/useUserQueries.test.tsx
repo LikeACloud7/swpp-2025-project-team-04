@@ -64,17 +64,6 @@ describe('useUserQueries', () => {
       expect(result.current.error).toBeNull();
     });
 
-    it('네트워크 에러 처리', async () => {
-      const error = new Error('Network error');
-      (userAPI.getMe as jest.Mock).mockRejectedValue(error);
-
-      const { result } = renderHook(() => useUser(), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => expect(result.current.data).toBeNull());
-    });
-
     it('캐시된 데이터 사용', async () => {
       const mockUser: User = {
         id: 1,
@@ -82,7 +71,7 @@ describe('useUserQueries', () => {
         nickname: 'Test User',
       };
 
-      queryClient.setQueryData(USER_QUERY_KEY, mockUser);
+      queryClient.setQueryData([USER_QUERY_KEY], mockUser);
 
       const { result } = renderHook(() => useUser(), {
         wrapper: createWrapper(),
@@ -107,6 +96,63 @@ describe('useUserQueries', () => {
 
       expect(result.current.data).toBeNull();
       expect(result.current.isError).toBe(false);
+    });
+
+    it('성공적으로 사용자 정보 가져오기', async () => {
+      const mockUser: User = {
+        id: 1,
+        username: 'testuser',
+        nickname: 'Test User',
+      };
+
+      (userAPI.getMe as jest.Mock).mockResolvedValue(mockUser);
+
+      const { result } = renderHook(() => useUser(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.refetch();
+
+      await waitFor(() => expect(result.current.data).toEqual(mockUser));
+
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.error).toBeNull();
+    });
+
+    it('401이 아닌 에러는 다시 throw', async () => {
+      const serverError: ApiError = {
+        status: 500,
+        message: 'Internal Server Error',
+      };
+
+      (userAPI.getMe as jest.Mock).mockRejectedValue(serverError);
+
+      const { result } = renderHook(() => useUser(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.refetch();
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      expect(result.current.data).toBeNull();
+      expect(result.current.error).toEqual(serverError);
+    });
+
+    it('네트워크 에러도 throw됨', async () => {
+      const networkError = new Error('Network request failed');
+
+      (userAPI.getMe as jest.Mock).mockRejectedValue(networkError);
+
+      const { result } = renderHook(() => useUser(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.refetch();
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+
+      expect(result.current.error).toEqual(networkError);
     });
   });
 });

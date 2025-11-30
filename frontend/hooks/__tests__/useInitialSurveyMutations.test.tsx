@@ -2,16 +2,20 @@ import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as initialSurveyAPI from '@/api/initialSurvey';
+import * as userAPI from '@/api/user';
 import {
   useSubmitLevelTest,
   useSubmitManualLevel,
+  useUpdateInterests,
 } from '../mutations/useInitialSurveyMutations';
 import type {
   LevelTestResponse,
   ManualLevelResponse,
 } from '@/api/initialSurvey';
+import type { UpdateInterestsResponse } from '@/api/user';
 
 jest.mock('@/api/initialSurvey');
+jest.mock('@/api/user');
 
 describe('useInitialSurveyMutations', () => {
   let queryClient: QueryClient;
@@ -248,6 +252,46 @@ describe('useInitialSurveyMutations', () => {
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.isPending).toBe(false);
+    });
+  });
+
+  describe('useUpdateInterests', () => {
+    it('관심사 업데이트 성공', async () => {
+      const mockResponse: UpdateInterestsResponse = {
+        message: 'Interests updated successfully',
+        interests: ['music', 'sports', 'technology'],
+      };
+
+      (userAPI.updateInterests as jest.Mock).mockResolvedValue(mockResponse);
+
+      const { result } = renderHook(() => useUpdateInterests(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({ interests: ['music', 'sports', 'technology'] });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(userAPI.updateInterests).toHaveBeenCalledWith([
+        'music',
+        'sports',
+        'technology',
+      ]);
+      expect(result.current.data).toEqual(mockResponse);
+    });
+
+    it('관심사 업데이트 실패 시 에러 처리', async () => {
+      const error = new Error('Failed to update interests');
+      (userAPI.updateInterests as jest.Mock).mockRejectedValue(error);
+
+      const { result } = renderHook(() => useUpdateInterests(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({ interests: ['invalid'] });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(result.current.error).toEqual(error);
     });
   });
 });

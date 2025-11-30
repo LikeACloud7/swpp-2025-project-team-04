@@ -82,7 +82,7 @@ describe('useStatsQueries', () => {
         streak: 3,
       };
 
-      queryClient.setQueryData(STATS_QUERY_KEY, mockStats);
+      queryClient.setQueryData([STATS_QUERY_KEY], mockStats);
 
       const { result } = renderHook(() => useStats(), {
         wrapper: createWrapper(),

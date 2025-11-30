@@ -7,15 +7,15 @@ describe('TopicGrid', () => {
     {
       category: '일상',
       topics: [
-        { id: 'food', label: '음식' },
-        { id: 'travel', label: '여행' },
+        { id: 'food', label: '음식', emoji: '🍔' },
+        { id: 'travel', label: '여행', emoji: '✈️' },
       ],
     },
     {
       category: '학습',
       topics: [
-        { id: 'science', label: '과학' },
-        { id: 'history', label: '역사' },
+        { id: 'science', label: '과학', emoji: '🔬' },
+        { id: 'history', label: '역사', emoji: '📚' },
       ],
     },
   ];
@@ -36,8 +36,9 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('가장 관심 있는 주제를 선택해주세요')).toBeTruthy();
-    expect(screen.getByText('최대 3개까지 선택할 수 있습니다')).toBeTruthy();
+    expect(screen.getByText(/관심 있는 주제를/)).toBeTruthy();
+    expect(screen.getByText(/선택해주세요/)).toBeTruthy();
+    expect(screen.getByText('최대 3개까지 선택 가능')).toBeTruthy();
   });
 
   it('renders all categories', () => {
@@ -182,7 +183,7 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('가장 관심 있는 주제를 선택해주세요')).toBeTruthy();
+    expect(screen.getByText(/관심 있는 주제를/)).toBeTruthy();
     expect(screen.getByText('0 / 3 선택됨')).toBeTruthy();
   });
 
@@ -196,7 +197,68 @@ describe('TopicGrid', () => {
       />,
     );
 
-    expect(screen.getByText('최대 5개까지 선택할 수 있습니다')).toBeTruthy();
+    expect(screen.getByText('최대 5개까지 선택 가능')).toBeTruthy();
     expect(screen.getByText('0 / 5 선택됨')).toBeTruthy();
+  });
+
+  it('shows special styling when max selections reached', () => {
+    render(
+      <TopicGrid
+        categories={mockCategories}
+        selectedTopics={['food', 'travel', 'science']}
+        onToggle={mockOnToggle}
+        maxSelections={3}
+      />,
+    );
+
+    expect(screen.getByText('3 / 3 선택됨')).toBeTruthy();
+  });
+
+  it('disables unselected topics when max selections reached', () => {
+    render(
+      <TopicGrid
+        categories={mockCategories}
+        selectedTopics={['food', 'travel', 'science']}
+        onToggle={mockOnToggle}
+        maxSelections={3}
+      />,
+    );
+
+    const historyButton = screen.getByText('역사');
+    fireEvent.press(historyButton);
+
+    expect(mockOnToggle).not.toHaveBeenCalled();
+  });
+
+  it('allows toggling already selected topics when max reached', () => {
+    render(
+      <TopicGrid
+        categories={mockCategories}
+        selectedTopics={['food', 'travel', 'science']}
+        onToggle={mockOnToggle}
+        maxSelections={3}
+      />,
+    );
+
+    const foodButton = screen.getByText('음식');
+    fireEvent.press(foodButton);
+
+    expect(mockOnToggle).toHaveBeenCalledWith('food');
+  });
+
+  it('renders emoji for each topic', () => {
+    render(
+      <TopicGrid
+        categories={mockCategories}
+        selectedTopics={[]}
+        onToggle={mockOnToggle}
+        maxSelections={3}
+      />,
+    );
+
+    expect(screen.getByText('🍔')).toBeTruthy();
+    expect(screen.getByText('✈️')).toBeTruthy();
+    expect(screen.getByText('🔬')).toBeTruthy();
+    expect(screen.getByText('📚')).toBeTruthy();
   });
 });

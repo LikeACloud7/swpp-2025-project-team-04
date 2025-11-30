@@ -74,7 +74,10 @@ export default function StatsScreen() {
     return dayData ? dayData.minutes : 0;
   });
 
-  const actualWeeklyTotal = weeklyActivity.reduce((sum, minutes) => sum + minutes, 0);
+  const actualWeeklyTotal = weeklyActivity.reduce(
+    (sum, minutes) => sum + minutes,
+    0,
+  );
   const maxMinutes = Math.max(...weeklyActivity, 1);
 
   // Helper function to calculate progress within current level
@@ -416,7 +419,7 @@ export default function StatsScreen() {
                 const isToday =
                   index ===
                   (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
-                
+
                 const dayDate = new Date(mondayDate);
                 dayDate.setDate(mondayDate.getDate() + index);
                 const dateString = dayDate.getDate().toString();
