@@ -243,6 +243,7 @@ export default function LevelResultScreen() {
           className="flex-1" 
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
           <Animated.View 
@@ -321,21 +322,12 @@ export default function LevelResultScreen() {
             className="px-5 mt-6"
           >
             <Pressable
+              className="bg-blue-500 rounded-xl py-4"
               onPress={() => router.replace('/(main)')}
-              style={({ pressed }) => ({
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              })}
             >
-              <LinearGradient
-                colors={['#3b82f6', '#2563eb']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-2xl py-4 shadow-lg shadow-blue-200"
-              >
-                <Text className="text-white text-center text-lg font-bold">
-                  확인
-                </Text>
-              </LinearGradient>
+              <Text className="text-white text-center text-lg font-bold">
+                확인
+              </Text>
             </Pressable>
           </Animated.View>
         </ScrollView>
