@@ -33,6 +33,8 @@ export const getBaseUrl = (): string => {
   return 'http://52.78.135.45:3000';
 };
 
+const DEFAULT_ERROR_MESSAGE = 'API 요청에 실패했습니다.';
+
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
@@ -55,30 +57,122 @@ const buildApiError = (
   return error;
 };
 
-const parseErrorResponse = async (response: Response): Promise<ApiError> => {
-  const rawBody = await response.text().catch(() => '');
-  let parsed: unknown;
-  let message = 'API 요청에 실패했습니다.';
+const extractFirstString = (input: unknown): string | null => {
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    return trimmed || null;
+  }
 
-  if (rawBody) {
-    try {
-      parsed = JSON.parse(rawBody);
-      if (parsed && typeof parsed === 'object' && 'message' in parsed) {
-        const parsedMessage = (parsed as Record<string, unknown>).message;
-        if (typeof parsedMessage === 'string' && parsedMessage.trim()) {
-          message = parsedMessage;
-        }
-      } else if (rawBody.trim()) {
-        message = rawBody;
+  if (Array.isArray(input)) {
+    for (const item of input) {
+      const nested = extractFirstString(item);
+      if (nested) {
+        return nested;
       }
-    } catch {
-      if (rawBody.trim()) {
-        message = rawBody;
+    }
+    return null;
+  }
+
+  if (input && typeof input === 'object') {
+    const record = input as Record<string, unknown>;
+    const prioritizedKeys = ['message', 'detail', 'error'];
+
+    for (const key of prioritizedKeys) {
+      if (key in record) {
+        const nested = extractFirstString(record[key]);
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+
+    for (const value of Object.values(record)) {
+      const nested = extractFirstString(value);
+      if (nested) {
+        return nested;
       }
     }
   }
 
-  return buildApiError(response.status, message, parsed);
+  return null;
+};
+
+const isUsernameDuplicateError = (
+  parsedBody: unknown,
+  message?: string | null,
+): boolean => {
+  const normalizedMessage = message?.toLowerCase() ?? '';
+  if (
+    normalizedMessage.includes('username already') ||
+    normalizedMessage.includes('username exists') ||
+    normalizedMessage.includes('duplicate username') ||
+    normalizedMessage.includes('이미 등록') ||
+    normalizedMessage.includes('이미 존재') ||
+    normalizedMessage.includes('중복')
+  ) {
+    return true;
+  }
+
+  if (!parsedBody || typeof parsedBody !== 'object') {
+    return false;
+  }
+
+  if ('username' in parsedBody) {
+    const usernameError = extractFirstString(
+      (parsedBody as Record<string, unknown>).username,
+    );
+    if (!usernameError) {
+      return false;
+    }
+
+    const normalized = usernameError.toLowerCase();
+    return (
+      normalized.includes('already') ||
+      normalized.includes('exist') ||
+      normalized.includes('taken') ||
+      normalized.includes('duplicate') ||
+      normalized.includes('이미') ||
+      normalized.includes('중복')
+    );
+  }
+
+  return false;
+};
+
+const localizeErrorMessage = (
+  parsedBody: unknown,
+  message: string | null,
+): string | null => {
+  if (isUsernameDuplicateError(parsedBody, message)) {
+    return '이미 사용 중인 아이디입니다.';
+  }
+
+  return null;
+};
+
+const parseErrorResponse = async (response: Response): Promise<ApiError> => {
+  const rawBody = await response.text().catch(() => '');
+  let parsed: unknown;
+  let message: string | null = null;
+
+  if (rawBody) {
+    try {
+      parsed = JSON.parse(rawBody);
+      message = extractFirstString(parsed);
+    } catch {
+      const trimmed = rawBody.trim();
+      message = trimmed || null;
+    }
+  }
+
+  if (!message && rawBody.trim()) {
+    message = rawBody.trim();
+  }
+
+  const localizedMessage = localizeErrorMessage(parsed, message);
+  const finalMessage = localizedMessage ?? message ?? DEFAULT_ERROR_MESSAGE;
+
+  return buildApiError(response.status, finalMessage, parsed ?? rawBody);
 };
 
 const parseResponse = async <T>(response: Response): Promise<T> => {
