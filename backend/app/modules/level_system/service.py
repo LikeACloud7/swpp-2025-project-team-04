@@ -24,7 +24,7 @@ DEFAULT_WEIGHT_MATRIX: List[List[float]] = [
     [-0.4, -0.8, -1.2],  # rewind_cnt가 주는 weight
     [2.4, 0, 0],  # vocab_lookup_cnt가 주는 weight
     [3.2, 0, 0],  # vocab_save_cnt가 주는 weight
-    [0.32, 1.6, 0.64],  # understanding_difficulty(쉬움이 더 큰 값)가 주는 weight
+    [4.8, 4.8, 1.92],  # understanding_difficulty(쉬움이 더 큰 값)가 주는 weight
     [0, 0, 1.6],  # speed_difficulty가 주는 weight
 ]
 
