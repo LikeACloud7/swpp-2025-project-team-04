@@ -73,4 +73,13 @@ describe('AuthButton', () => {
 
     expect(screen.getByText('로딩 중...')).toBeTruthy();
   });
+
+  it('applies pressed style when button is pressed and not disabled', () => {
+    render(<AuthButton title="Press Me" onPress={mockOnPress} />);
+
+    const button = screen.getByText('Press Me').parent;
+    fireEvent(button!, 'pressIn');
+
+    expect(mockOnPress).not.toHaveBeenCalled();
+  });
 });

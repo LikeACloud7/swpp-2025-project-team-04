@@ -5,11 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 type PlayerControlsProps = {
   isPlaying: boolean;
   onTogglePlay: () => Promise<void> | void;
+  onFinish?: () => Promise<void> | void;
+  finishButtonText?: string;
 };
 
 export default function PlayerControls({
   isPlaying,
   onTogglePlay,
+  onFinish,
+  finishButtonText = '학습 끝내기',
 }: PlayerControlsProps) {
   return (
     <View className="items-center pb-10">
@@ -35,6 +39,27 @@ export default function PlayerControls({
           />
         )}
       </Pressable>
+
+      {/* 학습/복습 끝내기 버튼 (재생 버튼 아래쪽) */}
+      {onFinish && (
+        <Pressable
+          onPress={onFinish}
+          accessibilityRole="button"
+          accessibilityLabel={finishButtonText}
+          android_ripple={{
+            color: 'rgba(255,255,255,0.15)',
+            borderless: false,
+          }}
+          className="mt-5 px-5 py-2.5 rounded-full bg-white/10"
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.85 : 1,
+          })}
+        >
+          <Text className="text-sm font-semibold text-white/85">
+            {finishButtonText}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }

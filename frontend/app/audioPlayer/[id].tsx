@@ -6,18 +6,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { AudioGenerationResponse } from '@/api/audio';
 import PlayerControls from '@/components/audio/PlayerControls';
-import Script from '@/components/audio/Script';
 import AudioSlider from '@/components/audio/AudioSlider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBehaviorLogs } from '@/hooks/useBehaviorLogs';
 import { PendingVocab, useAddVocab } from '@/hooks/mutations/useVocabMutations';
+import Script from '@/components/audio/script';
 
 export default function AudioPlayer() {
+  const { id: idParam, fromHistory } = useLocalSearchParams();
   const router = useRouter();
 
   const qc = useQueryClient();
-  const { id: idParam } = useLocalSearchParams();
   const id = Array.isArray(idParam) ? idParam[0] : (idParam ?? null);
+  const isFromHistory = fromHistory === 'true';
   const data = id
     ? (qc.getQueryData(['audio', id]) as AudioGenerationResponse | undefined)
     : undefined;
@@ -80,7 +81,7 @@ export default function AudioPlayer() {
     try {
       await TrackPlayer.stop();
       await TrackPlayer.reset();
-    } catch {}
+    } catch { }
   }, []);
 
   const endSessionWithFeedback = useCallback(async () => {
@@ -97,7 +98,13 @@ export default function AudioPlayer() {
     };
 
     router.replace({ pathname: '/feedback', params });
-  }, [router, stopAndCleanup, data, behaviorLogs]);
+  }, [router, stopAndCleanup, data, behaviorLogs, saveAllSelectedVocabs]);
+
+  const goBackToHistory = useCallback(async () => {
+    await stopAndCleanup();
+    await saveAllSelectedVocabs();
+    router.replace('/(main)/history');
+  }, [router, stopAndCleanup, saveAllSelectedVocabs]);
 
   const handleExitWithoutFeedback = async () => {
     await stopAndCleanup();
@@ -112,7 +119,7 @@ export default function AudioPlayer() {
       try {
         await TrackPlayer.play();
         if (mounted) setIsPlaying(true);
-      } catch {}
+      } catch { }
     })();
     return () => {
       mounted = false;
@@ -133,10 +140,20 @@ export default function AudioPlayer() {
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
-        await endSessionWithFeedback();
+        if (isFromHistory) {
+          await goBackToHistory();
+        } else {
+          await endSessionWithFeedback();
+        }
       })();
     }
-  }, [position, duration, endSessionWithFeedback]);
+  }, [
+    position,
+    duration,
+    endSessionWithFeedback,
+    goBackToHistory,
+    isFromHistory,
+  ]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -147,10 +164,14 @@ export default function AudioPlayer() {
     };
   }, []);
 
-  // 뒤로가기 눌렀을 때 모달
+  // 뒤로가기 눌렀을 때 모달 (히스토리에서 온 경우 바로 종료)
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (!data) return false;
+      if (isFromHistory) {
+        goBackToHistory();
+        return true;
+      }
       if (isModalVisible) {
         setIsModalVisible(false);
         return true;
@@ -159,7 +180,7 @@ export default function AudioPlayer() {
       return true;
     });
     return () => sub.remove();
-  }, [data, isModalVisible]);
+  }, [data, isModalVisible, isFromHistory, goBackToHistory]);
 
   if (!data) {
     return (
@@ -184,17 +205,26 @@ export default function AudioPlayer() {
       <Script
         generatedContentId={data.generated_content_id}
         scripts={data.sentences}
-        onVocabLookup={() => incrementLog('vocabLookupCount')}
-        onRewind={() => incrementLog('rewindCount')}
+        onVocabLookup={
+          isFromHistory ? () => { } : () => incrementLog('vocabLookupCount')
+        }
+        onRewind={isFromHistory ? () => { } : () => incrementLog('rewindCount')}
         selectedVocabs={selectedVocabs}
-        onToggleVocab={toggleVocab}
+        onToggleVocab={isFromHistory ? () => { } : toggleVocab}
       />
 
       {/* 슬라이더 */}
       <AudioSlider />
 
       {/* 컨트롤 */}
-      <PlayerControls isPlaying={isPlaying} onTogglePlay={togglePlayback} />
+      <PlayerControls
+        isPlaying={isPlaying}
+        onTogglePlay={togglePlayback}
+        onFinish={
+          isFromHistory ? goBackToHistory : () => setIsModalVisible(true)
+        }
+        finishButtonText={isFromHistory ? '복습 끝내기' : '학습 끝내기'}
+      />
 
       {/* 종료 모달 */}
       {isModalVisible && (

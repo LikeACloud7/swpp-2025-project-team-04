@@ -83,25 +83,28 @@ export default function SplashScreen({
     }
   }, [isReady, isMinTimeElapsed, containerOpacity, onAnimationComplete]); // Added containerOpacity and onAnimationComplete as dependencies
 
-    return (
-        <Animated.View className="flex-1 bg-[#001F3B] items-center justify-center" style={{ opacity: containerOpacity }}>
-            {/*
+  return (
+    <Animated.View
+      className="flex-1 bg-[#001F3B] items-center justify-center"
+      style={{ opacity: containerOpacity }}
+    >
+      {/*
         Image matches Native Splash:
         - Background: #001F3B (set in container)
         - Image: splash.png
         - Size: Reduced to ~64% to match native rendering of 1024px icon on high-density screens
       */}
-            <Animated.Image
-                source={require('@/assets/splash.png')}
-                className="w-[205px] h-[205px]"
-                style={[
-                    {
-                        transform: [{ scale: scaleAnim }],
-                        opacity: containerOpacity // Bind opacity directly to image too
-                    }
-                ]}
-                resizeMode="contain"
-            />
-        </Animated.View>
-    );
+      <Animated.Image
+        source={require('@/assets/splash.png')}
+        className="w-[205px] h-[205px]"
+        style={[
+          {
+            transform: [{ scale: scaleAnim }],
+            opacity: containerOpacity, // Bind opacity directly to image too
+          },
+        ]}
+        resizeMode="contain"
+      />
+    </Animated.View>
+  );
 }

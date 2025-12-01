@@ -136,7 +136,7 @@ export default function Script({
       animated: true,
       viewPosition: 0.5,
     });
-  }, [currentLineIndex, wordPopup, isUserTouching]);
+  }, [currentLineIndex]);
 
   // 2-3. 라인 누르면 해당 위치로 이동
   const onLinePress = (time: number, lineIndex: number) => {
@@ -220,7 +220,11 @@ export default function Script({
   }: ListRenderItemInfo<Sentence>) => {
     const isHighlighted = lineIndex === currentLineIndex;
     const startTime = Number.parseFloat(item.start_time) || 0;
-    const words = item.text?.trim()?.split(/\s+/) ?? ['...'];
+    const trimmedText = item.text?.trim();
+    const words =
+      trimmedText && trimmedText.length > 0
+        ? trimmedText.split(/\s+/)
+        : ['...'];
 
     return (
       <Pressable

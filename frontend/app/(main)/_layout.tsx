@@ -50,6 +50,18 @@ export default function MainLayout() {
           }}
         />
         <Tabs.Screen
+          name="history"
+          options={{
+            title: '히스토리',
+            tabBarLabel: '히스토리',
+            headerShown: true,
+            header: () => <MainHeader title="히스토리" />,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="time" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="stats"
           options={{
             title: '통계',
@@ -58,18 +70,6 @@ export default function MainLayout() {
             header: () => <MainHeader title="통계" />,
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="bar-chart" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: '프로필',
-            tabBarLabel: '프로필',
-            headerShown: true,
-            header: () => <MainHeader title="프로필" />,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
             ),
           }}
         />

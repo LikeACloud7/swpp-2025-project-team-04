@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import Script from '../Script';
+import Script from '../script';
 import { Sentence } from '@/api/audio';
 
 // Mock
@@ -14,6 +14,13 @@ jest.mock('react-native-track-player', () => ({
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
+}));
+
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn((callback) => {
+    const cleanup = callback();
+    return cleanup;
+  }),
 }));
 
 jest.mock('../Word', () => {
