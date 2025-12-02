@@ -242,11 +242,11 @@ def normalize_interaction_factor(
 
 def normalize_understanding_factor(understanding_difficulty: int) -> float: 
     # unterstanding은 0 1 2(적당) 3 4(매우 쉬움)로 온다고 가정
-    return understanding_difficulty-1.5
+    return understanding_difficulty-2
 
 def normalize_speed_factor(speed_difficulty: int) -> float: 
     # speed_difficulty는 0 1 2(적당) 3 4(매우 느림)으로 온다고 가정
-    return speed_difficulty-1.5
+    return speed_difficulty-2
 
 
 

@@ -2,6 +2,8 @@
 from backend.tests.integration.test_main import client
 import json
 from uuid import uuid4
+import random
+import string
 
 API_VERSION = "/api/v1"
 
@@ -321,8 +323,9 @@ def test_signup_username_too_long():
 
 def test_signup_username_exactly_3_chars():
     ''' Username이 정확히 3자일 때 성공 테스트 '''
+    random_username = ''.join(random.choices(string.ascii_lowercase, k=3))
     signup_data = {
-        "username": "abc",  # 3자
+        "username": random_username,  # 랜덤 영어 3자
         "password": "validpass123"
     }
     

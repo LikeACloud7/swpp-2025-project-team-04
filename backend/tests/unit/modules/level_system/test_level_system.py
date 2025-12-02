@@ -177,17 +177,17 @@ class TestNormalizationFunctions:
 
     def test_normalize_understanding_factor(self):
         """이해도 정규화 테스트"""
-        # 0~4 범위에서 1.5를 뺀 값
-        assert normalize_understanding_factor(0) == -1.5
-        assert normalize_understanding_factor(2) == 0.5
-        assert normalize_understanding_factor(4) == 2.5
+        # 0~4 범위에서 2를 뺀 값
+        assert normalize_understanding_factor(0) == -2
+        assert normalize_understanding_factor(2) == 0
+        assert normalize_understanding_factor(4) == 2
 
     def test_normalize_speed_factor(self):
         """속도 난이도 정규화 테스트"""
-        # 0~4 범위에서 1.5를 뺀 값
-        assert normalize_speed_factor(0) == -1.5
-        assert normalize_speed_factor(2) == 0.5
-        assert normalize_speed_factor(4) == 2.5
+        # 0~4 범위에서 2를 뺀 값
+        assert normalize_speed_factor(0) == -2
+        assert normalize_speed_factor(2) == 0
+        assert normalize_speed_factor(4) == 2
 
     def test_normalize_vocab_factor(self):
         """단어 조회/저장 정규화 테스트"""
@@ -306,8 +306,8 @@ class TestDirectorAndBuilder:
         assert vector[1] == 1  # rewind_cnt - 2
         assert vector[2] == 1.0  # vocab_lookup 정규화 (0개)
         assert vector[3] == 1.0  # vocab_save 정규화 (0개)
-        assert vector[4] == 0.5  # understanding - 1.5
-        assert vector[5] == 0.5  # speed - 1.5
+        assert vector[4] == 0  # understanding - 2
+        assert vector[5] == 0  # speed - 2
 
 
 class TestRawBuilder:
