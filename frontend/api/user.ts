@@ -26,7 +26,7 @@ export type UpdateInterestsResponse = {
 };
 
 export const getMe = async (): Promise<User> => {
-  return customFetch<User>('/users/me', {
+  return customFetch<User>('/user/me', {
     method: 'GET',
   });
 };

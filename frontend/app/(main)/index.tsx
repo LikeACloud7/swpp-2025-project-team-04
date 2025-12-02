@@ -64,6 +64,13 @@ export default function HomeScreen() {
   const [displayedThemes, setDisplayedThemes] = useState<ThemeKey[]>([]);
 
   // 유저 관심사가 있다면 우선 채우고, 모자라면 랜덤 보충
+  console.log('THEME_KEYS:', THEME_KEYS);
+  console.log('user:', user);
+  console.log(
+    'userInterests:',
+    (user?.interests ?? []).map((i) => i.key),
+  );
+
   const generateDisplayedThemes = useCallback((): ThemeKey[] => {
     const FIXED = 3; // 유저 관심사 고정 개수
     const TOTAL = 7;

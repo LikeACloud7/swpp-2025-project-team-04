@@ -9,7 +9,7 @@ import {
   UpdateInterestsPayload,
   type UpdateInterestsResponse,
 } from '@/api/user';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 type SubmitLevelTestParams = {
   levelId: string;
@@ -43,10 +43,13 @@ export const useSubmitManualLevel = () => {
 };
 
 export const useUpdateInterests = () => {
+  const qc = useQueryClient();
+
   return useMutation<UpdateInterestsResponse, Error, UpdateInterestsPayload>({
     mutationFn: (payload) => updateInterests(payload),
     onSuccess: (data) => {
       console.log('관심사 업데이트 성공:', data);
+      qc.invalidateQueries({ queryKey: ['user'] });
     },
     onError: (error) => {
       console.error('관심사 업데이트 실패:', error);
