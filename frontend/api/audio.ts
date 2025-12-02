@@ -8,8 +8,8 @@ export type AudioGenerationPayload = {
 };
 
 export type Sentence = {
-  id: string;
-  start_time: string;
+  id: number;
+  start_time: number;
   text: string;
 };
 
