@@ -412,8 +412,9 @@ def test_signup_password_exactly_3_chars():
 
 def test_signup_password_exactly_30_chars():
     ''' Password가 정확히 30자일 때 성공 테스트 '''
+    username = f"pwdtest_{uuid4().hex[:10]}"
     signup_data = {
-        "username": "pwdtest30char",
+        "username": username,
         "password": "a" * 30  # 30자
     }
     
