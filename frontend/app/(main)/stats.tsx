@@ -88,10 +88,6 @@ export default function StatsScreen() {
   );
   const maxMinutes = Math.max(...weeklyActivity, 1);
 
-  const totalStudyDays = stats.streak.daily_minutes.filter(
-    (day) => day.minutes > 0,
-  ).length;
-
   // Helper function to calculate progress within current level
   const calculateLevelProgress = (score: number, cefr_level: string) => {
     const levelRanges = {
@@ -351,7 +347,7 @@ export default function StatsScreen() {
                 </Text>
               </View>
               <Text className="text-2xl font-black text-neutral-900">
-                {totalStudyDays}d
+                {stats.total_days}d
               </Text>
             </View>
           </View>
