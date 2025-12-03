@@ -52,6 +52,7 @@ def test_stats_service_builds_full_payload(monkeypatch):
         lambda *_, **__: activity_dates,
     )
     monkeypatch.setattr(stats_service.crud, "get_total_study_minutes", lambda *_, **__: 3_600)
+    monkeypatch.setattr(stats_service.crud, "get_total_study_days", lambda *_, **__: 42)
 
     recorded_unlocks = []
 
@@ -90,6 +91,7 @@ def test_stats_service_calculates_overall_cefr_level(monkeypatch):
     monkeypatch.setattr(stats_service.crud, "get_daily_study_minutes", lambda *_, **__: {})
     monkeypatch.setattr(stats_service.crud, "get_study_dates_descending", lambda *_, **__: [])
     monkeypatch.setattr(stats_service.crud, "get_total_study_minutes", lambda *_, **__: 0)
+    monkeypatch.setattr(stats_service.crud, "get_total_study_days", lambda *_, **__: 0)
     monkeypatch.setattr(stats_service.crud, "ensure_user_achievement", lambda *_, **__: None)
     monkeypatch.setattr(stats_service.crud, "list_user_achievements", lambda *_, **__: [])
 
