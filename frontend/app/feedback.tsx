@@ -13,11 +13,11 @@ import Animated, {
 import { submitFeedback } from '@/api/feedback';
 
 const UNDERSTANDING_DIFFICULTY_LEVELS = [
-  { value: 1, label: '매우 낮음', emoji: '😰', backendValue: 4 },
-  { value: 2, label: '낮음', emoji: '😟', backendValue: 3 },
+  { value: 1, label: '매우 낮음', emoji: '😰', backendValue: 0 },
+  { value: 2, label: '낮음', emoji: '😟', backendValue: 1 },
   { value: 3, label: '보통', emoji: '😐', backendValue: 2 },
-  { value: 4, label: '높음', emoji: '🙂', backendValue: 1 },
-  { value: 5, label: '매우 높음', emoji: '😊', backendValue: 0 },
+  { value: 4, label: '높음', emoji: '🙂', backendValue: 3 },
+  { value: 5, label: '매우 높음', emoji: '😊', backendValue: 4 },
 ];
 
 const SPEED_DIFFICULTY_LEVELS = [
