@@ -121,7 +121,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
             for code, achieved_at in awarded.items()
         ]
 
-    crud_modules = [crud]
+    crud_modules = [crud, service_module.crud]
     try:
         from app.modules.stats import crud as app_crud  # type: ignore
 
