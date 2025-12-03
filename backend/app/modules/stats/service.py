@@ -121,6 +121,7 @@ class StatsService:
         consecutive_days = self._calculate_streak(activity_dates)
 
         total_time_spent = crud.get_total_study_minutes(db, user_id=user.id)
+        total_days = crud.get_total_study_days(db, user_id=user.id)
 
         skill_levels = self._build_skill_levels(user)
         
@@ -209,6 +210,7 @@ class StatsService:
             streak=streak_summary,
             current_level=current_level,
             total_time_spent_minutes=total_time_spent,
+            total_days=total_days,
             achievements=achievement_statuses,
         )
 

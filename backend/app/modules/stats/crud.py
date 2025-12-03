@@ -40,6 +40,19 @@ def get_total_study_minutes(db: Session, *, user_id: int) -> int:
     return int(total or 0)
 
 
+def get_total_study_days(db: Session, *, user_id: int) -> int:
+    """학습 시간이 0이 아닌 모든 날짜의 개수를 반환"""
+    count = (
+        db.query(func.count(func.distinct(func.date(StudySession.started_at))))
+        .filter(
+            StudySession.user_id == user_id,
+            StudySession.duration_minutes > 0
+        )
+        .scalar()
+    )
+    return int(count or 0)
+
+
 def get_study_dates_descending(
     db: Session,
     *,

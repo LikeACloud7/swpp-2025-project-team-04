@@ -43,4 +43,5 @@ class UserStatsResponse(BaseModel):
     streak: StudyStreakSummary
     current_level: LevelProgress
     total_time_spent_minutes: int = Field(ge=0)
+    total_days: int = Field(ge=0)
     achievements: List[AchievementStatus]
