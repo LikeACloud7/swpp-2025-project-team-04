@@ -247,11 +247,25 @@ class AudioService:
         You MUST generate the script based on the following data-driven principles.
         The user has two *different* target levels. Apply each target to its specific principle.
 
-        **1. Lexical Difficulty: "Closest Profile Match"**
-        Your primary goal is to match the vocabulary distribution of the **Target Lexical Level ({lexical_cefr_str})**.
-        You MUST strictly follow the lexical profile for **{lexical_cefr_str}** from the table below. Do not interpolate; try to match this row precisely.
+        **1. Lexical Difficulty: "Content Word Distribution" (CRITICAL)**
+        You must calculate lexical statistics based on **Content Words ONLY**, consistent with the methodology where function words are excluded from the difficulty profile.
 
-        **Ground Truth (Lexical Profile for Content Words)**
+        * **Rule A: Function Words (The "Glue")**
+            * **Definition:** Articles, prepositions, pronouns, conjunctions, and auxiliary verbs (e.g., *the, a, in, on, it, is, are, have*).
+            * **Instruction:** Use these naturally and grammatically to form complete sentences. Do not artificially restrict them.
+            * **Calculation:** These words **must NOT be counted** against the percentage limits in the table below. Expect them to make up roughly 40-55% of your total word count.
+
+        * **Rule B: Content Words (The "Substance")**
+            * **Definition:** Nouns, Verbs, Adjectives, and Adverbs (words that carry the semantic meaning).
+            * **Instruction:** Apply the percentage targets in the table below **strictly** to your Content Words.
+
+        * **Rule C: The "Target Level" Calculation (The Gap)**
+            * The columns in the table (A1-B2) do NOT add up to 100%.
+            * **You must calculate the remainder:** `100% - (Sum of A1+A2+B1+B2) = Target %`.
+            * **MANDATORY INSTRUCTION:** You must fill this exact calculated remainder percentage with words strictly matching the **User's Target Lexical Level ({lexical_cefr_str})**.
+            * *Example:* If the table sums to 66% and the target is C1, then **34%** of your Content Words MUST be C1-level vocabulary.
+
+        **Ground Truth (Lexical Profile for CONTENT WORDS ONLY)**
         | CEFR Level | A1 Word % | A2 Word % | B1 Word % | B2 Word % |
         | :--- | :--- | :--- | :--- | :--- |
         | **A1** | 66.3% | 15.2% | 4.8% | 1.3% |
