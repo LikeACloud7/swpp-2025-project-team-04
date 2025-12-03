@@ -393,8 +393,9 @@ def test_signup_password_too_long():
 
 def test_signup_password_exactly_3_chars():
     ''' Password가 정확히 3자일 때 성공 테스트 '''
+    username = f"pwdtest_{uuid4().hex[:10]}"
     signup_data = {
-        "username": "pwdtest3char",
+        "username": username,
         "password": "abc"  # 3자
     }
     
