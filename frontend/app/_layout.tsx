@@ -117,12 +117,6 @@ function RootNavigation() {
 
   const showSplash = isAuthLoading || !isSplashAnimationFinished;
 
-  useEffect(() => {
-    if (!isAuthLoading && user && !user.initial_level_completed) {
-      router.replace('/initial-survey');
-    }
-  }, [user, isAuthLoading, router]);
-
   if (showSplash) {
     return (
       <CustomSplashScreen
