@@ -126,7 +126,7 @@ export default function InitialSurveyScreen() {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      if (currentStep === 8 && skipTest === true) {
+      if ((currentStep === 8 || currentStep === 9) && skipTest === true) {
         setCurrentStep(2);
       } else {
         setCurrentStep(currentStep - 1);
@@ -281,7 +281,7 @@ export default function InitialSurveyScreen() {
                       };
 
                       setTestResult(mockResult);
-                      setCurrentStep(8);
+                      setCurrentStep(9);
                     },
                     onError: () => {
                       Alert.alert('오류', '제출에 실패했습니다.');
@@ -400,8 +400,8 @@ export default function InitialSurveyScreen() {
     }
   };
 
-  // Result Page(8)와 Topic Selection(9)은 스크롤 가능해야 함
-  const isScrollableStep = currentStep >= 8;
+  // Topic Selection(9)만 스크롤 가능
+  const isScrollableStep = currentStep === 9;
 
   return (
     <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
