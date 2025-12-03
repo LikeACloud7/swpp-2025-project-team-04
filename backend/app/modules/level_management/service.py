@@ -132,7 +132,6 @@ class LevelManagementService:
             level=evaluation.level,
             level_score=evaluation.level_score,
             llm_confidence=evaluation.llm_confidence,
-            initial_level_completed=True,
             commit=False,
         )
         history_record = crud.insert_level_history(
