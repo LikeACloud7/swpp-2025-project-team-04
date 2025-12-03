@@ -344,8 +344,9 @@ def test_signup_username_exactly_3_chars():
 
 def test_signup_username_exactly_30_chars():
     ''' Username이 정확히 30자일 때 성공 테스트 '''
+    username = f"uname_{uuid4().hex[:24]}"  # ensures <= 30 chars
     signup_data = {
-        "username": "a" * 30,  # 30자
+        "username": username[:30],  # enforce exact length
         "password": "validpass123"
     }
     
