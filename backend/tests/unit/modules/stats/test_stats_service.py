@@ -6,6 +6,17 @@ from types import SimpleNamespace
 
 from app.modules.stats import service as stats_service
 
+try:
+    from backend.app.modules.stats import service as backend_stats_service  # type: ignore
+except Exception:  # pragma: no cover - fallback when alias missing
+    backend_stats_service = None  # type: ignore
+
+
+def _patch_crud(monkeypatch, attr: str, value):
+    monkeypatch.setattr(stats_service.crud, attr, value)
+    if backend_stats_service is not None:
+        monkeypatch.setattr(backend_stats_service.crud, attr, value)
+
 
 def _make_user(
     level: float = 90.0,
@@ -32,26 +43,27 @@ def test_stats_service_builds_full_payload(monkeypatch):
     today = date.today()
     activity_dates = [today - timedelta(days=offset) for offset in range(5)]
 
-    monkeypatch.setattr(stats_service.crud, "ensure_achievements", lambda *_, **__: None)
-    monkeypatch.setattr(
-        stats_service.crud,
+    _patch_crud(monkeypatch, "ensure_achievements", lambda *_, **__: None)
+    _patch_crud(
+        monkeypatch,
         "list_achievements",
         lambda *_: [
             SimpleNamespace(code="FIRST_SESSION", name="First", description="desc", category="milestone"),
             SimpleNamespace(code="TOTAL_3000", name="Hardworker", description="desc", category="time"),
         ],
     )
-    monkeypatch.setattr(
-        stats_service.crud,
+    _patch_crud(
+        monkeypatch,
         "get_daily_study_minutes",
         lambda *_, **__: {today - timedelta(days=1): 60, today: 45},
     )
-    monkeypatch.setattr(
-        stats_service.crud,
+    _patch_crud(
+        monkeypatch,
         "get_study_dates_descending",
         lambda *_, **__: activity_dates,
     )
-    monkeypatch.setattr(stats_service.crud, "get_total_study_minutes", lambda *_, **__: 3_600)
+    _patch_crud(monkeypatch, "get_total_study_minutes", lambda *_, **__: 3_600)
+    _patch_crud(monkeypatch, "get_total_study_days", lambda *_, **__: 42)
 
     recorded_unlocks = []
 
@@ -59,9 +71,9 @@ def test_stats_service_builds_full_payload(monkeypatch):
         recorded_unlocks.append((user_id, achievement_code))
         return SimpleNamespace(achievement_code=achievement_code, achieved_at=today)
 
-    monkeypatch.setattr(stats_service.crud, "ensure_user_achievement", fake_ensure_user_achievement)
-    monkeypatch.setattr(
-        stats_service.crud,
+    _patch_crud(monkeypatch, "ensure_user_achievement", fake_ensure_user_achievement)
+    _patch_crud(
+        monkeypatch,
         "list_user_achievements",
         lambda *_, **__: [SimpleNamespace(achievement_code="FIRST_SESSION", achieved_at=today)],
     )
@@ -69,6 +81,7 @@ def test_stats_service_builds_full_payload(monkeypatch):
     payload = svc.get_user_stats(db="session", user=user)
 
     assert payload.total_time_spent_minutes == 3_600
+    assert payload.total_days == 42
     assert payload.current_level.lexical.cefr_level.value == stats_service.get_cefr_level_from_score(90.0).value
     assert payload.current_level.overall_cefr_level is not None
     assert payload.current_level.overall_cefr_level.score == 90.0
@@ -85,17 +98,19 @@ def test_stats_service_calculates_overall_cefr_level(monkeypatch):
     svc = stats_service.StatsService()
     user = _make_user(level=200.0, syntactic_level=150.0, auditory_level=100.0)
 
-    monkeypatch.setattr(stats_service.crud, "ensure_achievements", lambda *_, **__: None)
-    monkeypatch.setattr(stats_service.crud, "list_achievements", lambda *_, **__: [])
-    monkeypatch.setattr(stats_service.crud, "get_daily_study_minutes", lambda *_, **__: {})
-    monkeypatch.setattr(stats_service.crud, "get_study_dates_descending", lambda *_, **__: [])
-    monkeypatch.setattr(stats_service.crud, "get_total_study_minutes", lambda *_, **__: 0)
-    monkeypatch.setattr(stats_service.crud, "ensure_user_achievement", lambda *_, **__: None)
-    monkeypatch.setattr(stats_service.crud, "list_user_achievements", lambda *_, **__: [])
+    _patch_crud(monkeypatch, "ensure_achievements", lambda *_, **__: None)
+    _patch_crud(monkeypatch, "list_achievements", lambda *_, **__: [])
+    _patch_crud(monkeypatch, "get_daily_study_minutes", lambda *_, **__: {})
+    _patch_crud(monkeypatch, "get_study_dates_descending", lambda *_, **__: [])
+    _patch_crud(monkeypatch, "get_total_study_minutes", lambda *_, **__: 0)
+    _patch_crud(monkeypatch, "get_total_study_days", lambda *_, **__: 0)
+    _patch_crud(monkeypatch, "ensure_user_achievement", lambda *_, **__: None)
+    _patch_crud(monkeypatch, "list_user_achievements", lambda *_, **__: [])
 
     payload = svc.get_user_stats(db="session", user=user)
     overall_level = payload.current_level.overall_cefr_level
 
+    assert payload.total_days == 0
     assert overall_level is not None
     assert overall_level.score == 150.0  # average of the three scores above
     assert overall_level.cefr_level.value == stats_service.CEFRLevel.C1.value

@@ -213,9 +213,7 @@ class LevelSystemService:
         user.lexical_level = float(score)
         user.syntactic_level = float(score)
         user.speed_level = float(score)
-
-
-
+        user.initial_level_completed = True
 
         db.add(user)
         db.commit()
@@ -334,6 +332,7 @@ class LevelSystemService:
         user.lexical_level = float(target_score)
         user.syntactic_level = float(target_score)
         user.speed_level = float(target_score)
+        user.initial_level_completed = True
 
         db.add(user)
         db.commit()

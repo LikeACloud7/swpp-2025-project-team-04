@@ -72,6 +72,11 @@ def test_get_user_stats_aggregates_data(monkeypatch):
         assert user_id == user.id
         return 600
 
+    def fake_get_total_study_days(db_arg, *, user_id):
+        assert db_arg is db
+        assert user_id == user.id
+        return 42
+
     ensured = []
 
     def fake_ensure_achievements(db_arg, *, definitions):
@@ -116,7 +121,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
             for code, achieved_at in awarded.items()
         ]
 
-    crud_modules = [crud]
+    crud_modules = [crud, service_module.crud]
     try:
         from app.modules.stats import crud as app_crud  # type: ignore
 
@@ -128,6 +133,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
         monkeypatch.setattr(module, "get_daily_study_minutes", fake_get_daily_study_minutes)
         monkeypatch.setattr(module, "get_study_dates_descending", fake_get_study_dates_descending)
         monkeypatch.setattr(module, "get_total_study_minutes", fake_get_total_study_minutes)
+        monkeypatch.setattr(module, "get_total_study_days", fake_get_total_study_days)
         monkeypatch.setattr(module, "ensure_achievements", fake_ensure_achievements)
         monkeypatch.setattr(module, "list_achievements", fake_list_achievements)
         monkeypatch.setattr(module, "ensure_user_achievement", fake_ensure_user_achievement)
@@ -155,6 +161,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     assert stats.streak.consecutive_days == 3
     assert len(stats.streak.daily_minutes) == 7
     assert stats.streak.daily_minutes[-1].minutes == 60
+    assert stats.total_days == 42
 
     achieved = {item.code: item.achieved for item in stats.achievements}
     assert achieved["FIRST_SESSION"] is True
@@ -186,6 +193,7 @@ def test_get_user_stats_handles_no_activity(monkeypatch):
     monkeypatch.setattr(crud, "get_daily_study_minutes", lambda *args, **kwargs: {})
     monkeypatch.setattr(crud, "get_study_dates_descending", lambda *args, **kwargs: [])
     monkeypatch.setattr(crud, "get_total_study_minutes", lambda *args, **kwargs: 0)
+    monkeypatch.setattr(crud, "get_total_study_days", lambda *args, **kwargs: 0)
     monkeypatch.setattr(crud, "ensure_user_achievement", lambda *args, **kwargs: SimpleNamespace(
         achievement_code="FIRST_SESSION",
         achieved_at=None,
@@ -196,6 +204,7 @@ def test_get_user_stats_handles_no_activity(monkeypatch):
     stats = service.get_user_stats(db=db, user=user)
 
     assert stats.total_time_spent_minutes == 0
+    assert stats.total_days == 0
     assert stats.streak.consecutive_days == 0
     assert all(item.minutes == 0 for item in stats.streak.daily_minutes)
     assert stats.achievements[0].achieved is False
