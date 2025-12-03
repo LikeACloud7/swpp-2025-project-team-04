@@ -11,8 +11,9 @@ DUMMY_USER_USERNAME="testuser123"
 DUMMY_USER_PASSWORD="testuser123!"  
 
 def test_signup_success():
+    username = f"signuptest_{uuid4().hex[:8]}"
     signup_data = {
-        "username": "signuptest123",
+        "username": username,
         "password": "signuptest123!"
         # No nickname provided - should default to username
     }
@@ -24,8 +25,8 @@ def test_signup_success():
     assert "access_token" in response_data
     assert "refresh_token" in response_data
     assert "user" in response_data
-    assert response_data["user"]["username"] == "signuptest123"
-    assert response_data["user"]["nickname"] == "signuptest123"  # Should default to username
+    assert response_data["user"]["username"] == username
+    assert response_data["user"]["nickname"] == username  # Should default to username
     assert "id" in response_data["user"]
     
     # Clean up - delete the test user
@@ -35,8 +36,9 @@ def test_signup_success():
 
 def test_signup_with_custom_nickname():
     ''' Test successful signup with custom nickname '''
+    username = f"signuptest_{uuid4().hex[:8]}"
     signup_data = {
-        "username": "signuptest456",
+        "username": username,
         "password": "signuptest456!",
         "nickname": "customnick456"
     }
@@ -48,7 +50,7 @@ def test_signup_with_custom_nickname():
     assert "access_token" in response_data
     assert "refresh_token" in response_data
     assert "user" in response_data
-    assert response_data["user"]["username"] == "signuptest456"
+    assert response_data["user"]["username"] == username
     assert response_data["user"]["nickname"] == "customnick456"  # Should use provided nickname
     assert "id" in response_data["user"]
     
@@ -546,4 +548,3 @@ def test_change_password_current_password_too_short():
     
     # Clean up
     client.delete(f"{API_VERSION}/auth/delete-account", headers=headers)
-
