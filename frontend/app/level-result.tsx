@@ -323,7 +323,7 @@ export default function LevelResultScreen() {
           >
             <Pressable
               className="bg-blue-500 rounded-xl py-4"
-              onPress={() => router.replace('/(main)')}
+              onPress={() => router.replace('/')}
             >
               <Text className="text-white text-center text-lg font-bold">
                 확인
