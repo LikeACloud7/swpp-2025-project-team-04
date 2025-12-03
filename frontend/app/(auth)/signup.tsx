@@ -129,7 +129,7 @@ export default function SignUpScreen() {
                 }}
                 secureTextEntry
                 textContentType="newPassword"
-                placeholder="8~32자, 영문과 숫자 포함"
+                placeholder="3~30자 비밀번호를 입력하세요"
                 editable={!signupMutation.isPending}
                 returnKeyType="next"
                 containerClassName="mb-5"
