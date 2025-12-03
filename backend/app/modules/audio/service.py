@@ -232,7 +232,7 @@ class AudioService:
         target_asl_avg = REFERENCE_ASL_AVG.get(syntactic_cefr_str, 15.0) # Default to B1-ish if key missing
 
         prompt = f"""
-        You are a scriptwriter. Generate a script for an audio narration in the style of {style}.
+        You are a {style} writer. Generate a script for an audio narration in the style of {style}.
         The script must be between 1 and 2 minutes long (around {TARGET_SCRIPT_WORDS} words).
         The narration will be read by a single speaker: {voice_detail}.
 
@@ -249,7 +249,7 @@ class AudioService:
 
         **1. Lexical Difficulty: "Closest Profile Match"**
         Your primary goal is to match the vocabulary distribution of the **Target Lexical Level ({lexical_cefr_str})**.
-        You MUST strictly follow the lexical profile for **{lexical_cefr_str}** from the table below. Do not interpolate; match this row precisely.
+        You MUST strictly follow the lexical profile for **{lexical_cefr_str}** from the table below. Do not interpolate; try to match this row precisely.
 
         **Ground Truth (Lexical Profile for Content Words)**
         | CEFR Level | A1 Word % | A2 Word % | B1 Word % | B2 Word % |
@@ -298,6 +298,9 @@ class AudioService:
         * **C1 Examples:** rudimentary, facilitation, vegetation, preacher, detriment, blankness, reenact, sacrifice, inexplicable, prolific, contextual, aimlessly, dither, conditionally, revere, render, bribery, premise, fanatic, provocative, prophet, exuberant, insensitively, carrier, isolated, formulate, overdraft, pertinent, somersault, quirky, jersey, rustle, anthropology, dismay, violet, absolute, commercially, stoke, commission, maneuver/manoeuvre
         * **C2 Examples:** kinetically, philanthropic, angsty, facsimile, colloquium, flit, agility, infernally, extant, wistful, posterity, ferocity, ingrate, circuit, thicket, consternation, all-encompassing, enabler, maelstrom, testimonial, daunt, stringently, avian, adversely, blurb, diffuse, annex, drudgery, formidably, solitariness, tetchy, reverb, salivary, tactic, incipient, hazard, incumbent, bona fide, lassitude, extracurricular
 
+        *** Grammar (things you have been wrong in the past) ***
+        Maintain strict temporal consistency. Ensure that all temporal adverbs and time indicators align logically with the grammatical tense of the sentence. Avoid narrative anachronisms where the timeframe of the description conflicts with the timeframe of the action
+
         *** IMPORTANT FORMATTING RULES ***
         1. Start with a title on the first line formatted as: TITLE: [Your Title Here]
         2. Add one blank line after the title.
@@ -306,11 +309,16 @@ class AudioService:
         4. Do NOT include speaker names (e.g., "Narrator:"), scene directions, 
         or any text other than the dialogue itself.
 
-        Example format:
-        TITLE: Amazing Adventures in Technology
+       **4. Narrative Coherence: The "Single Thread" Rule**
+        Because the script is short (1-2 minutes), you MUST NOT cover multiple sub-topics. You must strictly adhere to a **Singular Focus**.
 
-        Welcome to our exciting journey into the world of technology.
-        Today we will explore fascinating innovations.
+        * **The Rule of One:** Select ONE specific aspect or argument regarding {theme} and stick to it entirely. Do not list unrelated facts.
+        * **The "Red Thread":** Every single sentence must logically connect to the one before it to advance this specific argument. Sentence B must explain, support, or contrast Sentence A.
+        * **Structure:**
+            1.  **The Hook (15%):** Introduce the *single* specific concept immediately.
+            2.  **The Deep Dive (70%):** Explore that ONE concept in detail. Do not switch topics.
+            3.  **The Takeaway (15%):** Conclude that specific concept.
+        * **Pass/Fail Condition:** If a sentence fits the mathematical word stats but deviates from the "Single Thread" or introduces a new, unrelated topic, **it is a failure.** You must rewrite it to maintain the narrative arc.
         """
         
         generated_script = ""
