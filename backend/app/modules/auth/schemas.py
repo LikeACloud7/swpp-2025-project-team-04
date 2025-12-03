@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 import re
 from ...core.exceptions import InvalidPasswordFormatException, InvalidUsernameFormatException
+from ..users.schemas import User
 
 
 class UserCredentials(BaseModel):
@@ -21,10 +22,7 @@ class UserCredentials(BaseModel):
             raise InvalidPasswordFormatException()
         return v
 
-class UserInfo(BaseModel):
-    id: int
-    username: str
-    nickname: str
+
 
 class TokensResponse(BaseModel):
     access_token: str
@@ -35,13 +33,13 @@ class SignupRequest(UserCredentials):
     nickname: str = Field(default="")
 
 class SignupResponse(TokensResponse):
-    user: UserInfo
+    user: User
 
 class LoginRequest(UserCredentials):
     pass
 
 class LoginResponse(TokensResponse):
-    user: UserInfo
+    user: User
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str

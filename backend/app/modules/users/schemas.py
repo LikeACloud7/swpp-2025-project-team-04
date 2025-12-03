@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from ..level_management.models import CEFRLevel
 from .interests import InterestKey
@@ -12,8 +12,7 @@ class UserInterest(BaseModel):
     category: str
     label: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UpdateUserInterestsRequest(BaseModel):
@@ -34,5 +33,4 @@ class User(BaseModel):
     level_score: Optional[int] = None
     interests: List[UserInterest] = Field(default_factory=list)
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

@@ -34,6 +34,7 @@ from .schemas import (
     SignupRequest,
     SignupResponse,
 )
+from ..users.schemas import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -63,7 +64,7 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
     return SignupResponse(
         access_token=access_token, 
         refresh_token=refresh_token,
-        user={"id": user.id, "username": user.username, "nickname": user.nickname}
+        user=User.from_orm(user)
     )
 
 
@@ -93,7 +94,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     return LoginResponse(
         access_token=access_token, 
         refresh_token=refresh_token,
-        user={"id": user.id, "username": user.username, "nickname": user.nickname}
+        user=User.from_orm(user)
     )
 
 
