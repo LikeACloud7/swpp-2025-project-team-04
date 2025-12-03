@@ -72,6 +72,11 @@ def test_get_user_stats_aggregates_data(monkeypatch):
         assert user_id == user.id
         return 600
 
+    def fake_get_total_study_days(db_arg, *, user_id):
+        assert db_arg is db
+        assert user_id == user.id
+        return 42
+
     ensured = []
 
     def fake_ensure_achievements(db_arg, *, definitions):
@@ -128,6 +133,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
         monkeypatch.setattr(module, "get_daily_study_minutes", fake_get_daily_study_minutes)
         monkeypatch.setattr(module, "get_study_dates_descending", fake_get_study_dates_descending)
         monkeypatch.setattr(module, "get_total_study_minutes", fake_get_total_study_minutes)
+        monkeypatch.setattr(module, "get_total_study_days", fake_get_total_study_days)
         monkeypatch.setattr(module, "ensure_achievements", fake_ensure_achievements)
         monkeypatch.setattr(module, "list_achievements", fake_list_achievements)
         monkeypatch.setattr(module, "ensure_user_achievement", fake_ensure_user_achievement)
@@ -186,6 +192,7 @@ def test_get_user_stats_handles_no_activity(monkeypatch):
     monkeypatch.setattr(crud, "get_daily_study_minutes", lambda *args, **kwargs: {})
     monkeypatch.setattr(crud, "get_study_dates_descending", lambda *args, **kwargs: [])
     monkeypatch.setattr(crud, "get_total_study_minutes", lambda *args, **kwargs: 0)
+    monkeypatch.setattr(crud, "get_total_study_days", lambda *args, **kwargs: 0)
     monkeypatch.setattr(crud, "ensure_user_achievement", lambda *args, **kwargs: SimpleNamespace(
         achievement_code="FIRST_SESSION",
         achieved_at=None,
