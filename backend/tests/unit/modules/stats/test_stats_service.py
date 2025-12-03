@@ -81,6 +81,7 @@ def test_stats_service_builds_full_payload(monkeypatch):
     payload = svc.get_user_stats(db="session", user=user)
 
     assert payload.total_time_spent_minutes == 3_600
+    assert payload.total_days == 42
     assert payload.current_level.lexical.cefr_level.value == stats_service.get_cefr_level_from_score(90.0).value
     assert payload.current_level.overall_cefr_level is not None
     assert payload.current_level.overall_cefr_level.score == 90.0
@@ -109,6 +110,7 @@ def test_stats_service_calculates_overall_cefr_level(monkeypatch):
     payload = svc.get_user_stats(db="session", user=user)
     overall_level = payload.current_level.overall_cefr_level
 
+    assert payload.total_days == 0
     assert overall_level is not None
     assert overall_level.score == 150.0  # average of the three scores above
     assert overall_level.cefr_level.value == stats_service.CEFRLevel.C1.value

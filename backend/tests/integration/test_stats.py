@@ -161,6 +161,7 @@ def test_get_user_stats_aggregates_data(monkeypatch):
     assert stats.streak.consecutive_days == 3
     assert len(stats.streak.daily_minutes) == 7
     assert stats.streak.daily_minutes[-1].minutes == 60
+    assert stats.total_days == 42
 
     achieved = {item.code: item.achieved for item in stats.achievements}
     assert achieved["FIRST_SESSION"] is True
@@ -203,6 +204,7 @@ def test_get_user_stats_handles_no_activity(monkeypatch):
     stats = service.get_user_stats(db=db, user=user)
 
     assert stats.total_time_spent_minutes == 0
+    assert stats.total_days == 0
     assert stats.streak.consecutive_days == 0
     assert all(item.minutes == 0 for item in stats.streak.daily_minutes)
     assert stats.achievements[0].achieved is False
