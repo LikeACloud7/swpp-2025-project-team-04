@@ -39,14 +39,15 @@ def read_users(skip: int = 0, limit: int = 100):
     return []
 
 
-@router.get("/me", response_model=schemas.User,
-            responses=AppException.to_openapi_examples([
-                InvalidAuthHeaderException,
-                UserNotFoundException,
-                AuthTokenExpiredException,
-                InvalidTokenException,
-                InvalidTokenTypeException
-            ]))
+error_responses = AppException.to_openapi_examples([
+    InvalidAuthHeaderException,
+    UserNotFoundException,
+    AuthTokenExpiredException,
+    InvalidTokenException,
+    InvalidTokenTypeException
+])
+
+@router.get("/me", response_model=schemas.User, responses=error_responses)
 def get_me(current_user = Depends(get_current_user)):
     return current_user
 
@@ -54,3 +55,21 @@ def get_me(current_user = Depends(get_current_user)):
 @router.get("/{user_id}", response_model=schemas.User)
 def read_user(user_id: int):
     return {"id": user_id, "username": "user", "nickname": "user"}
+
+
+@router.put(
+    "/me/interests",
+    response_model=schemas.UpdateUserInterestsResponse,
+    responses=error_responses,
+)
+def update_user_interests(
+    payload: schemas.UpdateUserInterestsRequest,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user = crud.set_user_interests(
+        db,
+        user_id=current_user.id,
+        interest_keys=payload.interests,
+    )
+    return {"interests": user.interests}

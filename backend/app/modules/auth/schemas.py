@@ -1,34 +1,28 @@
 from pydantic import BaseModel, Field, field_validator
 import re
-from ...core.exceptions import InvalidUsernameFormatException, InvalidPasswordFormatException
+from ...core.exceptions import InvalidPasswordFormatException, InvalidUsernameFormatException
+from ..users.schemas import User
 
 
 class UserCredentials(BaseModel):
-    username: str  # min_length, max_length 제거
-    password: str  # min_length, max_length 제거
+    username: str
+    password: str
 
     @field_validator("username")
     @classmethod
     def validate_username(cls, v):
-        if not (6 <= len(v) <= 16):
-            raise InvalidUsernameFormatException()
-        if not re.match(r"^[a-zA-Z0-9]+$", v):
+        if not (3 <= len(v) <= 30):
             raise InvalidUsernameFormatException()
         return v
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, v):
-        if not (8 <= len(v) <= 32):
-            raise InvalidPasswordFormatException()
-        if not re.search(r"[a-zA-Z]", v) or not re.search(r"[0-9]", v):
+        if not (3 <= len(v) <= 30):
             raise InvalidPasswordFormatException()
         return v
 
-class UserInfo(BaseModel):
-    id: int
-    username: str
-    nickname: str
+
 
 class TokensResponse(BaseModel):
     access_token: str
@@ -36,16 +30,16 @@ class TokensResponse(BaseModel):
 
 
 class SignupRequest(UserCredentials):
-    nickname: str = Field("", max_length=50)
+    nickname: str = Field(default="")
 
 class SignupResponse(TokensResponse):
-    user: UserInfo
+    user: User
 
 class LoginRequest(UserCredentials):
     pass
 
 class LoginResponse(TokensResponse):
-    user: UserInfo
+    user: User
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
@@ -55,6 +49,20 @@ class RefreshTokenResponse(BaseModel):
     refresh_token: str
 class AccessTokenResponse(BaseModel):
     access_token: str
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("current_password", "new_password")
+    @classmethod
+    def validate_password(cls, v):
+        if not (3 <= len(v) <= 30):
+            raise InvalidPasswordFormatException()
+        return v
+
+class ChangePasswordResponse(BaseModel):
+    message: str
 
 class DeleteAccountResponse(BaseModel):
     message: str

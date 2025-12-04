@@ -1,8 +1,11 @@
+from typing import Sequence
+
 from sqlalchemy.orm import Session
 
 from ...core.exceptions import UserNotFoundException
 from ..level_management.models import CEFRLevel
-from .models import User
+from .interests import InterestKey
+from .models import User, UserInterest
 
 def create_user(db: Session, username: str, hashed_password: str, nickname: str = None):
     if nickname is None:
@@ -51,4 +54,36 @@ def update_user_level(
         db.commit()
         db.refresh(user)
 
+    return user
+
+
+def update_user_password(db: Session, user: User, hashed_password: str) -> User:
+    """
+    Persist a password change for the given user.
+    """
+    user.hashed_password = hashed_password
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def set_user_interests(
+    db: Session,
+    *,
+    user_id: int,
+    interest_keys: Sequence[InterestKey],
+) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise UserNotFoundException()
+
+    unique_keys = list(dict.fromkeys(interest_keys))
+    db.query(UserInterest).filter(UserInterest.user_id == user_id).delete(synchronize_session=False)
+
+    for key in unique_keys:
+        db.add(UserInterest(user_id=user_id, interest_key=key))
+
+    db.commit()
+    db.refresh(user)
     return user

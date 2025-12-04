@@ -1,41 +1,61 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
-from ..users.crud import create_user
-from .schemas import SignupRequest, SignupResponse, LoginRequest, LoginResponse, RefreshTokenRequest, AccessTokenResponse,RefreshTokenResponse, DeleteAccountResponse
-from ...core.auth import hash_password, create_access_token, verify_password, verify_token, TokenType
+
+from ...core.auth import (
+    TokenType,
+    create_access_token,
+    hash_password,
+    verify_password,
+    verify_token,
+)
 from ...core.config import get_db
-from ..users.crud import get_user_by_username, delete_user
 from ...core.exceptions import (
+    AccountDeletionFailedException,
     AppException,
-    UserNotFoundException, 
-    InvalidCredentialsException, 
-    UsernameExistsException,
     AuthTokenExpiredException,
     InvalidAuthHeaderException,
-    AccountDeletionFailedException,
+    InvalidCredentialsException,
+    InvalidPasswordFormatException,
     InvalidTokenException,
     InvalidTokenTypeException,
-    InvalidUsernameFormatException,
-    InvalidPasswordFormatException
+    UserNotFoundException,
+    UsernameExistsException,
 )
+from ..users.crud import create_user, delete_user, get_user_by_username, update_user_password
+from .schemas import (
+    AccessTokenResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+    DeleteAccountResponse,
+    LoginRequest,
+    LoginResponse,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
+    SignupRequest,
+    SignupResponse,
+)
+from ..users.schemas import User
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-
-@router.post("/signup", response_model=SignupResponse, status_code=201, 
-            responses=AppException.to_openapi_examples([
-                UsernameExistsException,
-                InvalidUsernameFormatException,
-                InvalidPasswordFormatException
-            ]))
+@router.post(
+    "/signup",
+    response_model=SignupResponse,
+    status_code=201,
+    responses=AppException.to_openapi_examples(
+        [
+            UsernameExistsException,
+        ]
+    ),
+)
 def signup(request: SignupRequest, db: Session = Depends(get_db)):
-    # username 중복 체크
     if get_user_by_username(db, request.username):
         raise UsernameExistsException()
     # 비밀번호 해싱
     hashed_pw = hash_password(request.password)
     # 유저 생성
-    nickname = request.nickname if request.nickname.strip() else request.username
+    nickname = (request.nickname or "").strip() or request.username
     user = create_user(db, request.username, hashed_pw, nickname)
     # 토큰 생성
     data = {"sub": user.username}
@@ -44,27 +64,28 @@ def signup(request: SignupRequest, db: Session = Depends(get_db)):
     return SignupResponse(
         access_token=access_token, 
         refresh_token=refresh_token,
-        user={"id": user.id, "username": user.username, "nickname": user.nickname}
+        user=User.from_orm(user)
     )
 
 
-@router.post("/login", response_model=LoginResponse, 
-            responses=AppException.to_openapi_examples([
-                UserNotFoundException,
-                InvalidCredentialsException,
-                InvalidUsernameFormatException,
-                InvalidPasswordFormatException
-            ]))
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    responses=AppException.to_openapi_examples(
+        [
+            UserNotFoundException,
+            InvalidCredentialsException,
+        ]
+    ),
+)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    # 사용자 조회
     user = get_user_by_username(db, request.username)
     if not user:
         raise InvalidCredentialsException()
-    
-    # 비밀번호 검증
+
     if not verify_password(request.password, user.hashed_password):
         raise InvalidCredentialsException()
-    
+
     # 토큰 생성
     data = {"sub": user.username}
     access_token = create_access_token(data, TokenType.ACCESS_TOKEN)
@@ -73,8 +94,46 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     return LoginResponse(
         access_token=access_token, 
         refresh_token=refresh_token,
-        user={"id": user.id, "username": user.username, "nickname": user.nickname}
+        user=User.from_orm(user)
     )
+
+
+@router.post(
+    "/change-password",
+    response_model=ChangePasswordResponse,
+    responses=AppException.to_openapi_examples([
+        InvalidAuthHeaderException,
+        UserNotFoundException,
+        AuthTokenExpiredException,
+        InvalidTokenException,
+        InvalidTokenTypeException,
+        InvalidCredentialsException,
+        InvalidPasswordFormatException,
+    ]),
+)
+def change_password(
+    request: ChangePasswordRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    if not authorization.startswith("Bearer "):
+        raise InvalidAuthHeaderException()
+
+    access_token = authorization[7:]
+    token_data = verify_token(access_token, TokenType.ACCESS_TOKEN)
+    username = token_data["username"]
+
+    user = get_user_by_username(db, username)
+    if not user:
+        raise UserNotFoundException()
+
+    if not verify_password(request.current_password, user.hashed_password):
+        raise InvalidCredentialsException()
+
+    hashed_pw = hash_password(request.new_password)
+    update_user_password(db, user, hashed_pw)
+
+    return ChangePasswordResponse(message="Password updated successfully")
 
 
 @router.post("/refresh/access", response_model=AccessTokenResponse, 
@@ -130,6 +189,5 @@ def delete_account(authorization: str = Header(), db: Session = Depends(get_db))
     # 계정 삭제
     if delete_user(db, username):
         return DeleteAccountResponse(message="Account deleted successfully")
-    else:
-        raise AccountDeletionFailedException()
 
+    raise AccountDeletionFailedException()

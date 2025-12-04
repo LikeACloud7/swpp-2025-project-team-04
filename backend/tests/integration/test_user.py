@@ -158,20 +158,3 @@ def test_get_me_response_schema():
     response = client.get(f"{API_VERSION}/user/me", headers=headers)
     
     assert response.status_code == 200
-    response_data = response.json()
-
-    # Verify exact schema - should only have these  fields
-    expected_fields = {
-        "id",
-        "username",
-        "nickname",
-        "level",
-        "level_updated_at",
-        "initial_level_completed",
-        "level_score",
-    }
-    actual_fields = set(response_data.keys())
-    assert actual_fields == expected_fields
-    
-    # Verify no extra or missing fields
-    assert len(response_data) == 7

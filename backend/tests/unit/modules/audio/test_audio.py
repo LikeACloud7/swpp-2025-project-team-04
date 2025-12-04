@@ -1,3 +1,10 @@
+import asyncio
+from types import SimpleNamespace
+
+import pytest
+
+from backend.app.modules.audio import utils as audio_utils
+from backend.app.modules.audio.service import AudioService
 from backend.app.modules.audio.utils import parse_tts_by_newlines
 
 
@@ -80,4 +87,106 @@ def test_parse_tts_by_newlines_trailing_newline():
     assert sentences[1]["text"] == "Bye!"
 
 
-# TODO : audio/service에 정의된 _split_script_by_newlines 유닛 테스트 코드 작성하기.
+def test_extract_words_and_duration():
+    words = audio_utils.extract_words_from_sentence("Don't Stop, Believin'!")
+    assert words == ["don't", "stop", "believin"]
+
+    duration = audio_utils.compute_audio_duration_seconds_from_sentences(
+        [
+            {"start_time": 0, "end_time": "1.5"},
+            {"start": 2.2},
+            {"end_time_seconds": 3.7},
+        ]
+    )
+    assert duration == 3.7
+
+
+def test_insert_study_session_from_sentences(monkeypatch, sqlite_session):
+    captured = {}
+
+    def fake_session_local():
+        return sqlite_session
+
+    def fake_insert(db, user_id, duration_minutes, activity_type):
+        captured["args"] = (user_id, duration_minutes, activity_type)
+
+    monkeypatch.setattr(audio_utils, "SessionLocal", fake_session_local)
+    monkeypatch.setattr(audio_utils.stats_crud, "insert_study_session", fake_insert)
+
+    sentences = [{"start_time": 0, "end_time": 130}]
+    audio_utils.insert_study_session_from_sentences(user_id=7, sentences=sentences, activity_type="audio")
+
+    assert captured["args"] == (7, 3, "audio")
+
+
+def test_parse_title_and_clean_filename():
+    content = "TITLE: Hello\nLine one\nLine two"
+    title, script = AudioService._parse_title_and_script(content)
+    assert title == "Hello"
+    assert "Line one" in script
+    assert AudioService._clean_filename("Hi! there??") == "Hi_there"
+
+
+def test_split_script_by_newlines():
+    script = "First line\n\nSecond line\nThird"
+    sentences = AudioService._split_script_by_newlines(script)
+    assert sentences == ["First line", "Second line", "Third"]
+
+
+def test_select_voice_algorithmically():
+    user = SimpleNamespace(
+        lexical_level=30.0,
+        syntactic_level=40.0,
+        speed_level=60.0,
+    )
+    voices = [
+        {"name": "Calm Voice", "tags": {"accent": "american_standard", "style": "calm"}},
+        {"name": "Bold Voice", "tags": {"accent": "british", "style": "gravelly"}},
+    ]
+    selected = AudioService._select_voice_algorithmically(voices, user)
+    assert selected in voices
+
+
+def test_extract_words_handles_non_string():
+    assert audio_utils.extract_words_from_sentence(None) == []
+    assert audio_utils.extract_words_from_sentence("  Where's  the  Dog? ") == ["where's", "the", "dog"]
+
+
+def test_parse_tts_missing_alignment():
+    with pytest.raises(ValueError):
+        parse_tts_by_newlines({})
+
+
+def test_parse_tts_skips_blank_sentences():
+    resp = {
+        "alignment": {
+            "characters": ["H", "i", "\n", "\n", "B", "y", "e"],
+            "character_start_times_seconds": [0, 0.05, 0.1, 0.2, 0.3, 0.35, 0.4],
+        }
+    }
+    sentences = parse_tts_by_newlines(resp)
+    assert len(sentences) == 2
+
+
+def test_insert_study_session_zero_duration(monkeypatch):
+    called = {}
+    monkeypatch.setattr(audio_utils, "compute_audio_duration_seconds_from_sentences", lambda _: 0)
+    monkeypatch.setattr(audio_utils, "SessionLocal", lambda: None)
+    audio_utils.insert_study_session_from_sentences(user_id=1, sentences=[])
+    assert called == {}
+
+
+def test_insert_study_session_handles_exceptions(monkeypatch):
+    monkeypatch.setattr(audio_utils, "compute_audio_duration_seconds_from_sentences", lambda _: 120)
+
+    class DummySession:
+        def close(self):
+            raise RuntimeError("close failed")
+
+    monkeypatch.setattr(audio_utils, "SessionLocal", lambda: DummySession())
+
+    def fake_insert(*args, **kwargs):
+        raise RuntimeError("db error")
+
+    monkeypatch.setattr(audio_utils.stats_crud, "insert_study_session", fake_insert)
+    audio_utils.insert_study_session_from_sentences(user_id=1, sentences=[{"end": 120}])
