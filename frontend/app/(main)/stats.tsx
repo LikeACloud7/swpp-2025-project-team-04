@@ -62,17 +62,6 @@ export default function StatsScreen() {
     return date;
   });
 
-  console.log('=== WEEKLY ACTIVITY DEBUG ===');
-  console.log('Today:', formatLocalDate(today));
-  console.log(
-    'Last 7 days:',
-    last7Days.map((d) => formatLocalDate(d)),
-  );
-  console.log(
-    'API daily_minutes data:',
-    JSON.stringify(stats.streak.daily_minutes, null, 2),
-  );
-
   const dailyMinutesMap = new Map(
     stats.streak.daily_minutes.map((day) => [day.date, day.minutes]),
   );
@@ -121,10 +110,6 @@ export default function StatsScreen() {
   const achievedCount = achievements.filter((a) => a.achieved).length;
   const totalAchievements = achievements.length;
 
-  console.log('=== ACHIEVEMENTS DEBUG ===');
-  console.log('Total achievements:', totalAchievements);
-  console.log('Achievements:', JSON.stringify(achievements, null, 2));
-
   const getBadgeIcon = (code: string) => {
     const iconMap: Record<string, string> = {
       FIRST_SESSION: '🌱',
@@ -146,8 +131,6 @@ export default function StatsScreen() {
     setSelectedAchievement(achievement);
     setModalVisible(true);
   };
-
-  console.log('stats data:', stats);
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">

@@ -57,14 +57,6 @@ export default function HomeScreen() {
   const [selectedTheme, setSelectedTheme] = useState<ThemeKey | null>(null);
   const [displayedThemes, setDisplayedThemes] = useState<ThemeKey[]>([]);
 
-  // 유저 관심사가 있다면 우선 채우고, 모자라면 랜덤 보충
-  console.log('THEME_KEYS:', THEME_KEYS);
-  console.log('user:', user);
-  console.log(
-    'userInterests:',
-    (user?.interests ?? []).map((i) => i.key),
-  );
-
   const generateDisplayedThemes = useCallback((): ThemeKey[] => {
     const FIXED = 3; // 유저 관심사 고정 개수
     const TOTAL = 7;
@@ -120,7 +112,7 @@ export default function HomeScreen() {
     if (!selectedTheme && !selectedStyle) {
       return (
         <Text className="text-base leading-7 text-slate-600">
-          주제와 스타일를 선택해주세요.
+          주제와 스타일을 선택해주세요.
         </Text>
       );
     }
@@ -179,7 +171,6 @@ export default function HomeScreen() {
             await TrackPlayer.add({
               id: data.generated_content_id,
               url: data.audio_url,
-              // url: require('@/assets/audio/1_audio.mp3'),
               title: data.title,
               artist: 'LingoFit',
             });
@@ -268,7 +259,7 @@ export default function HomeScreen() {
         <Text className="my-3 text-[15px] leading-6 text-slate-600">
           아래에서 듣고 싶은{' '}
           <Text className="font-semibold text-slate-800">주제</Text>와{' '}
-          <Text className="font-semibold text-slate-800">스타일</Text>를 고르면
+          <Text className="font-semibold text-slate-800">스타일</Text>을 고르면
           맞춤 오디오를 만들어드릴게요.
         </Text>
       </View>
