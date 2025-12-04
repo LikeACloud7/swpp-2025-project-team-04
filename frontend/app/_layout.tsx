@@ -134,13 +134,6 @@ function RootNavigation() {
         />
         <Stack.Screen name="feedback" options={{ headerShown: false }} />
         <Stack.Screen name="level-result" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="profile"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
