@@ -319,6 +319,7 @@ export default function HomeScreen() {
         {/* 오디오 생성 버튼 */}
         <GradientButton
           title="나만의 오디오 만들기"
+          loadingMessage="생성 중..."
           icon="musical-notes"
           loading={isAudioLoading}
           disabled={!selectedTheme || !selectedStyle}
