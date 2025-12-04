@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -27,6 +27,22 @@ export default function Word({
   appendSpace = false,
 }: WordProps) {
   const touchableRef = useRef<View>(null);
+
+  // 정규식으로 특수문자와 단어 분리
+  // Group 1: 앞쪽 특수문자 (예: " )
+  // Group 2: 단어 (문자, 숫자, 하이픈, 작은따옴표 포함)
+  // Group 3: 뒤쪽 특수문자 (예: ", . )
+  const { prefix, core, suffix } = useMemo(() => {
+    // \p{L}: 유니코드 문자(한글 포함), \p{N}: 숫자
+    const match = text.match(
+      /^([^\p{L}\p{N}]*)([\p{L}\p{N}\-']*)([^\p{L}\p{N}]*)$/u,
+    );
+    if (match) {
+      return { prefix: match[1], core: match[2], suffix: match[3] };
+    }
+    // 매칭 안되면 전체를 단어로 취급
+    return { prefix: '', core: text, suffix: '' };
+  }, [text]);
 
   const handleLongPress = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -60,6 +76,9 @@ export default function Word({
     }
   };
 
+  // 공통 폰트 스타일 (굵기 처리)
+  const fontStyle = isHighlighted ? 'font-bold' : 'font-semibold';
+
   return (
     <Pressable
       ref={touchableRef}
@@ -71,20 +90,28 @@ export default function Word({
         },
       ]}
     >
-      {/* [구조 변경] 
-        1. 바깥쪽 Text: 폰트 크기(text-xl), 정렬 등 공통 레이아웃 잡음
-        2. 안쪽 Text: 실제 '단어'에만 배경색(형광펜) 적용
-        3. 공백: 바깥쪽 Text의 스타일을 따라가되 배경색은 없음
-      */}
       <Text className="text-center text-xl text-white">
+        {/* 1. 앞쪽 특수문자 (하이라이트 X) */}
+        {prefix ? (
+          <Text className={`text-white ${fontStyle}`}>{prefix}</Text>
+        ) : null}
+
+        {/* 2. 실제 단어 (여기에만 북마크 배경색 적용) */}
         <Text
           suppressHighlighting
           className={`${
             isBookmarked ? 'bg-yellow-500/30 text-yellow-50' : 'text-white'
-          } ${isHighlighted ? 'font-bold' : 'font-semibold'}`}
+          } ${fontStyle}`}
         >
-          {text}
+          {core}
         </Text>
+
+        {/* 3. 뒤쪽 특수문자 (하이라이트 X) */}
+        {suffix ? (
+          <Text className={`text-white ${fontStyle}`}>{suffix}</Text>
+        ) : null}
+
+        {/* 4. 띄어쓰기 */}
         {appendSpace ? ' ' : ''}
       </Text>
     </Pressable>
