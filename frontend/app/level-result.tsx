@@ -325,8 +325,11 @@ export default function LevelResultScreen() {
             className="px-5 mt-6"
           >
             <Pressable
-              className="bg-blue-500 rounded-xl py-4"
+              className="bg-blue-500 rounded-xl py-4 active:bg-blue-600"
               onPress={() => router.replace('/')}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <Text className="text-white text-center text-lg font-bold">
                 확인
