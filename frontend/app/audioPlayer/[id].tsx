@@ -14,11 +14,11 @@ import Script from '@/components/audio/script';
 
 export default function AudioPlayer() {
   const { id: idParam, fromHistory } = useLocalSearchParams();
+  const isFromHistory = fromHistory === 'true';
   const router = useRouter();
 
   const qc = useQueryClient();
   const id = Array.isArray(idParam) ? idParam[0] : (idParam ?? null);
-  const isFromHistory = fromHistory === 'true';
   const data = id
     ? (qc.getQueryData(['audio', id]) as AudioGenerationResponse | undefined)
     : undefined;
@@ -81,12 +81,12 @@ export default function AudioPlayer() {
     try {
       await TrackPlayer.stop();
       await TrackPlayer.reset();
-    } catch { }
+    } catch {}
   }, []);
 
-  const endSessionWithFeedback = useCallback(async () => {
+  const exitWithFeedback = useCallback(async () => {
     await stopAndCleanup();
-    await saveAllSelectedVocabs();
+    saveAllSelectedVocabs();
 
     // 행동 로그와 generated_content_id를 피드백 페이지로 전달
     const params = {
@@ -100,16 +100,10 @@ export default function AudioPlayer() {
     router.replace({ pathname: '/feedback', params });
   }, [router, stopAndCleanup, data, behaviorLogs, saveAllSelectedVocabs]);
 
-  const goBackToHistory = useCallback(async () => {
+  const exitWithoutFeedback = async () => {
     await stopAndCleanup();
-    await saveAllSelectedVocabs();
-    router.replace('/(main)/history');
-  }, [router, stopAndCleanup, saveAllSelectedVocabs]);
-
-  const handleExitWithoutFeedback = async () => {
-    await stopAndCleanup();
-    await saveAllSelectedVocabs();
-    router.replace('/');
+    saveAllSelectedVocabs();
+    isFromHistory ? router.replace('/(main)/history') : router.replace('/');
   };
 
   // ✅ 마운트 시 자동 재생
@@ -119,7 +113,7 @@ export default function AudioPlayer() {
       try {
         await TrackPlayer.play();
         if (mounted) setIsPlaying(true);
-      } catch { }
+      } catch {}
     })();
     return () => {
       mounted = false;
@@ -136,24 +130,18 @@ export default function AudioPlayer() {
     if (!duration || duration <= 0) return;
 
     // 끝으로부터 epsilon(여유) 안으로 들어오면 완료 처리
-    const EPSILON = 0.1; // 초 단위 여유 (원하는 값으로 조절)
+    const EPSILON = 0.3; // 초 단위 여유 (원하는 값으로 조절)
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
         if (isFromHistory) {
-          await goBackToHistory();
+          router.replace('/(main)/history');
         } else {
-          await endSessionWithFeedback();
+          await exitWithFeedback();
         }
       })();
     }
-  }, [
-    position,
-    duration,
-    endSessionWithFeedback,
-    goBackToHistory,
-    isFromHistory,
-  ]);
+  }, [position, duration, exitWithFeedback, isFromHistory]);
 
   // 트랙/화면 재진입 시 한 번 더 테스트해야 한다면 필요에 따라 리셋
   useEffect(() => {
@@ -169,7 +157,7 @@ export default function AudioPlayer() {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (!data) return false;
       if (isFromHistory) {
-        goBackToHistory();
+        exitWithoutFeedback();
         return true;
       }
       if (isModalVisible) {
@@ -180,7 +168,7 @@ export default function AudioPlayer() {
       return true;
     });
     return () => sub.remove();
-  }, [data, isModalVisible, isFromHistory, goBackToHistory]);
+  }, [data, isModalVisible, isFromHistory]);
 
   if (!data) {
     return (
@@ -205,12 +193,10 @@ export default function AudioPlayer() {
       <Script
         generatedContentId={data.generated_content_id}
         scripts={data.sentences}
-        onVocabLookup={
-          isFromHistory ? () => { } : () => incrementLog('vocabLookupCount')
-        }
-        onRewind={isFromHistory ? () => { } : () => incrementLog('rewindCount')}
+        onVocabLookup={() => incrementLog('vocabLookupCount')}
+        onRewind={() => incrementLog('rewindCount')}
         selectedVocabs={selectedVocabs}
-        onToggleVocab={isFromHistory ? () => { } : toggleVocab}
+        onToggleVocab={toggleVocab}
       />
 
       {/* 슬라이더 */}
@@ -221,7 +207,7 @@ export default function AudioPlayer() {
         isPlaying={isPlaying}
         onTogglePlay={togglePlayback}
         onFinish={
-          isFromHistory ? goBackToHistory : () => setIsModalVisible(true)
+          isFromHistory ? exitWithoutFeedback : () => setIsModalVisible(true)
         }
         finishButtonText={isFromHistory ? '복습 끝내기' : '학습 끝내기'}
       />
@@ -268,7 +254,7 @@ export default function AudioPlayer() {
                 </Pressable>
 
                 <Pressable
-                  onPress={handleExitWithoutFeedback}
+                  onPress={exitWithoutFeedback}
                   className="rounded-full bg-red-500 px-4 py-2 active:opacity-90"
                 >
                   <Text className="font-semibold text-white">
