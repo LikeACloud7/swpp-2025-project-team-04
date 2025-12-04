@@ -41,6 +41,10 @@ export default function AudioPlayer() {
   const [isExiting, setIsExiting] = useState(false); // ✅ 저장/종료 진행 상태
 
   const { behaviorLogs, incrementLog } = useBehaviorLogs();
+  const behaviorLogsRef = useRef(behaviorLogs);
+  useEffect(() => {
+    behaviorLogsRef.current = behaviorLogs;
+  }, [behaviorLogs]);
 
   const togglePlayback = async () => {
     if (isPlaying) {
@@ -56,6 +60,15 @@ export default function AudioPlayer() {
   // 단어장 관련 로직
   const addVocabMutation = useAddVocab();
   const [selectedVocabs, setSelectedVocabs] = useState<PendingVocab[]>([]);
+  const selectedVocabsRef = useRef<PendingVocab[]>([]);
+  useEffect(() => {
+    selectedVocabsRef.current = selectedVocabs;
+  }, [selectedVocabs]);
+
+  const generatedIdRef = useRef<number | null>(null);
+  useEffect(() => {
+    generatedIdRef.current = data?.generated_content_id ?? null;
+  }, [data?.generated_content_id]);
 
   const toggleVocab = (sentenceIndex: number, word: string) => {
     setSelectedVocabs((prev) => {
@@ -71,17 +84,19 @@ export default function AudioPlayer() {
   };
 
   const saveAllSelectedVocabs = useCallback(async () => {
-    if (!data || !selectedVocabs.length) return;
+    const generatedId = generatedIdRef.current;
+    const vocabsToSave = selectedVocabsRef.current;
+    if (!generatedId || !vocabsToSave.length) return;
     await Promise.all(
-      selectedVocabs.map((vocab) =>
+      vocabsToSave.map((vocab) =>
         addVocabMutation.mutateAsync({
-          generatedContentId: data.generated_content_id,
+          generatedContentId: generatedId,
           pendingVocab: vocab,
         }),
       ),
     );
-    incrementLog('vocabSaveCount', selectedVocabs.length);
-  }, [addVocabMutation, data, incrementLog, selectedVocabs]);
+    incrementLog('vocabSaveCount', vocabsToSave.length);
+  }, [addVocabMutation, incrementLog]);
 
   const stopAndCleanup = useCallback(async () => {
     try {
@@ -98,12 +113,15 @@ export default function AudioPlayer() {
       await stopAndCleanup();
       await saveAllSelectedVocabs(); // 서버 요청 대기
 
+      const logs = behaviorLogsRef.current;
+      const generatedId = generatedIdRef.current;
+
       const params = {
-        generated_content_id: data?.generated_content_id?.toString() ?? '0',
-        pause_cnt: behaviorLogs.pauseCount.toString(),
-        rewind_cnt: behaviorLogs.rewindCount.toString(),
-        vocab_lookup_cnt: behaviorLogs.vocabLookupCount.toString(),
-        vocab_save_cnt: behaviorLogs.vocabSaveCount.toString(),
+        generated_content_id: generatedId?.toString() ?? '0',
+        pause_cnt: logs.pauseCount.toString(),
+        rewind_cnt: logs.rewindCount.toString(),
+        vocab_lookup_cnt: logs.vocabLookupCount.toString(),
+        vocab_save_cnt: logs.vocabSaveCount.toString(),
       };
 
       router.replace({ pathname: '/feedback', params });
@@ -112,7 +130,7 @@ export default function AudioPlayer() {
       console.error(e);
       setIsExiting(false);
     }
-  }, [router, stopAndCleanup, data, behaviorLogs, saveAllSelectedVocabs]);
+  }, [router, stopAndCleanup, saveAllSelectedVocabs]);
 
   // 2. [학습 종료] -> 저장 후 이동
   const exitWithoutFeedback = useCallback(async () => {
@@ -159,7 +177,7 @@ export default function AudioPlayer() {
     if (didFinishRef.current) return;
     if (!duration || duration <= 0) return;
 
-    const EPSILON = 0.5;
+    const EPSILON = 0.3;
     if (position >= duration - EPSILON) {
       didFinishRef.current = true;
       (async () => {
@@ -270,7 +288,7 @@ export default function AudioPlayer() {
                 </Text>
               </View>
               <Text className="text-[15px] leading-6 text-slate-600">
-                지금 나가면 학습 기록이 저장되지 않습니다.{'\n'}그래도
+                지금 나가면 레벨이 증가하지 않습니다.{'\n'}그래도
                 종료하시겠어요?
               </Text>
               <View className="mt-8 flex-row justify-end gap-3">
