@@ -7,8 +7,6 @@ import {
   ScrollView,
   Text,
   View,
-  Platform,
-  Alert,
   ToastAndroid,
 } from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
@@ -235,17 +233,7 @@ export default function HomeScreen() {
             });
             qc.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
-            if (Platform.OS === 'android') {
-              ToastAndroid.show(
-                '오디오가 준비됐어요. 재생 버튼을 눌러 시작하세요.',
-                ToastAndroid.LONG,
-              );
-            } else {
-              Alert.alert(
-                '오디오가 준비됐어요',
-                '오디오 재생 버튼을 눌러 시작하세요.',
-              );
-            }
+            ToastAndroid.show('오디오가 준비됐어요.', ToastAndroid.LONG);
           } catch (e) {
             4;
             console.error('TrackPlayer 처리 중 오류:', e);
@@ -278,92 +266,94 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
       >
-      {/* 인사말 */}
+        {/* 인사말 */}
 
-      <View className="px-5 pt-6 pb-2">
-        <Text className="text-3xl font-black leading-tight text-slate-900">
-          {/* 한 줄 안에 배치 */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'baseline',
-              flexWrap: 'wrap',
-            }}
-          >
-            <MaskedView
-              maskElement={
-                <Text className="text-3xl font-black leading-tight">
-                  {displayName}
-                </Text>
-              }
+        <View className="px-5 pt-6 pb-2">
+          <Text className="text-3xl font-black leading-tight text-slate-900">
+            {/* 한 줄 안에 배치 */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                flexWrap: 'wrap',
+              }}
             >
-              <LinearGradient
-                colors={['#38BDF8', '#0EA5E9', '#0284C7'] as const}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <MaskedView
+                maskElement={
+                  <Text className="text-3xl font-black leading-tight">
+                    {displayName}
+                  </Text>
+                }
               >
-                <Text className="text-3xl font-black leading-tight opacity-0">
-                  {displayName}
-                </Text>
-              </LinearGradient>
-            </MaskedView>
-            <Text className="text-3xl font-black leading-tight text-slate-900">
-              님,
-            </Text>
-          </View>
-          {'\n'}
-          바로 학습을 시작해볼까요?
-        </Text>
+                <LinearGradient
+                  colors={['#38BDF8', '#0EA5E9', '#0284C7'] as const}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text className="text-3xl font-black leading-tight opacity-0">
+                    {displayName}
+                  </Text>
+                </LinearGradient>
+              </MaskedView>
+              <Text className="text-3xl font-black leading-tight text-slate-900">
+                님,
+              </Text>
+            </View>
+            {'\n'}
+            바로 학습을 시작해볼까요?
+          </Text>
 
-        <Text className="my-3 text-[15px] leading-6 text-slate-600">
-          아래에서 듣고 싶은{' '}
-          <Text className="font-semibold text-slate-800">주제</Text>와{' '}
-          <Text className="font-semibold text-slate-800">스타일</Text>을 고르면
-          맞춤 오디오를 만들어드릴게요.
-        </Text>
-      </View>
+          <Text className="my-3 text-[15px] leading-6 text-slate-600">
+            아래에서 듣고 싶은{' '}
+            <Text className="font-semibold text-slate-800">주제</Text>와{' '}
+            <Text className="font-semibold text-slate-800">스타일</Text>을
+            고르면 맞춤 오디오를 만들어드릴게요.
+          </Text>
+        </View>
 
-      {/* 주제 & 스타일 선택 칩 카드 */}
-      <View className="mb-5 rounded-3xl border border-slate-100 bg-white shadow-sm">
-        {/* 주제 */}
-        <View className="p-4 pb-2">
+        {/* 주제 & 스타일 선택 칩 카드 */}
+        <View className="mb-5 rounded-3xl border border-slate-100 bg-white shadow-sm">
+          {/* 주제 */}
+          <View className="p-4 pb-2">
             <ChipSelectorGroup
               title="주제"
               chips={displayedThemes.map(toThemeDisplay)}
               value={selectedTheme ? toThemeDisplay(selectedTheme) : null}
               onSelectionChange={handleThemeChange}
+              disabled={!!lastGeneratedId}
             />
           </View>
 
-        {/* 구분선 */}
-        <View className="h-[1px] bg-sky-100 mb-5" />
+          {/* 구분선 */}
+          <View className="h-[1px] bg-sky-100 mb-5" />
 
-        {/* 스타일 */}
-        <View className="p-4 pt-2">
+          {/* 스타일 */}
+          <View className="p-4 pt-2">
             <ChipSelectorGroup
               title="스타일"
               chips={displayedStyles.map(toStyleDisplay)}
               value={selectedStyle ? toStyleDisplay(selectedStyle) : null}
               onSelectionChange={handleStyleChange}
+              disabled={!!lastGeneratedId}
             />
           </View>
-      </View>
+        </View>
 
-      {/* 하단 안내 문구 */}
-      {/* 하단 안내 + 버튼 카드 */}
-      <View className="rounded-3xl bg-white border border-sky-100 shadow-md shadow-sky-200/40 px-6 py-5">
-        {/* 섹션 타이틀 */}
-        <Text className="text-sm font-semibold text-sky-600 mb-2">
-          오늘의 선택
-        </Text>
+        {/* 하단 안내 문구 */}
+        {/* 하단 안내 + 버튼 카드 */}
+        <View className="rounded-3xl bg-white border border-sky-100 shadow-md shadow-sky-200/40 px-6 py-5">
+          {/* 섹션 타이틀 */}
+          <Text className="text-sm font-semibold text-sky-600 mb-2">
+            오늘의 선택
+          </Text>
 
-        {/* 안내 문구 */}
-        <View className="mb-6">{focusMessage}</View>
+          {/* 안내 문구 */}
+          <View className="mb-6">{focusMessage}</View>
 
-        {/* 구분선 */}
-        <View className="h-[1px] bg-sky-100 mb-5" />
+          {/* 구분선 */}
+          <View className="h-[1px] bg-sky-100 mb-5" />
 
-        {/* 오디오 생성/재생 단일 버튼 */}
+          {/* 오디오 생성/재생 단일 버튼 */}
         <GradientButton
           title={lastGeneratedId ? '오디오 재생' : '나만의 오디오 만들기'}
           loadingMessage="생성 중..."
@@ -378,10 +368,10 @@ export default function HomeScreen() {
               router.replace(`/audioPlayer/${lastGeneratedId}`);
             } else {
               handleGenerateAudio();
-            }
-          }}
-        />
-      </View>
+              }
+            }}
+          />
+        </View>
       </ScrollView>
     </View>
   );
