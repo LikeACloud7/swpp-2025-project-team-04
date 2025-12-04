@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { LevelTestResponse } from '@/api/initialSurvey';
@@ -27,8 +27,12 @@ export default function ResultStep({ results, onNext }: ResultStepProps) {
     const averageLevel = results.overall.score;
 
     return (
-        <View className="flex-1 pb-4 pt-12">
-            <View className="flex-1 justify-center">
+        <View className="flex-1 pb-4 pt-20">
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+                showsVerticalScrollIndicator={false}
+            >
                 <View className="mb-4">
                     <Text className="text-[32px] font-black text-slate-900 mb-2 text-center leading-[40px] tracking-tight">
                         레벨 테스트 결과
@@ -83,7 +87,7 @@ export default function ResultStep({ results, onNext }: ResultStepProps) {
                         color={LEVEL_COLORS.auditory}
                     />
                 </View>
-            </View>
+            </ScrollView>
 
             <Pressable
                 onPress={onNext}
