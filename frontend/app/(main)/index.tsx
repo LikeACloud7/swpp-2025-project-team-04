@@ -2,7 +2,15 @@ import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { STYLE_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  View,
+  Platform,
+  Alert,
+  ToastAndroid,
+} from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/queries/useUserQueries';
@@ -21,6 +29,7 @@ export default function HomeScreen() {
   useScrollToTop(scrollRef);
 
   const { data: user, isLoading: isUserLoading } = useUser();
+  const [lastGeneratedId, setLastGeneratedId] = useState<number | null>(null);
 
   // --- 타입 & 유틸
   type ThemeKey = keyof typeof THEME_OPTIONS;
@@ -157,6 +166,40 @@ export default function HomeScreen() {
     }, []),
   );
 
+  // 테마/스타일 변경 시 이전 생성 오디오 상태 리셋
+  const handleThemeChange = (value: string | null) => {
+    setLastGeneratedId(null);
+    setSelectedTheme(value ? (themeDisplayToKey[value] ?? null) : null);
+  };
+
+  const handleStyleChange = (value: string | null) => {
+    setLastGeneratedId(null);
+    setSelectedStyle(value ? (StyleDisplayToKey[value] ?? null) : null);
+  };
+
+  // 화면 복귀 시 TrackPlayer에 남아있는 트랙 ID를 복원하여 재생 버튼 유지
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          const activeTrack = await TrackPlayer.getActiveTrack();
+          if (!cancelled && activeTrack?.id) {
+            const parsed = Number(activeTrack.id);
+            if (Number.isFinite(parsed)) {
+              setLastGeneratedId(parsed);
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+
   // 오디오 생성 핸들러
   const handleGenerateAudio = () => {
     if (!selectedTheme || !selectedStyle) {
@@ -180,6 +223,7 @@ export default function HomeScreen() {
 
             // 세션 ID 생성 후 캐시에 원본 응답 저장
             qc.setQueryData(['audio', String(data.generated_content_id)], data);
+            setLastGeneratedId(data.generated_content_id);
 
             // navigation과 동시에 백그라운드에서 실행 (await 불필요)
             qc.prefetchQuery({
@@ -191,8 +235,17 @@ export default function HomeScreen() {
             });
             qc.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
-            // 플레이어 화면으로 라우팅 (id만 전달)
-            router.replace(`/audioPlayer/${data.generated_content_id}`);
+            if (Platform.OS === 'android') {
+              ToastAndroid.show(
+                '오디오가 준비됐어요. 재생 버튼을 눌러 시작하세요.',
+                ToastAndroid.LONG,
+              );
+            } else {
+              Alert.alert(
+                '오디오가 준비됐어요',
+                '오디오 재생 버튼을 눌러 시작하세요.',
+              );
+            }
           } catch (e) {
             4;
             console.error('TrackPlayer 처리 중 오류:', e);
@@ -218,11 +271,13 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      className="flex-1 px-5 bg-[#EBF4FB]"
-      showsVerticalScrollIndicator={false}
-    >
+    <View className="flex-1 bg-[#EBF4FB]">
+      <ScrollView
+        ref={scrollRef}
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
       {/* 인사말 */}
 
       <View className="px-5 pt-6 pb-2">
@@ -272,34 +327,26 @@ export default function HomeScreen() {
       <View className="mb-5 rounded-3xl border border-slate-100 bg-white shadow-sm">
         {/* 주제 */}
         <View className="p-4 pb-2">
-          <ChipSelectorGroup
-            title="주제"
-            chips={displayedThemes.map(toThemeDisplay)}
-            value={selectedTheme ? toThemeDisplay(selectedTheme) : null}
-            onSelectionChange={(value) =>
-              setSelectedTheme(
-                value ? (themeDisplayToKey[value] ?? null) : null,
-              )
-            }
-          />
-        </View>
+            <ChipSelectorGroup
+              title="주제"
+              chips={displayedThemes.map(toThemeDisplay)}
+              value={selectedTheme ? toThemeDisplay(selectedTheme) : null}
+              onSelectionChange={handleThemeChange}
+            />
+          </View>
 
         {/* 구분선 */}
         <View className="h-[1px] bg-sky-100 mb-5" />
 
         {/* 스타일 */}
         <View className="p-4 pt-2">
-          <ChipSelectorGroup
-            title="스타일"
-            chips={displayedStyles.map(toStyleDisplay)}
-            value={selectedStyle ? toStyleDisplay(selectedStyle) : null}
-            onSelectionChange={(value) =>
-              setSelectedStyle(
-                value ? (StyleDisplayToKey[value] ?? null) : null,
-              )
-            }
-          />
-        </View>
+            <ChipSelectorGroup
+              title="스타일"
+              chips={displayedStyles.map(toStyleDisplay)}
+              value={selectedStyle ? toStyleDisplay(selectedStyle) : null}
+              onSelectionChange={handleStyleChange}
+            />
+          </View>
       </View>
 
       {/* 하단 안내 문구 */}
@@ -316,16 +363,26 @@ export default function HomeScreen() {
         {/* 구분선 */}
         <View className="h-[1px] bg-sky-100 mb-5" />
 
-        {/* 오디오 생성 버튼 */}
+        {/* 오디오 생성/재생 단일 버튼 */}
         <GradientButton
-          title="나만의 오디오 만들기"
+          title={lastGeneratedId ? '오디오 재생' : '나만의 오디오 만들기'}
           loadingMessage="생성 중..."
-          icon="musical-notes"
+          icon={lastGeneratedId ? 'play' : 'musical-notes'}
           loading={isAudioLoading}
-          disabled={!selectedTheme || !selectedStyle}
-          onPress={handleGenerateAudio}
+          disabled={
+            isAudioLoading ||
+            (!lastGeneratedId && (!selectedTheme || !selectedStyle))
+          }
+          onPress={() => {
+            if (lastGeneratedId) {
+              router.replace(`/audioPlayer/${lastGeneratedId}`);
+            } else {
+              handleGenerateAudio();
+            }
+          }}
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
