@@ -1,5 +1,5 @@
 import { changePassword, deleteAccount, login, signup } from '@/api/auth';
-import { User } from '@/api/user';
+import { getMe, User } from '@/api/user';
 import { USER_QUERY_KEY } from '@/constants/queryKeys';
 import {
   deleteRefreshToken,
@@ -34,13 +34,18 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
-      // data: { user, accessToken, refreshToken }
-      queryClient.setQueryData([USER_QUERY_KEY], data.user);
+    onSuccess: async (data) => {
       setAccessToken(data.access_token);
       saveRefreshToken(data.refresh_token);
-      console.log('로그인 성공 및 모든 토큰/정보 저장 완료');
-      router.replace('/');
+
+      const user = await getMe();
+      queryClient.setQueryData([USER_QUERY_KEY], user);
+
+      if (user?.initial_level_completed) {
+        router.replace('/');
+      } else {
+        router.replace('/initial-survey');
+      }
     },
     onError: (error) => console.error('로그인 실패:', error),
   });
