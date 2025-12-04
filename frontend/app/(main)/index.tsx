@@ -2,13 +2,7 @@ import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { STYLE_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '@/hooks/queries/useUserQueries';
