@@ -1,7 +1,7 @@
 import { ChipSelectorGroup } from '@/components/home/ChipSelectorGroup';
 import { STYLE_OPTIONS, THEME_OPTIONS } from '@/constants/homeOptions';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useGenerateAudio } from '@/hooks/mutations/useAudioMutations';
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,10 +12,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { STATS_QUERY_KEY, VOCAB_QUERY_KEY } from '@/constants/queryKeys';
 import { getVocab } from '@/api/vocab';
+import { useScrollToTop } from '@react-navigation/native';
 
 export default function HomeScreen() {
   const qc = useQueryClient();
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
 
   const { data: user, isLoading: isUserLoading } = useUser();
 
@@ -216,6 +219,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       className="flex-1 px-5 bg-[#EBF4FB]"
       showsVerticalScrollIndicator={false}
     >

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,9 +11,12 @@ import {
 
 import type { Achievement } from '@/api/stats'; // Achievement 타입은 모달을 위해 계속 사용
 import { useStats } from '@/hooks/queries/useStatsQueries';
+import { useScrollToTop } from '@react-navigation/native';
 
 export default function StatsScreen() {
   const { data: stats, isLoading, error } = useStats();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
 
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null);
@@ -135,6 +138,7 @@ export default function StatsScreen() {
   return (
     <View className="flex-1 bg-[#EBF4FB]">
       <ScrollView
+        ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
