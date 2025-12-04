@@ -1,14 +1,11 @@
 import { GradientButton } from '@/components/home/GradientButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, Text, View, Alert, SafeAreaView } from 'react-native';
 import Animated, {
   FadeInUp,
   FadeInDown,
   Layout,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
 } from 'react-native-reanimated';
 import { submitFeedback } from '@/api/feedback';
 
@@ -276,24 +273,14 @@ export default function FeedbackScreen() {
             entering={FadeInDown.delay(600).springify()}
             className="pb-8"
           >
-            <View className="px-2 gap-3">
-              <GradientButton
-                title="제출하기"
-                icon="send"
-                loading={submitting}
-                disabled={!canSubmit}
-                onPress={handleSubmit}
-              />
-              <Pressable
-                onPress={() => router.replace('/')}
-                className="py-4 rounded-xl bg-gray-200"
-                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-              >
-                <Text className="text-gray-700 text-center text-base font-semibold">
-                  피드백 건너뛰기
-                </Text>
-              </Pressable>
-            </View>
+            <GradientButton
+              title="제출하기"
+              loadingMessage="제출 중..."
+              icon="send"
+              loading={submitting}
+              disabled={!canSubmit}
+              onPress={handleSubmit}
+            />
           </Animated.View>
         </View>
       </SafeAreaView>
