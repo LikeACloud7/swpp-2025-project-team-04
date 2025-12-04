@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -41,6 +42,7 @@ class LevelEvaluationResult:
     average_understanding: int
     sample_count: int
     rationale: str
+    llm_success: bool
     
 # 프롬프트 캐싱
 _PROMPT_STORE = PromptStore(Path(__file__).resolve().parent / "prompts")
@@ -105,6 +107,24 @@ class LevelManagementService:
             scripts=scripts,
             current_profile=self._build_user_profile(user, context="initial_level_assessment"),
         )
+
+        if not evaluation.llm_success:
+            db.refresh(user)
+            current_level = self._coerce_user_level(user, fallback=evaluation.level)
+            level_score = self._clamp_score(getattr(user, "level_score", None), evaluation.level_score)
+            llm_confidence = self._clamp_score(getattr(user, "llm_confidence", None), evaluation.llm_confidence)
+            updated_at = getattr(user, "level_updated_at", None) or datetime.now(timezone.utc)
+
+            return schemas.LevelTestResponse(
+                level=current_level,
+                level_description=schemas.CEFR_LEVEL_DESCRIPTIONS[current_level],
+                scores=schemas.LevelScores(
+                    level_score=level_score,
+                    llm_confidence=llm_confidence,
+                ),
+                rationale=evaluation.rationale,
+                updated_at=updated_at,
+            )
 
         user_record = user_crud.update_user_level(
             db,
@@ -178,6 +198,24 @@ class LevelManagementService:
             current_profile=self._build_user_profile(user, context="session_feedback"),
             default_target_level=default_target_level,
         )
+
+        if not evaluation.llm_success:
+            db.refresh(user)
+            current_level = self._coerce_user_level(user, fallback=evaluation.level)
+            level_score = self._clamp_score(getattr(user, "level_score", None), evaluation.level_score)
+            llm_confidence = self._clamp_score(getattr(user, "llm_confidence", None), evaluation.llm_confidence)
+            updated_at = getattr(user, "level_updated_at", None) or datetime.now(timezone.utc)
+
+            return schemas.LevelTestResponse(
+                level=current_level,
+                level_description=schemas.CEFR_LEVEL_DESCRIPTIONS[current_level],
+                scores=schemas.LevelScores(
+                    level_score=level_score,
+                    llm_confidence=llm_confidence,
+                ),
+                rationale=evaluation.rationale,
+                updated_at=updated_at,
+            )
 
         user_record = user_crud.update_user_level(
             db,
@@ -325,6 +363,7 @@ class LevelManagementService:
                 average_understanding=average_understanding,
                 sample_count=sample_count,
                 rationale="LLM 평가가 실패하여 자기 보고 이해도 기반의 휴리스틱 결과를 사용했습니다.",
+                llm_success=False,
             )
 
         assigned_level = self._extract_level(llm_payload, fallback_level)
@@ -345,6 +384,7 @@ class LevelManagementService:
             average_understanding=average_understanding,
             sample_count=sample_count,
             rationale=rationale,
+            llm_success=True,
         )
 
     def _resolve_llm_client(self) -> OpenAILLMClient:

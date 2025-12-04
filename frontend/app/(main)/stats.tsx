@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -9,11 +9,14 @@ import {
   View,
 } from 'react-native';
 
-import type { Achievement } from '@/api/stats';
+import type { Achievement } from '@/api/stats'; // Achievement 타입은 모달을 위해 계속 사용
 import { useStats } from '@/hooks/queries/useStatsQueries';
+import { useScrollToTop } from '@react-navigation/native';
 
 export default function StatsScreen() {
   const { data: stats, isLoading, error } = useStats();
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTop(scrollRef);
 
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null);
@@ -21,9 +24,9 @@ export default function StatsScreen() {
 
   const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
 
-  const maxMinutes = stats
-    ? Math.max(...stats.streak.daily_minutes.map((d) => d.minutes), 1)
-    : 1;
+  // --- [수정 1] ---
+  // API 로딩이 끝나야 stats가 존재하므로, 로딩/에러 처리 '이후'로 이동함.
+  // -----------------
 
   if (isLoading) {
     return (
@@ -46,215 +49,300 @@ export default function StatsScreen() {
     );
   }
 
-  const weeklyActivity = weekDays.map((_, index) => {
-    const dayData = stats.streak.daily_minutes[index];
-    return dayData ? dayData.minutes : 0;
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (6 - i));
+    return date;
   });
 
-  //Mock
-  const mockAchievements = [
-    {
-      code: 'first_step',
-      name: '첫 걸음',
-      description: '첫 번째 레슨 완료',
-      category: 'beginner',
-      achieved: true,
-      achieved_at: '2025-10-28T10:00:00Z',
-    },
-    {
-      code: 'week_warrior',
-      name: '일주일 전사',
-      description: '7일 연속 학습',
-      category: 'streak',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'early_bird',
-      name: '아침형 인간',
-      description: '오전 9시 이전 학습 5회',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'night_owl',
-      name: '올빼미',
-      description: '밤 10시 이후 학습 10회',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'hour_master',
-      name: '한 시간의 마법',
-      description: '총 학습 시간 1시간 달성',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'ten_hour_hero',
-      name: '10시간 영웅',
-      description: '총 학습 시간 10시간 달성',
-      category: 'time',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'month_master',
-      name: '꾸준함',
-      description: '30일 연속 학습',
-      category: 'streak',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'level_up',
-      name: '레벨업',
-      description: '최초 레벨에서 레벨업',
-      category: 'level',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: '100_hours',
-      name: '100 시간',
-      description: '총 학습시간 6000분 달성',
-      category: 'mastery',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'vocab_rookie',
-      name: '단어 초보',
-      description: '단어 100개 학습',
-      category: 'vocabulary',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'vocab_expert',
-      name: '단어 전문가',
-      description: '단어 500개 학습',
-      category: 'vocabulary',
-      achieved: false,
-      achieved_at: null,
-    },
-    {
-      code: 'speed_demon',
-      name: '스피드 러너',
-      description: '하루에 5개 레슨 완료',
-      category: 'special',
-      achieved: false,
-      achieved_at: null,
-    },
-  ];
+  const dailyMinutesMap = new Map(
+    stats.streak.daily_minutes.map((day) => [day.date, day.minutes]),
+  );
 
-  const achievements = mockAchievements;
+  const weeklyActivity = last7Days.map((date) => {
+    const dateString = formatLocalDate(date);
+    return dailyMinutesMap.get(dateString) || 0;
+  });
+
+  const actualWeeklyTotal = weeklyActivity.reduce(
+    (sum, minutes) => sum + minutes,
+    0,
+  );
+  const maxMinutes = Math.max(...weeklyActivity, 1);
+
+  // Helper function to calculate progress within current level
+  const calculateLevelProgress = (score: number, cefr_level: string) => {
+    const levelRanges = {
+      A1: { min: 0, max: 25 },
+      A2: { min: 25, max: 50 },
+      B1: { min: 50, max: 100 },
+      B2: { min: 100, max: 150 },
+      C1: { min: 150, max: 200 },
+      C2: { min: 200, max: 300 },
+    };
+
+    const range = levelRanges[cefr_level as keyof typeof levelRanges];
+    if (!range) return { progress: 0, current: 0, total: 0 };
+
+    const clampedScore = Math.min(Math.max(score, range.min), range.max);
+    const current = clampedScore - range.min;
+    const total = range.max - range.min;
+    const progress = Math.min(100, (current / total) * 100);
+
+    return { progress, current: Math.round(current), total };
+  };
+
+  const getNextLevel = (currentLevel: string): string | null => {
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const currentIndex = levels.indexOf(currentLevel);
+    if (currentIndex === -1 || currentIndex === levels.length - 1) return null;
+    return levels[currentIndex + 1];
+  };
+
+  const achievements = stats.achievements;
   const achievedCount = achievements.filter((a) => a.achieved).length;
   const totalAchievements = achievements.length;
 
-  const getAchievementEmoji = (category: string) => {
-    const emojiMap: Record<string, string> = {
-      beginner: '🌱',
-      streak: '🔥',
-      time: '⏰',
-      level: '🏆',
-      mastery: '⭐',
-      vocabulary: '📚',
-      special: '✨',
+  const getBadgeIcon = (code: string) => {
+    const iconMap: Record<string, string> = {
+      FIRST_SESSION: '🌱',
+
+      STREAK_3: '🔥',
+      STREAK_7: '⚡',
+      STREAK_30: '💎',
+
+      TOTAL_60: '⏱️',
+      TOTAL_300: '⏰',
+      TOTAL_600: '⭐',
+      TOTAL_1200: '⌛',
+      TOTAL_3000: '👑',
     };
-    return emojiMap[category] || '🏆';
+    return iconMap[code] || '🏆';
   };
 
-  const handleAchievementPress = (
-    achievement: (typeof mockAchievements)[0],
-  ) => {
-    setSelectedAchievement(achievement as Achievement);
+  const handleAchievementPress = (achievement: Achievement) => {
+    setSelectedAchievement(achievement);
     setModalVisible(true);
   };
 
   return (
     <View className="flex-1 bg-[#EBF4FB]">
       <ScrollView
+        ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="bg-primary px-6 pb-8 pt-16">
-          <Text className="mb-6 text-3xl font-black text-white">학습 통계</Text>
-
-          <View className="mb-4 rounded-3xl bg-white p-6 shadow-lg">
-            <View className="mb-3 flex-row items-center justify-between">
-              <Text className="text-base font-bold text-neutral-700">
-                현재 레벨
+        <View className="bg-[#EBF4FB] px-6 pb-6 pt-12">
+          <View className="mb-6 items-center">
+            <View className="h-32 w-32 items-center justify-center rounded-3xl bg-primary shadow-lg">
+              <Text className="text-5xl font-black text-white">
+                {stats.current_level.overall_cefr_level.cefr_level}
               </Text>
-              <Ionicons name="trophy" size={24} color="#F59E0B" />
             </View>
-            <View className="items-center py-4">
-              <View className="mb-3 h-24 w-24 items-center justify-center rounded-full bg-primary shadow-lg">
-                <Text className="text-4xl font-black text-white">
-                  {stats.current_level.level}
+          </View>
+
+          <View className="mb-6 rounded-2xl bg-white p-4 shadow-sm">
+            <View className="mb-4">
+              <View className="mb-2 flex-row items-center justify-between">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    어휘력
+                  </Text>
+                  <View className="rounded-full bg-blue-500 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.lexical.cefr_level}
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-base font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.lexical.score,
+                      stats.current_level.lexical.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.lexical.score,
+                      stats.current_level.lexical.cefr_level,
+                    ).total
+                  }
                 </Text>
               </View>
-              <Text className="mb-3 text-center text-sm font-semibold text-neutral-600">
-                {stats.current_level.level_description}
-              </Text>
-              <View className="mt-2 w-full rounded-xl bg-neutral-50 p-3">
-                <View className="mb-2 flex-row items-center justify-between">
-                  <Text className="text-xs font-semibold text-neutral-600">
-                    레벨 점수
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.lexical.score, stats.current_level.lexical.cefr_level).progress}%`,
+                    backgroundColor: '#3b82f6',
+                  }}
+                />
+              </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.lexical.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.lexical.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.lexical.cefr_level)}
                   </Text>
-                  <Text className="text-sm font-bold text-primary">
-                    {stats.current_level.level_score}/100
+                )}
+              </View>
+            </View>
+
+            <View className="mb-4">
+              <View className="mb-2 flex-row items-center justify-between">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    문법
                   </Text>
+                  <View className="rounded-full bg-purple-600 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.syntactic.cefr_level}
+                    </Text>
+                  </View>
                 </View>
-                <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
-                  <View
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${stats.current_level.level_score}%` }}
-                  />
+                <Text className="text-base font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.syntactic.score,
+                      stats.current_level.syntactic.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.syntactic.score,
+                      stats.current_level.syntactic.cefr_level,
+                    ).total
+                  }
+                </Text>
+              </View>
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.syntactic.score, stats.current_level.syntactic.cefr_level).progress}%`,
+                    backgroundColor: '#7c3aed',
+                  }}
+                />
+              </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.syntactic.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.syntactic.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.syntactic.cefr_level)}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <View>
+              <View className="mb-2 flex-row items-center justify-between">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-sm font-semibold text-neutral-600">
+                    청취력
+                  </Text>
+                  <View className="rounded-full bg-green-600 px-2.5 py-1">
+                    <Text className="text-sm font-black text-white">
+                      {stats.current_level.auditory.cefr_level}
+                    </Text>
+                  </View>
                 </View>
+                <Text className="text-base font-bold text-primary">
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.auditory.score,
+                      stats.current_level.auditory.cefr_level,
+                    ).current
+                  }
+                  /
+                  {
+                    calculateLevelProgress(
+                      stats.current_level.auditory.score,
+                      stats.current_level.auditory.cefr_level,
+                    ).total
+                  }
+                </Text>
+              </View>
+              <View className="h-2 overflow-hidden rounded-full bg-neutral-200">
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${calculateLevelProgress(stats.current_level.auditory.score, stats.current_level.auditory.cefr_level).progress}%`,
+                    backgroundColor: '#10b981',
+                  }}
+                />
+              </View>
+              <View className="mt-1 flex-row justify-between">
+                <Text className="text-xs font-semibold text-neutral-500">
+                  {stats.current_level.auditory.cefr_level}
+                </Text>
+                {getNextLevel(stats.current_level.auditory.cefr_level) && (
+                  <Text className="text-xs font-semibold text-neutral-400">
+                    {getNextLevel(stats.current_level.auditory.cefr_level)}
+                  </Text>
+                )}
               </View>
             </View>
           </View>
 
-          <View className="flex-row gap-3">
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-lg">
-              <View className="mb-2 flex-row items-center gap-2">
-                <Ionicons name="flame" size={20} color="#EF4444" />
-                <Text className="text-xs font-bold text-neutral-600">
-                  연속 학습
+          <View className="flex-row justify-between gap-2">
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="time-outline" size={16} color="#8B5CF6" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  총 학습시간
                 </Text>
               </View>
-              <Text className="text-3xl font-black text-neutral-900">
-                {stats.streak.consecutive_days}
-              </Text>
-              <Text className="text-xs font-semibold text-neutral-400">
-                일 연속
+              <Text className="text-2xl font-black text-neutral-900">
+                {stats.total_time_spent_minutes}m
               </Text>
             </View>
 
-            <View className="flex-1 rounded-2xl bg-white p-5 shadow-lg">
-              <View className="mb-2 flex-row items-center gap-2">
-                <Ionicons name="time" size={20} color="#8B5CF6" />
-                <Text className="text-xs font-bold text-neutral-600">
-                  총 학습 시간
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="flame" size={16} color="#EF4444" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  연속 학습일
                 </Text>
               </View>
-              <Text className="text-3xl font-black text-neutral-900">
-                {Math.floor(stats.total_time_spent_minutes / 60)}
+              <Text className="text-2xl font-black text-neutral-900">
+                {stats.streak.consecutive_days}d
               </Text>
-              <Text className="text-xs font-semibold text-neutral-400">
-                시간 {stats.total_time_spent_minutes % 60}분
+            </View>
+
+            <View className="flex-1 items-center rounded-2xl bg-white py-4 shadow-sm">
+              <View className="mb-2 flex-row items-center gap-1">
+                <Ionicons name="trophy-outline" size={16} color="#F59E0B" />
+                <Text className="text-xs font-semibold text-neutral-600">
+                  누적 학습일
+                </Text>
+              </View>
+              <Text className="text-2xl font-black text-neutral-900">
+                {stats.total_days}d
               </Text>
             </View>
           </View>
         </View>
 
         <View className="px-5 pt-4">
-          <View className="mb-4 rounded-3xl bg-white p-6 shadow-lg">
+          {/* ----- 주간 활동 ----- */}
+          <View className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
             <View className="mb-6 flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="bar-chart" size={24} color="#0EA5E9" />
@@ -264,22 +352,25 @@ export default function StatsScreen() {
               </View>
               <View className="rounded-full bg-primary/10 px-3 py-1">
                 <Text className="text-sm font-bold text-primary">
-                  {stats.streak.weekly_total_minutes}분
+                  {actualWeeklyTotal}분
                 </Text>
               </View>
             </View>
 
             <View
               className="flex-row items-end justify-between gap-2"
-              style={{ height: 120 }}
+              style={{ height: 140 }}
             >
               {weeklyActivity.map((minutes, index) => {
                 const barHeight =
                   maxMinutes > 0 ? (minutes / maxMinutes) * 100 : 0;
+                const dayDate = last7Days[index];
                 const isToday =
-                  (index === new Date().getDay()) === 0
-                    ? 6
-                    : new Date().getDay() - 1;
+                  formatLocalDate(dayDate) === formatLocalDate(today);
+
+                const dayOfWeek = dayDate.getDay();
+                const dayLabel = weekDays[dayOfWeek === 0 ? 6 : dayOfWeek - 1];
+                const dateString = dayDate.getDate().toString();
 
                 return (
                   <View key={index} className="flex-1 items-center">
@@ -291,7 +382,7 @@ export default function StatsScreen() {
                       )}
                       <View
                         className={`w-full rounded-t-lg ${
-                          isToday ? 'bg-primary' : 'bg-sky-200'
+                          isToday ? 'bg-primary' : 'bg-primary/60'
                         }`}
                         style={{
                           height: `${Math.max(barHeight, minutes > 0 ? 10 : 0)}%`,
@@ -304,7 +395,14 @@ export default function StatsScreen() {
                         isToday ? 'text-primary' : 'text-neutral-400'
                       }`}
                     >
-                      {weekDays[index]}
+                      {dayLabel}
+                    </Text>
+                    <Text
+                      className={`text-[10px] font-semibold ${
+                        isToday ? 'text-primary' : 'text-neutral-400'
+                      }`}
+                    >
+                      {dateString}
                     </Text>
                   </View>
                 );
@@ -312,7 +410,8 @@ export default function StatsScreen() {
             </View>
           </View>
 
-          <View className="rounded-3xl bg-white p-6 shadow-lg">
+          {/* ----- 나의 배지 ----- */}
+          <View className="rounded-3xl bg-white p-6 shadow-sm">
             <View className="mb-6 flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <Ionicons name="medal" size={24} color="#F59E0B" />
@@ -354,7 +453,7 @@ export default function StatsScreen() {
                         className="text-3xl"
                         style={{ opacity: achievement.achieved ? 1 : 0.3 }}
                       >
-                        {getAchievementEmoji(achievement.category)}
+                        {getBadgeIcon(achievement.code)}
                       </Text>
                     </View>
                     <Text
@@ -388,6 +487,7 @@ export default function StatsScreen() {
         </View>
       </ScrollView>
 
+      {/* ----- 배지 상세 모달 ----- */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -399,14 +499,14 @@ export default function StatsScreen() {
           onPress={() => setModalVisible(false)}
         >
           <Pressable
-            className="mx-6 w-4/5 rounded-3xl bg-white p-6 shadow-2xl"
+            className="mx-6 w-4/5 rounded-3xl bg-white p-6 shadow-sm"
             onPress={(e) => e.stopPropagation()}
           >
             {selectedAchievement && (
               <>
                 <View className="items-center">
                   <View
-                    className={`mb-4 h-24 w-24 items-center justify-center rounded-3xl shadow-lg ${
+                    className={`mb-4 h-24 w-24 items-center justify-center rounded-3xl shadow-sm ${
                       selectedAchievement.achieved
                         ? 'bg-amber-500'
                         : 'bg-neutral-200'
@@ -418,7 +518,7 @@ export default function StatsScreen() {
                         opacity: selectedAchievement.achieved ? 1 : 0.3,
                       }}
                     >
-                      {getAchievementEmoji(selectedAchievement.category)}
+                      {getBadgeIcon(selectedAchievement.code)}
                     </Text>
                   </View>
 

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, Any
+from sqlalchemy import func
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from .model import GeneratedContent
 
@@ -78,3 +79,53 @@ def update_generated_content_audio(
     db.commit()
     db.refresh(content)
     return content
+
+
+def get_generated_contents_by_user(
+    db: Session,
+    *,
+    user_id: int,
+    limit: int = 20,
+    offset: int = 0,
+) -> List[GeneratedContent]:
+    """
+    Fetch paginated GeneratedContent rows for a given user (newest first).
+    """
+    return (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.user_id == user_id)
+        .order_by(GeneratedContent.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+
+def count_generated_contents_by_user(
+    db: Session,
+    *,
+    user_id: int,
+) -> int:
+    """
+    Count how many audio contents a given user has generated in total.
+    """
+    return (
+        db.query(func.count(GeneratedContent.generated_content_id))
+        .filter(GeneratedContent.user_id == user_id)
+        .scalar()
+    )
+
+
+def get_generated_content_by_id(
+    db: Session,
+    *,
+    content_id: int,
+) -> Optional[GeneratedContent]:
+    """
+    Fetch a single GeneratedContent by its ID.
+    """
+    return (
+        db.query(GeneratedContent)
+        .filter(GeneratedContent.generated_content_id == content_id)
+        .first()
+    )

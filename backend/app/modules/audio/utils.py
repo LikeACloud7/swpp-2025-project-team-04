@@ -1,6 +1,9 @@
 import re
 from elevenlabs import ElevenLabs
 from ...core.config import settings
+from ...core.config import SessionLocal
+from ..stats import crud as stats_crud
+import math
 
 def get_elevenlabs_client(): # for circular dependency resolution
     return ElevenLabs(api_key=settings.elevenlabs_api_key)
@@ -69,6 +72,63 @@ def parse_tts_by_newlines(tts_response: dict):
         })
 
     return sentences
+
+
+def compute_audio_duration_seconds_from_sentences(sentences: list[dict]) -> float:
+    """Compute approximate audio duration in seconds from sentence timestamp info.
+
+    The function looks for common timestamp keys in each sentence dict in this
+    order: 'end', 'end_time', 'end_time_seconds', 'start_time', 'start'. It uses
+    the maximum value found as the audio length. Returns 0.0 if nothing found.
+    """
+    if not sentences:
+        return 0.0
+
+    candidates = []
+    keys = ("end", "end_time", "end_time_seconds", "start_time", "start")
+    for s in sentences:
+        for k in keys:
+            v = s.get(k)
+            if v is None:
+                continue
+            try:
+                fv = float(v)
+            except Exception:
+                continue
+            candidates.append(fv)
+
+    return max(candidates) if candidates else 0.0
+
+
+def insert_study_session_from_sentences(user_id: int, sentences: list[dict], activity_type: str = "audio") -> None:
+    """Compute duration from sentences and insert a StudySession record.
+
+    This helper opens its own DB session and logs failures but does not raise
+    so callers (like the audio pipeline) won't fail because of stats errors.
+    """
+    try:
+        last_sec = compute_audio_duration_seconds_from_sentences(sentences)
+        if not last_sec or last_sec <= 0:
+            return
+
+        duration_minutes = math.ceil(last_sec / 60)
+
+        db = SessionLocal()
+        try:
+            stats_crud.insert_study_session(
+                db,
+                user_id=user_id,
+                duration_minutes=duration_minutes,
+                activity_type=activity_type,
+            )
+        finally:
+            try:
+                db.close()
+            except Exception:
+                pass
+    except Exception:
+        # swallow exceptions to avoid breaking the main audio pipeline
+        return
 
 
 

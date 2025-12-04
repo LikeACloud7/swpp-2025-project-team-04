@@ -82,6 +82,7 @@ def test_summarize_level_test_with_llm_success():
     assert result.llm_confidence == 72
     assert "upper-intermediate" in result.rationale
     assert len(llm.calls) == 1
+    assert result.llm_success is True
 
 
 def test_summarize_level_test_invalid_llm_payload_uses_defaults():
@@ -110,6 +111,30 @@ def test_summarize_level_test_invalid_llm_payload_uses_defaults():
     assert result.level_score == 28  # A2 구간 중간값
     assert result.llm_confidence == 0  # clamp 결과
     assert result.rationale == "평가 근거가 제공되지 않았습니다."
+    assert result.llm_success is True
+
+
+def test_summarize_level_test_llm_failure_returns_fallback():
+    llm = FakeLLMClient(error=LLMServiceError("network down"))
+    service = LevelManagementService(llm_client=llm)
+
+    tests = [
+        schemas.LevelTestItem(script_id="script-a", understanding=70),
+        schemas.LevelTestItem(script_id="script-b", understanding=60),
+    ]
+
+    result = service._summarize_level_test(
+        tests=tests,
+        scripts=make_scripts(),
+    )
+
+    assert result.level == CEFRLevel.B2  # 평균 65 → B2
+    assert result.level_score == 65      # B2 구간 중간값
+    assert result.llm_confidence == 65   # 자기 보고 이해도 평균
+    assert result.sample_count == 2
+    assert result.llm_success is False
+    assert "LLM 평가가 실패" in result.rationale
+    assert len(llm.calls) == 1
 
 
 class DummySession:
@@ -288,6 +313,62 @@ def test_evaluate_session_feedback_updates_user_and_history(monkeypatch):
     assert '"context": "session_feedback"' in llm.calls[0]["user_prompt"]
 
 
+def test_evaluate_session_feedback_llm_failure_preserves_user_level(monkeypatch):
+    db = DummySession()
+    updated_at = datetime.now(timezone.utc)
+    user = SimpleNamespace(
+        id=8,
+        level=CEFRLevel.B2,
+        level_score=88,
+        llm_confidence=80,
+        initial_level_completed=True,
+        level_updated_at=updated_at,
+    )
+
+    llm = FakeLLMClient(error=LLMServiceError("llm boom"))
+    service = LevelManagementService(llm_client=llm)
+
+    def fake_get_generated_contents_by_ids(db_arg, ids):
+        assert db_arg is db
+        return {
+            content_id: SimpleNamespace(
+                generated_content_id=content_id,
+                script_data="transcript",
+                title=f"content-{content_id}",
+            )
+            for content_id in ids
+        }
+
+    monkeypatch.setattr(crud, "get_generated_contents_by_ids", fake_get_generated_contents_by_ids)
+    monkeypatch.setattr(
+        user_crud,
+        "update_user_level",
+        lambda *args, **kwargs: pytest.fail("update_user_level should not be called on LLM failure"),
+    )
+    monkeypatch.setattr(
+        crud,
+        "insert_level_history",
+        lambda *args, **kwargs: pytest.fail("insert_level_history should not be called on LLM failure"),
+    )
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(generated_content_id=303, understanding=70),
+            schemas.LevelTestItem(generated_content_id=404, understanding=60),
+        ]
+    )
+
+    response = service.evaluate_session_feedback(db=db, user=user, payload=payload)
+
+    assert db.commits == 0
+    assert db.refreshed == [user]
+    assert response.level == user.level
+    assert response.scores.level_score == user.level_score
+    assert response.scores.llm_confidence == user.llm_confidence
+    assert "LLM 평가가 실패" in response.rationale
+    assert len(llm.calls) == 1
+
+
 def test_evaluate_initial_level_updates_user_and_history(monkeypatch):
     db = DummySession()
     updated_at = datetime.now(timezone.utc)
@@ -376,6 +457,56 @@ def test_evaluate_initial_level_updates_user_and_history(monkeypatch):
     assert response.level == CEFRLevel.B1
     assert response.scores.level_score == 50
     assert '"context": "initial_level_assessment"' in llm.calls[0]["user_prompt"]
+
+
+def test_evaluate_initial_level_llm_failure_preserves_user_level(monkeypatch):
+    db = DummySession()
+    updated_at = datetime.now(timezone.utc)
+    user = SimpleNamespace(
+        id=13,
+        level=CEFRLevel.C1,
+        level_score=90,
+        llm_confidence=85,
+        initial_level_completed=True,
+        level_updated_at=updated_at,
+    )
+
+    llm = FakeLLMClient(error=LLMServiceError("llm failed"))
+    service = LevelManagementService(llm_client=llm)
+
+    def fake_get_scripts_by_ids(db_arg, ids):
+        assert db_arg is db
+        scripts = make_scripts()
+        return {script_id: scripts.get(script_id) for script_id in ids}
+
+    monkeypatch.setattr(crud, "get_scripts_by_ids", fake_get_scripts_by_ids)
+    monkeypatch.setattr(
+        user_crud,
+        "update_user_level",
+        lambda *args, **kwargs: pytest.fail("update_user_level should not be called on LLM failure"),
+    )
+    monkeypatch.setattr(
+        crud,
+        "insert_level_history",
+        lambda *args, **kwargs: pytest.fail("insert_level_history should not be called on LLM failure"),
+    )
+
+    payload = schemas.LevelTestRequest(
+        tests=[
+            schemas.LevelTestItem(script_id="script-a", understanding=65),
+            schemas.LevelTestItem(script_id="script-b", understanding=70),
+        ]
+    )
+
+    response = service.evaluate_initial_level(db=db, user=user, payload=payload)
+
+    assert db.commits == 0
+    assert db.refreshed == [user]
+    assert response.level == user.level
+    assert response.scores.level_score == user.level_score
+    assert response.scores.llm_confidence == user.llm_confidence
+    assert "LLM 평가가 실패" in response.rationale
+    assert len(llm.calls) == 1
 
 
 def test_evaluate_level_raises_when_script_missing(monkeypatch):
