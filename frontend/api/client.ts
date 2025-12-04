@@ -5,10 +5,17 @@ import {
   getAccessToken,
   getRefreshToken,
   setAccessToken,
+  saveRefreshToken, // [추가] 새 리프레시 토큰 저장을 위해 import
 } from '@/utils/tokenManager';
 
 export type RefreshResponse = {
   accessToken: string;
+};
+
+// [추가] 서버 응답 타입을 정의 (스네이크 케이스)
+type ServerAuthResponse = {
+  access_token: string;
+  refresh_token: string;
 };
 
 export type ApiError = Error & {
@@ -17,7 +24,7 @@ export type ApiError = Error & {
 };
 
 type PendingRequest = {
-  resolve: () => void; // string 인자 제거
+  resolve: () => void;
   reject: (error: Error) => void;
 };
 
@@ -29,7 +36,6 @@ export const getBaseUrl = (): string => {
   if (!baseUrl) {
     throw new Error('API base URL is not configured. Set EXPO_PUBLIC_API_URL.');
   }
-  // return baseUrl;
   return 'http://52.78.135.45:3000';
 };
 
@@ -197,6 +203,7 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
   return text as T;
 };
 
+// --- [수정된 부분] ---
 const refreshAccessToken = async (): Promise<RefreshResponse> => {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) {
@@ -206,15 +213,30 @@ const refreshAccessToken = async (): Promise<RefreshResponse> => {
   const response = await fetch(`${getBaseUrl()}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
+    // 1. 서버 스펙에 맞춰 키 이름을 refresh_token으로 변경
+    body: JSON.stringify({ refresh_token: refreshToken }),
   });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
   }
 
-  return parseResponse<RefreshResponse>(response);
+  // 2. 서버 응답 파싱 (스네이크 케이스)
+  const data = await parseResponse<ServerAuthResponse>(response);
+
+  // 3. [중요] Refresh Token Rotation 처리
+  // 서버가 새 리프레시 토큰을 주면 반드시 저장해야 함.
+  // 이걸 안 하면 다음 갱신 때 구버전 토큰을 보내서 401 뜸.
+  if (data.refresh_token) {
+    await saveRefreshToken(data.refresh_token);
+  }
+
+  // 4. 앱 내부에서 사용하는 카멜 케이스로 반환
+  return {
+    accessToken: data.access_token,
+  };
 };
+// --------------------
 
 export const customFetch = async <T>(
   endpoint: string,
@@ -266,6 +288,8 @@ export const customFetch = async <T>(
       setAccessToken(newAccessToken);
       headers.set('Authorization', `Bearer ${newAccessToken}`);
       processQueue(null, newAccessToken);
+
+      // 재요청
       response = await fetch(fullUrl, {
         ...requestInit,
         headers,
@@ -285,7 +309,7 @@ export const customFetch = async <T>(
           : undefined;
       const failureError = buildApiError(
         status,
-        '세션이 만료되었습니다. 다시 로그인해주세요.',
+        '로그인에 실패했습니다.',
         data,
       );
       processQueue(failureError, null);
