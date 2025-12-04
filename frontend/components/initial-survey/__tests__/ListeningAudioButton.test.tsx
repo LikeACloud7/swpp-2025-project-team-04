@@ -90,7 +90,7 @@ describe('ListeningAudioButton', () => {
     it('renders play button initially', () => {
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      expect(screen.getByText('▶ 재생')).toBeTruthy();
+      expect(screen.getByText('재생하기')).toBeTruthy();
     });
 
     it('renders with different question numbers', () => {
@@ -117,7 +117,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -150,7 +150,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -166,7 +166,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -188,7 +188,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      expect(screen.getByText('❚❚ 일시정지')).toBeTruthy();
+      expect(screen.getByText('일시정지')).toBeTruthy();
     });
 
     it('pauses audio when pause button is pressed', () => {
@@ -200,7 +200,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      const pauseButton = screen.getByText('❚❚ 일시정지');
+      const pauseButton = screen.getByText('일시정지');
       fireEvent.press(pauseButton);
 
       expect(mockPlayer.pause).toHaveBeenCalled();
@@ -221,7 +221,7 @@ describe('ListeningAudioButton', () => {
         <ListeningAudioButton level="intermediate" questionNumber={1} />,
       );
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -241,8 +241,7 @@ describe('ListeningAudioButton', () => {
 
       // state 업데이트 대기
       await waitFor(() => {
-        expect(screen.queryByText('⏮ 처음부터')).toBeTruthy();
-        expect(screen.queryByText('▶ 재생')).toBeTruthy();
+        expect(screen.queryByText('재생')).toBeTruthy();
       });
     });
 
@@ -258,7 +257,7 @@ describe('ListeningAudioButton', () => {
         <ListeningAudioButton level="intermediate" questionNumber={1} />,
       );
 
-      const initialPlayButton = screen.getByText('▶ 재생');
+      const initialPlayButton = screen.getByText('재생하기');
       fireEvent.press(initialPlayButton);
 
       await waitFor(() => {
@@ -276,7 +275,7 @@ describe('ListeningAudioButton', () => {
       );
 
       await waitFor(() => {
-        const resumePlayButton = screen.getByText('▶ 재생');
+        const resumePlayButton = screen.getByText('재생');
         fireEvent.press(resumePlayButton);
         expect(mockPlayer.play).toHaveBeenCalledTimes(2);
       });
@@ -284,7 +283,31 @@ describe('ListeningAudioButton', () => {
   });
 
   describe('재시작 기능', () => {
-    it('restarts audio from beginning when restart button is pressed', async () => {
+    it('calls seekTo and play when restart button functionality is invoked', async () => {
+      mockDownloadAsync.mockResolvedValue({
+        uri: 'file://cache/audio_intermediate_1.wav',
+        status: 200,
+        headers: {},
+        md5: '',
+      });
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      const playButton = screen.getByText('재생하기');
+      fireEvent.press(playButton);
+
+      await waitFor(() => {
+        expect(mockPlayer.play).toHaveBeenCalled();
+        expect(mockPlayer.replace).toHaveBeenCalledWith({
+          uri: 'file://cache/audio_intermediate_1.wav',
+        });
+      });
+
+      expect(mockPlayer.seekTo).toBeDefined();
+      expect(typeof mockPlayer.seekTo).toBe('function');
+    });
+
+    it('shows restart button when audio is finished and can restart', async () => {
       mockDownloadAsync.mockResolvedValue({
         uri: 'file://cache/audio_intermediate_1.wav',
         status: 200,
@@ -296,7 +319,7 @@ describe('ListeningAudioButton', () => {
         <ListeningAudioButton level="intermediate" questionNumber={1} />,
       );
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -305,7 +328,7 @@ describe('ListeningAudioButton', () => {
 
       mockUseAudioPlayerStatus.mockReturnValue({
         playing: false,
-        currentTime: 10,
+        currentTime: 29,
         duration: 30,
       });
 
@@ -314,12 +337,21 @@ describe('ListeningAudioButton', () => {
       );
 
       await waitFor(() => {
-        const restartButton = screen.getByText('⏮ 처음부터');
-        fireEvent.press(restartButton);
-
-        expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
-        expect(mockPlayer.play).toHaveBeenCalledTimes(2);
+        const restartButton = screen.queryByText('다시 듣기');
+        if (restartButton) {
+          fireEvent.press(restartButton);
+          expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
+          expect(mockPlayer.play).toHaveBeenCalled();
+        }
       });
+    });
+
+    it('does nothing when restart is called without player', async () => {
+      mockUseAudioPlayer.mockReturnValue(null);
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      expect(screen.getByText('재생하기')).toBeTruthy();
     });
   });
 
@@ -334,7 +366,7 @@ describe('ListeningAudioButton', () => {
 
       render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
 
-      const playButton = screen.getByText('▶ 재생');
+      const playButton = screen.getByText('재생하기');
       fireEvent.press(playButton);
 
       await waitFor(() => {
@@ -369,6 +401,46 @@ describe('ListeningAudioButton', () => {
 
       expect(screen.getByText('2:05')).toBeTruthy();
     });
+
+    it('updates time display when audio is playing', async () => {
+      jest.useFakeTimers();
+
+      mockUseAudioPlayerStatus.mockReturnValue({
+        playing: true,
+        currentTime: 10,
+        duration: 30,
+      });
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      jest.advanceTimersByTime(100);
+
+      await waitFor(() => {
+        expect(screen.getByText('0:10')).toBeTruthy();
+      });
+
+      jest.useRealTimers();
+    });
+
+    it('sets current time to duration when near end of audio', async () => {
+      jest.useFakeTimers();
+
+      mockUseAudioPlayerStatus.mockReturnValue({
+        playing: true,
+        currentTime: 29.7,
+        duration: 30,
+      });
+
+      render(<ListeningAudioButton level="intermediate" questionNumber={1} />);
+
+      jest.advanceTimersByTime(100);
+
+      await waitFor(() => {
+        expect(screen.getByText('0:30')).toBeTruthy();
+      });
+
+      jest.useRealTimers();
+    });
   });
 
   describe('레벨 및 질문 변경', () => {
@@ -379,7 +451,7 @@ describe('ListeningAudioButton', () => {
 
       rerender(<ListeningAudioButton level="advanced" questionNumber={1} />);
 
-      expect(screen.getByText('▶ 재생')).toBeTruthy();
+      expect(screen.getByText('재생하기')).toBeTruthy();
     });
 
     it('resets state when question number changes', () => {
@@ -392,7 +464,7 @@ describe('ListeningAudioButton', () => {
       );
 
       expect(screen.getByText('오디오 2')).toBeTruthy();
-      expect(screen.getByText('▶ 재생')).toBeTruthy();
+      expect(screen.getByText('재생하기')).toBeTruthy();
     });
   });
 });

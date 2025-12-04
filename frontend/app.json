@@ -1,12 +1,15 @@
 {
   "expo": {
-    "name": "swpp-frontend",
-    "slug": "swpp-frontend",
+    "name": "LingoFit",
+    "slug": "lingofit",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "swppfrontend",
+    "scheme": "lingofit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "androidNavigationBar": {
+      "visible": "immersive"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.swppfrontend"
@@ -23,14 +26,16 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "./plugins/withAndroidSplash",
       [
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
             "minSdkVersion": 24,
-            "kotlinVersion": "2.0.21"
+            "kotlinVersion": "2.1.20",
+            "usesCleartextTraffic": true
           }
         }
       ]
@@ -41,7 +46,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6FA4D7"
+      "backgroundColor": "#001F3B"
     },
     "icon": "./assets/icon.png"
   }

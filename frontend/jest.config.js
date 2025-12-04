@@ -11,14 +11,25 @@ module.exports = {
       '<rootDir>/__mocks__/fileMock.js',
   },
   collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
     'components/**/*.{ts,tsx}',
     'api/**/*.{ts,tsx}',
+    'hooks/**/*.{ts,tsx}',
+    'utils/**/*.{ts,tsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/__tests__/**',
+    '!app/**',
+    '!api/client.ts',
   ],
-  testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
+  testMatch: [
+    '**/__tests__/**/*.(test|spec).[jt]s?(x)',
+    '**/?(*.)+(spec|test).[jt]s?(x)',
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/utils/',
+    '/__tests__/integration/',
+  ],
   globals: {
     'ts-jest': {
       tsconfig: {

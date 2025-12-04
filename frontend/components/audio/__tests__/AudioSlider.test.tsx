@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react-native';
-import AudioSlider from '../slider';
+import AudioSlider from '../AudioSlider';
 import TrackPlayer, { useProgress } from 'react-native-track-player';
 
 jest.mock('react-native-track-player');
@@ -41,6 +41,18 @@ describe('AudioSlider', () => {
 
       expect(slider.props.value).toBe(45);
       expect(slider.props.maximumValue).toBe(180);
+    });
+
+    it('renders slider with maximumValue 0 when duration is 0', () => {
+      mockUseProgress.mockReturnValue({ position: 0, duration: 0 });
+
+      const { UNSAFE_getByType } = render(<AudioSlider />);
+      const slider = UNSAFE_getByType(
+        require('@react-native-community/slider').default,
+      );
+
+      expect(slider.props.maximumValue).toBe(0);
+      expect(slider.props.disabled).toBe(true);
     });
   });
 
@@ -85,6 +97,22 @@ describe('AudioSlider', () => {
       expect(screen.getByText('0:45')).toBeTruthy();
       expect(screen.getByText('3:00')).toBeTruthy();
     });
+
+    it('handles non-finite values (Infinity)', () => {
+      mockUseProgress.mockReturnValue({ position: Infinity, duration: 100 });
+
+      render(<AudioSlider />);
+
+      expect(screen.getByText('0:00')).toBeTruthy();
+    });
+
+    it('handles non-finite values (NaN)', () => {
+      mockUseProgress.mockReturnValue({ position: NaN, duration: 100 });
+
+      render(<AudioSlider />);
+
+      expect(screen.getByText('0:00')).toBeTruthy();
+    });
   });
 
   describe('슬라이더 동작', () => {
@@ -126,9 +154,9 @@ describe('AudioSlider', () => {
         require('@react-native-community/slider').default,
       );
 
-      expect(slider.props.minimumTrackTintColor).toBe('#6FA4D7');
-      expect(slider.props.maximumTrackTintColor).toBe('#dbeafe');
-      expect(slider.props.thumbTintColor).toBe('#3b82f6');
+      expect(slider.props.minimumTrackTintColor).toBe('rgba(255,255,255,0.95)');
+      expect(slider.props.maximumTrackTintColor).toBe('rgba(255,255,255,0.28)');
+      expect(slider.props.thumbTintColor).toBe('rgba(255,255,255,0.98)');
     });
   });
 });

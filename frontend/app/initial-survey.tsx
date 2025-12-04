@@ -1,4 +1,5 @@
-import { useState } from 'react';
+// screens/InitialSurveyScreen.tsx
+import { useMemo, useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 
@@ -7,19 +8,27 @@ import ListeningAudioButton from '@/components/initial-survey/ListeningAudioButt
 import NavButtons from '@/components/initial-survey/NavButtons';
 import PercentageSlider from '@/components/initial-survey/PercentageSlider';
 import ProgressBar from '@/components/initial-survey/ProgressBar';
+import ResultStep from '@/components/initial-survey/ResultStep';
 import TestOptionStep from '@/components/initial-survey/TestOptionStep';
 import TopicGrid from '@/components/initial-survey/TopicGrid';
 import WelcomeStep from '@/components/initial-survey/WelcomeStep';
+
+import { LevelTestResponse } from '@/api/initialSurvey';
+
 import {
   LISTENING_LEVELS,
-  TOPIC_CATEGORIES,
   WELCOME_CONTENT,
   MAX_TOPIC_SELECTIONS,
   TOTAL_SURVEY_PAGES,
 } from '@/constants/initialSurveyData';
+import { THEME_OPTIONS } from '@/constants/homeOptions';
+import { LEVEL_THRESHOLDS } from '@/utils/levelUtils';
+import { mapLevelIdToCEFR } from '@/api/initialSurvey';
+
 import {
   useSubmitLevelTest,
   useSubmitManualLevel,
+  useUpdateInterests,
 } from '@/hooks/mutations/useInitialSurveyMutations';
 
 export default function InitialSurveyScreen() {
@@ -34,13 +43,17 @@ export default function InitialSurveyScreen() {
     percent5: 50,
     selectedTopics: [] as string[],
   });
+  const [testResult, setTestResult] = useState<LevelTestResponse | null>(null);
 
   const { mutate: submitLevelTest, isPending: isLevelTestPending } =
     useSubmitLevelTest();
   const { mutate: submitManualLevel, isPending: isManualLevelPending } =
     useSubmitManualLevel();
+  const { mutate: updateInterests, isPending: isUpdateInterestsPending } =
+    useUpdateInterests();
 
-  const isSubmitting = isLevelTestPending || isManualLevelPending;
+  const isSubmitting =
+    isLevelTestPending || isManualLevelPending || isUpdateInterestsPending;
 
   const handleNext = () => {
     if (currentStep === TOTAL_SURVEY_PAGES) {
@@ -51,38 +64,14 @@ export default function InitialSurveyScreen() {
     if (currentStep === 1 && !userInput.proficiencyLevel) {
       return;
     }
-    // Step 2에서 선택 없이 넘어가기 방지
-    if (currentStep === 2 && skipTest === null) {
-      return;
-    }
-    // Step 2에서 Skip하면 바로 Step 8로 이동
-    if (currentStep === 2 && skipTest === true) {
-      setCurrentStep(8);
-      return;
-    }
-    setCurrentStep(currentStep + 1);
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      if (currentStep === 8 && skipTest === true) {
-        setCurrentStep(2);
-      } else {
-        setCurrentStep(currentStep - 1);
-      }
-    }
-  };
-
-  const handleSubmit = () => {
-    if (isSubmitting) return;
-
-    // 백엔드로 보내기
-    if (skipTest === true) {
+    // Step 1에서 레벨 선택 후 다음으로 넘어갈 때 API 호출
+    if (currentStep === 1) {
+      if (isSubmitting) return;
       submitManualLevel(
         { levelId: userInput.proficiencyLevel },
         {
-          onSuccess: () => {
-            router.replace('/(main)');
+          onSuccess: (data) => {
+            setCurrentStep(currentStep + 1);
           },
           onError: () => {
             Alert.alert(
@@ -93,7 +82,14 @@ export default function InitialSurveyScreen() {
           },
         },
       );
-    } else {
+      return;
+    }
+    // Step 2에서 선택 없이 넘어가기 방지
+    if (currentStep === 2 && skipTest === null) return;
+
+    // Step 7 (Last Question) -> Submit Level Test
+    if (currentStep === 7) {
+      if (isSubmitting) return;
       submitLevelTest(
         {
           levelId: userInput.proficiencyLevel,
@@ -106,18 +102,69 @@ export default function InitialSurveyScreen() {
           ],
         },
         {
-          onSuccess: () => {
-            router.replace('/(main)');
+          onSuccess: (data) => {
+            setTestResult(data);
+            setCurrentStep(8);
           },
-          onError: () => {
+          onError: () =>
             Alert.alert(
               '제출 실패',
               '레벨 테스트 제출에 실패했습니다. 다시 시도해주세요.',
               [{ text: '확인' }],
-            );
-          },
+            ),
         },
       );
+      return;
+    }
+
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      if ((currentStep === 8 || currentStep === 9) && skipTest === true) {
+        setCurrentStep(2);
+      } else {
+        setCurrentStep(currentStep - 1);
+      }
+    }
+  };
+
+  const goToWalkthrough = () => {
+    router.replace('/walkthrough');
+  };
+
+  const handleSubmit = () => {
+    if (isSubmitting) return;
+
+    const submitInterestsAndNavigate = () => {
+      if (userInput.selectedTopics.length > 0) {
+        updateInterests(
+          { interests: userInput.selectedTopics },
+          {
+            onSuccess: (data) => {
+              goToWalkthrough();
+            },
+            onError: () => {
+              Alert.alert(
+                '제출 실패',
+                '관심사 저장에 실패했습니다. 다시 시도해주세요.',
+                [{ text: '확인' }],
+              );
+            },
+          },
+        );
+      } else {
+        goToWalkthrough();
+      }
+    };
+
+    if (skipTest === true) {
+      // 레벨은 이미 Step 2에서 제출했으므로, 관심사만 저장 후 워크스루 이동
+      submitInterestsAndNavigate();
+    } else {
+      // 레벨 테스트도 이미 Step 7에서 제출했으므로, 관심사만 저장
+      submitInterestsAndNavigate();
     }
   };
 
@@ -144,6 +191,7 @@ export default function InitialSurveyScreen() {
       if (skipTest === false) return '테스트 시작';
       return '선택해주세요';
     }
+    if (currentStep === 8) return ''; // Result Page has its own button
     return '다음';
   };
 
@@ -153,6 +201,32 @@ export default function InitialSurveyScreen() {
     if (currentStep === 2 && skipTest === null) return false;
     return true;
   };
+
+  // THEME_OPTIONS -> TopicGrid용 구조로 변환
+  // TopicGrid expects: { category: string, topics: { id, label, emoji }[] }[]
+  const themeCategories = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        category: string;
+        topics: { id: string; label: string; emoji: string }[];
+      }
+    >();
+
+    Object.entries(THEME_OPTIONS).forEach(([id, v]) => {
+      const cat = v.category;
+      if (!map.has(cat)) map.set(cat, { category: cat, topics: [] });
+      map.get(cat)!.topics.push({ id, label: v.label, emoji: v.emoji });
+    });
+
+    const arr = Array.from(map.values());
+    // 카테고리/토픽 정렬(선택)
+    arr.sort((a, b) => a.category.localeCompare(b.category, 'ko'));
+    arr.forEach((g) =>
+      g.topics.sort((a, b) => a.label.localeCompare(b.label, 'ko')),
+    );
+    return arr;
+  }, []);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -175,7 +249,44 @@ export default function InitialSurveyScreen() {
           />
         );
       case 2:
-        return <TestOptionStep onSelect={(skip) => setSkipTest(skip)} />;
+        return (
+          <TestOptionStep
+            onSelect={(skip) => {
+              setSkipTest(skip);
+              if (skip) {
+                // Skip selected: Submit manual level immediately
+                if (isSubmitting) return;
+
+                submitManualLevel(
+                  { levelId: userInput.proficiencyLevel },
+                  {
+                    onSuccess: (data: any) => {
+                      // Construct mock result for manual level
+                      const cefr = mapLevelIdToCEFR(userInput.proficiencyLevel);
+                      const score = LEVEL_THRESHOLDS[cefr] || 0;
+
+                      const mockResult: LevelTestResponse = {
+                        success: true,
+                        lexical: { cefr_level: cefr, score: score },
+                        syntactic: { cefr_level: cefr, score: score },
+                        auditory: { cefr_level: cefr, score: score },
+                        overall: { cefr_level: cefr, score: score },
+                      };
+
+                      setTestResult(mockResult);
+                      setCurrentStep(9);
+                    },
+                    onError: () => {
+                      Alert.alert('오류', '제출에 실패했습니다.');
+                    },
+                  },
+                );
+              } else {
+                setCurrentStep(currentStep + 1);
+              }
+            }}
+          />
+        );
       case 3:
         return (
           <>
@@ -262,9 +373,13 @@ export default function InitialSurveyScreen() {
           </>
         );
       case 8:
+        return testResult ? (
+          <ResultStep results={testResult} onNext={() => setCurrentStep(9)} />
+        ) : null;
+      case 9:
         return (
           <TopicGrid
-            categories={TOPIC_CATEGORIES}
+            categories={themeCategories}
             selectedTopics={userInput.selectedTopics}
             onToggle={handleTopicToggle}
             maxSelections={MAX_TOPIC_SELECTIONS}
@@ -275,13 +390,16 @@ export default function InitialSurveyScreen() {
     }
   };
 
-  // 마지막 페이지만 스크롤 가능
-  const isLastPage = currentStep === TOTAL_SURVEY_PAGES;
+  // Topic Selection(9)만 스크롤 가능
+  const isScrollableStep = currentStep === 9;
 
   return (
-    <View className="flex-1 bg-[#EBF4FB]">
-      {isLastPage ? (
-        <ScrollView className="flex-1" contentContainerClassName="p-6 pt-16">
+    <View className="flex-1" style={{ backgroundColor: '#EBF4FB' }}>
+      {isScrollableStep ? (
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="px-6 pb-4 pt-12"
+        >
           {currentStep > 0 && (
             <ProgressBar
               currentStep={currentStep}
@@ -291,22 +409,29 @@ export default function InitialSurveyScreen() {
           {renderStep()}
         </ScrollView>
       ) : (
-        <View className="flex-1 p-6 pt-16">
+        <>
+          <View className="flex-1 px-6 justify-center">{renderStep()}</View>
           {currentStep > 0 && (
-            <ProgressBar
-              currentStep={currentStep}
-              totalPages={TOTAL_SURVEY_PAGES}
-            />
+            <View
+              className="absolute top-0 left-0 right-0 px-6 pt-12"
+              style={{ pointerEvents: 'box-none' }}
+            >
+              <ProgressBar
+                currentStep={currentStep}
+                totalPages={TOTAL_SURVEY_PAGES}
+              />
+            </View>
           )}
-          {renderStep()}
-        </View>
+        </>
       )}
+
       <NavButtons
         onNext={handleNext}
         onBack={handleBack}
         nextLabel={getNextButtonLabel()}
-        showBackButton={currentStep > 0}
+        showBackButton={currentStep > 0 && currentStep !== 8}
         canProceed={canProceed()}
+        hideNextButton={currentStep === 2 || currentStep === 8}
       />
     </View>
   );
